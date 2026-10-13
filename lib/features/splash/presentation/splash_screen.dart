@@ -24,7 +24,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final bool seen = prefs.getBool('onboarding_seen') ?? false;
     await Future<void>.delayed(const Duration(milliseconds: 1800));
     if (!mounted) return;
-    context.go(seen ? '/home' : '/onboarding');
+    context.go(seen ? '/auth' : '/onboarding');
   }
 
   @override

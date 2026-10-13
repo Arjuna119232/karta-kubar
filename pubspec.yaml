@@ -1,7 +1,7 @@
 name: karta_kubar
 description: "KARTA KUBAR — Karang Taruna Kelurahan Kuningan Barat. Satu Komando, Satu Karya."
 publish_to: "none"
-version: 0.2.0+2
+version: 0.3.0+3
 
 environment:
   sdk: ">=3.4.0 <4.0.0"

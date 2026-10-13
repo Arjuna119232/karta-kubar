@@ -18,6 +18,8 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final List<Activity> upcoming =
         SeedData.activities.where((Activity a) => a.upcoming).toList();
+    final AuthUser? user = ref.watch(authUserProvider);
+    final String nama = user?.name ?? SeedData.memberName;
 
     return SafeArea(
       bottom: false,
@@ -25,7 +27,7 @@ class HomeScreen extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(
             AppSpacing.screen, 12, AppSpacing.screen, 96),
         children: <Widget>[
-          const _Greeting(),
+          _Greeting(nama: nama),
           const SizedBox(height: 18),
           const _AnnouncementCarousel(),
           const SizedBox(height: 18),
@@ -79,7 +81,9 @@ class HomeScreen extends ConsumerWidget {
 }
 
 class _Greeting extends StatelessWidget {
-  const _Greeting();
+  const _Greeting({required this.nama});
+
+  final String nama;
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +99,7 @@ class _Greeting extends StatelessWidget {
                     ?.copyWith(color: context.semantic.textSecondary),
               ),
               const SizedBox(height: 2),
-              Text(SeedData.memberName, style: context.text.headlineMedium),
+              Text(nama, style: context.text.headlineMedium),
             ],
           ),
         ),

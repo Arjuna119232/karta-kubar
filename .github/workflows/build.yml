@@ -47,11 +47,15 @@ jobs:
           name: karta-kubar-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
+      - name: Read version from pubspec.yaml
+        id: ver
+        run: echo "version=$(grep -E '^version:' pubspec.yaml | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
       - name: Publish Release with APK
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.1.0-${{ github.run_number }}
-          name: KARTA KUBAR v0.1.0 (build ${{ github.run_number }})
+          tag_name: v${{ steps.ver.outputs.version }}-${{ github.run_number }}
+          name: KARTA KUBAR v${{ steps.ver.outputs.version }} (build ${{ github.run_number }})
           body_path: .github/notes/release.md
           files: build/app/outputs/flutter-apk/app-release.apk
         env:

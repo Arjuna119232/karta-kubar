@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -15,13 +16,16 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AuthUser? user = ref.watch(authUserProvider);
+    final String nama = user?.name ?? SeedData.memberName;
+
     return SafeArea(
       bottom: false,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(
             AppSpacing.screen, 16, AppSpacing.screen, 96),
         children: <Widget>[
-          const _ProfileHeader(),
+          _ProfileHeader(nama: nama),
           const SizedBox(height: 20),
           const _MemberCard(),
           const SizedBox(height: 18),
@@ -84,7 +88,10 @@ class ProfileScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
           TextButton.icon(
-            onPressed: () => _soon(context, 'Keluar'),
+            onPressed: () {
+              ref.read(authUserProvider.notifier).state = null;
+              context.go('/auth');
+            },
             icon: Icon(Icons.logout_rounded, color: context.colors.error),
             label: Text('Keluar',
                 style: TextStyle(color: context.colors.error)),
@@ -102,7 +109,9 @@ class ProfileScreen extends ConsumerWidget {
 }
 
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader();
+  const _ProfileHeader({required this.nama});
+
+  final String nama;
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +141,7 @@ class _ProfileHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(SeedData.memberName, style: context.text.titleLarge),
+              Text(nama, style: context.text.titleLarge),
               const SizedBox(height: 2),
               Text(
                 '${SeedData.memberDivision} · ${SeedData.memberRole}',

@@ -47,7 +47,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_seen', true);
     if (!mounted) return;
-    context.go('/home');
+    context.go('/auth');
   }
 
   void _next() {
