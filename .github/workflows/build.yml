@@ -1,0 +1,58 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate Android platform (android/ folder)
+        run: |
+          flutter create --org id.kartakubar --project-name app --platforms=android /tmp/scaffold
+          cp -r /tmp/scaffold/android .
+
+      - name: Apply Android patches (branding, permissions)
+        run: bash tool/patch_android.sh
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Analyze (non-blocking)
+        run: flutter analyze || true
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: karta-kubar-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Publish Release with APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.0-${{ github.run_number }}
+          name: KARTA KUBAR v0.1.0 (build ${{ github.run_number }})
+          body_path: .github/notes/release.md
+          files: build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
