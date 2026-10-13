@@ -47,6 +47,11 @@ jobs:
       - name: Apply release signing
         run: python3 tool/patch_signing.py
 
+      # WAJIB setelah `flutter create` + patch. Folder android/ baru saja
+      # dibuat ulang, jadi ikon harus digenerate ulang di sini juga.
+      - name: Generate launcher icons
+        run: dart run flutter_launcher_icons
+
       - name: Flutter pub get
         run: flutter pub get
 

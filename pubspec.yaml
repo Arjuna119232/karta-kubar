@@ -1,7 +1,7 @@
 name: kubar_connect
 description: "KUNBAR Connect — Kuningan Barat Connected Community. Satu Kelurahan, Satu Komunitas, Satu Aplikasi."
 publish_to: "none"
-version: 0.5.3+8
+version: 0.5.4+9
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -21,8 +21,26 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
   assets:
     - assets/data/
+
+# Ikon launcher digenerate di CI (setelah `flutter create`), bukan secara
+# lokal, karena folder android/ di-generate ulang tiap build dan akan
+# menghapus file ikon yang sudah di-generate.
+#
+# inset: 0 disengaja - file ikon sudah punya margin ~26% di semua sisi,
+# sedangkan area aman adaptive Android hanya butuh 19,5%. Menambah inset
+# 16% akan mengecilkan logo tanpa perlu.
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/icon-1024.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true
+  adaptive_icon_background: "#1B5E20"
+  adaptive_icon_foreground: "assets/icon/icon-1024.png"
+  adaptive_icon_foreground_inset: 0
