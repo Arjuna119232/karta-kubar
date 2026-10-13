@@ -1,65 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/auth/session.dart';
+import '../../../core/auth/user_role.dart';
 import '../../../core/providers.dart';
-import '../../galeri/presentation/galeri_screen.dart';
-import '../../home/presentation/home_screen.dart';
-import '../../keuangan/presentation/keuangan_screen.dart';
-import '../../kegiatan/presentation/kegiatan_screen.dart';
-import '../../profile/presentation/profile_screen.dart';
+import '../data/app_tabs.dart';
 
-/// Kerangka utama: 5 tab dengan IndexedStack (state tiap tab terjaga).
+/// Kerangka utama. Bottom navigation ditentukan oleh role yang sedang aktif.
 class AppShell extends ConsumerWidget {
   const AppShell({super.key});
 
-  static const List<Widget> _tabs = <Widget>[
-    HomeScreen(),
-    KegiatanScreen(),
-    KeuanganScreen(),
-    GaleriScreen(),
-    ProfileScreen(),
-  ];
-
-  static const List<NavigationDestination> _destinations =
-      <NavigationDestination>[
-    NavigationDestination(
-      icon: Icon(Icons.home_outlined),
-      selectedIcon: Icon(Icons.home_rounded),
-      label: 'Beranda',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.event_outlined),
-      selectedIcon: Icon(Icons.event_rounded),
-      label: 'Kegiatan',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.account_balance_wallet_outlined),
-      selectedIcon: Icon(Icons.account_balance_wallet_rounded),
-      label: 'Keuangan',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.photo_library_outlined),
-      selectedIcon: Icon(Icons.photo_library_rounded),
-      label: 'Galeri',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.person_outline_rounded),
-      selectedIcon: Icon(Icons.person_rounded),
-      label: 'Profil',
-    ),
-  ];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final Session session = ref.watch(sessionProvider);
+    final UserRole role = session.efektif;
+    final List<AppTab> tabs = tabsUntuk(role);
     final int index = ref.watch(navigationIndexProvider);
 
+    // Role bisa berubah saat runtime (mis. setelah login). Jaga indeks tetap
+    // supaya tidak keluar dari jangkauan tab yang sekarang tampil.
+    final int aman = index.clamp(0, tabs.length - 1);
+
     return Scaffold(
-      body: IndexedStack(index: index, children: _tabs),
+      // IndexedStack menjaga scroll position tiap tab saat berpindah.
+      body: IndexedStack(
+        index: aman,
+        children: <Widget>[for (final AppTab t in tabs) t.screen],
+      ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
-        destinations: _destinations,
-        onDestinationSelected: (int i) =>
-            ref.read(navigationIndexProvider.notifier).state = i,
+        selectedIndex: aman,
+        destinations: <Widget>[
+          for (final AppTab t in tabs)
+            NavigationDestination(
+              icon: t.badge == null
+                  ? Icon(t.icon)
+                  : Badge.count(count: t.badge!, child: Icon(t.icon)),
+              selectedIcon: Icon(t.selectedIcon),
+              label: t.label,
+              tooltip: t.label,
+            ),
+        ],
+        onDestinationSelected: (int i) {
+          if (i >= tabs.length) return;
+          ref.read(navigationIndexProvider.notifier).state = i;
+        },
       ),
     );
   }

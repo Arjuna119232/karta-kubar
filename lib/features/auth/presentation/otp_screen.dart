@@ -67,9 +67,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       );
       return;
     }
-    final String nama = widget.nama.trim().isEmpty ? 'Sobat Karta' : widget.nama.trim();
-    ref.read(authUserProvider.notifier).state =
-        AuthUser(name: nama, phone: widget.nomor);
+    final String nama =
+        widget.nama.trim().isEmpty ? 'Warga KUBAR' : widget.nama.trim();
+    ref.read(sessionProvider.notifier).masuk(
+          AuthUser(name: nama, phone: widget.nomor),
+        );
     HapticFeedback.mediumImpact();
     context.go('/home');
   }

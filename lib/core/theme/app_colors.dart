@@ -7,8 +7,10 @@ class AppColors {
   static const Color primary = Color(0xFF1B5E20); // Hijau Karang Taruna
   static const Color secondary = Color(0xFFFFC107); // Kuning energi muda
   static const Color accent = Color(0xFF0D47A1); // Biru kepercayaan
+  // Accent pink untuk highlight kegiatan sosial (identitas KUBAR Connect).
+  static const Color social = Color(0xFFE91E63);
   static const Color error = Color(0xFFD32F2F);
-  static const Color success = Color(0xFF1B7A43);
+  static const Color success = Color(0xFF2E7D32);
   static const Color warning = Color(0xFFB26A00);
 
   static const Color bgLight = Color(0xFFF6F7F9);

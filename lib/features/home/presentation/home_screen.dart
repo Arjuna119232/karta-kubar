@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/auth/session.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -19,8 +20,8 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final List<Activity> upcoming =
         SeedData.activities.where((Activity a) => a.upcoming).toList();
-    final AuthUser? user = ref.watch(authUserProvider);
-    final String nama = user?.name ?? SeedData.memberName;
+    final Session session = ref.watch(sessionProvider);
+    final String nama = session.user?.name ?? 'Warga KUBAR';
 
     return SafeArea(
       bottom: false,

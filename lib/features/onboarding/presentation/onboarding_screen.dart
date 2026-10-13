@@ -19,25 +19,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   static const List<_Slide> _slides = <_Slide>[
     _Slide(
-      icon: Icons.groups_rounded,
-      title: 'Satu wadah, satu komando',
+      icon: Icons.groups_2_rounded,
+      title: 'Selamat datang di KUBAR Connect',
       body:
-          'Semua informasi Karang Taruna Kelurahan Kuningan Barat dalam satu aplikasi — dari agenda sampai kabar terbaru.',
+          'Untuk seluruh warga Kuningan Barat — dari anak muda, orang tua, RT/RW, UMKM, sampai pengurus kelurahan.',
       tint: AppColors.primary,
     ),
     _Slide(
-      icon: Icons.qr_code_scanner_rounded,
-      title: 'Kegiatan & absensi',
+      icon: Icons.campaign_rounded,
+      title: 'Sampaikan tanpa ribet',
       body:
-          'Ikuti agenda kerja bakti, olahraga, dan keagamaan. Absen cukup dengan pindai QR di lokasi kegiatan.',
-      tint: AppColors.accent,
+          'Kirim aspirasi, laporan masalah, sampai kondisi darurat keamanan. Semua tercatat dan bisa dilacak statusnya.',
+      tint: AppColors.social,
     ),
     _Slide(
-      icon: Icons.verified_user_rounded,
-      title: 'Transparan & terhubung',
+      icon: Icons.handshake_rounded,
+      title: 'Terhubung & terbuka',
       body:
-          'Kas organisasi terbuka untuk semua anggota, dan aspirasi kamu tersampaikan langsung ke pengurus.',
-      tint: AppColors.success,
+          'Baca pengumuman RT/RW, lihat agenda, dukung UMKM warga, dan pesan fasilitas balai tanpa datang langsung.',
+      tint: AppColors.accent,
     ),
   ];
 
@@ -114,7 +114,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   const SizedBox(height: 22),
                   PrimaryButton(
-                    label: _isLast ? 'Mulai sekarang' : 'Lanjut',
+                    label: _isLast ? 'Masuk KUBAR Connect' : 'Lanjut',
                     icon: _isLast ? Icons.check_rounded : null,
                     onPressed: _next,
                   ),

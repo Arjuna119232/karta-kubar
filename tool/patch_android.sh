@@ -11,15 +11,15 @@ GRADLE="android/app/build.gradle.kts"
 echo "==> patch_android: manifest=$MANIFEST gradle=$GRADLE"
 
 # --- 1) Launcher label = real app name (never the package id) ---
-sed -i 's/android:label="[^"]*"/android:label="KARTA KUBAR"/' "$MANIFEST"
-grep -q 'android:label="KARTA KUBAR"' "$MANIFEST" || { echo "FAIL: label not set"; exit 1; }
+sed -i 's/android:label="[^"]*"/android:label="KUBAR Connect"/' "$MANIFEST"
+grep -q 'android:label="KUBAR Connect"' "$MANIFEST" || { echo "FAIL: label not set"; exit 1; }
 
-# --- 2) applicationId + namespace = id.kartakubar.app ---
-sed -i 's/applicationId = "[^"]*"/applicationId = "id.kartakubar.app"/' "$GRADLE" 2>/dev/null || true
-sed -i 's/namespace = "[^"]*"/namespace = "id.kartakubar.app"/' "$GRADLE" 2>/dev/null || true
+# --- 2) applicationId + namespace = id.kubarkonek.app ---
+sed -i 's/applicationId = "[^"]*"/applicationId = "id.kubarkonek.app"/' "$GRADLE" 2>/dev/null || true
+sed -i 's/namespace = "[^"]*"/namespace = "id.kubarkonek.app"/' "$GRADLE" 2>/dev/null || true
 # Groovy DSL fallback
-sed -i 's/applicationId "[^"]*"/applicationId "id.kartakubar.app"/' "$GRADLE" 2>/dev/null || true
-sed -i 's/namespace "[^"]*"/namespace "id.kartakubar.app"/' "$GRADLE" 2>/dev/null || true
+sed -i 's/applicationId "[^"]*"/applicationId "id.kubarkonek.app"/' "$GRADLE" 2>/dev/null || true
+sed -i 's/namespace "[^"]*"/namespace "id.kubarkonek.app"/' "$GRADLE" 2>/dev/null || true
 
 # --- 3) Permissions needed by later phases (idempotent insert before <application) ---
 add_permission() {

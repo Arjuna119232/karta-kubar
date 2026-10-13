@@ -1,12 +1,84 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/absen/presentation/absen_screen.dart';
-import '../features/auth/presentation/auth_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/shell/presentation/app_shell.dart';
 import '../features/splash/presentation/splash_screen.dart';
+import 'auth/session.dart';
+import 'auth/user_role.dart';
 
-/// Rute aplikasi. Splash memutuskan layar pertama tiap sesi.
+/// Halaman "kamu belum punya akses" — muncul kalau guard menolak rute.
+class AksesDitolakScreen extends ConsumerWidget {
+  const AksesDitolakScreen({super.key, required this.minimal});
+
+  final UserRole minimal;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final Session session = ref.watch(sessionProvider);
+
+    return Scaffold(
+      appBar: AppBar(leading: const BackButton()),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(Icons.lock_outline_rounded, size: 56, color: Theme.of(context).colorScheme.error),
+              const SizedBox(height: 18),
+              Text('Akses perlu ${minimal.label}',
+                  style: Theme.of(context).textTheme.titleLarge,
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 8),
+              Text(
+                session.sudahLogin
+                    ? 'Akun kamu saat ini ${session.efektif.label}. Fitur ini khusus untuk ${minimal.label} ke atas.'
+                    : 'Kamu perlu masuk terlebih dahulu untuk memakai fitur ini.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () => context.go('/home'),
+                child: const Text('Kembali ke beranda'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Guard rute: menolak kalau role session tidak memenuhi [minimal].
+///
+/// Catatan: ini guard di sisi APP. Keamanan sesungguhnya harus tetap
+/// ditegakkan di sisi server lewat Row Level Security Supabase — guard
+/// aplikasi cuma untuk UX, bukan pengaman.
+class RoleGate extends ConsumerWidget {
+  const RoleGate({
+    super.key,
+    required this.minimal,
+    required this.child,
+  });
+
+  final UserRole minimal;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final Session session = ref.watch(sessionProvider);
+    if (!session.sudahLogin || !session.efektif.bisa(minimal)) {
+      return AksesDitolakScreen(minimal: minimal);
+    }
+    return child;
+  }
+}
+
+/// Rute aplikasi.
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
   routes: <RouteBase>[
@@ -19,16 +91,15 @@ final GoRouter appRouter = GoRouter(
       builder: (_, __) => const OnboardingScreen(),
     ),
     GoRoute(
-      path: '/auth',
-      builder: (_, __) => const AuthScreen(),
+      path: '/home',
+      builder: (_, __) => const AppShell(),
     ),
     GoRoute(
       path: '/absen',
-      builder: (_, __) => const AbsenScreen(),
-    ),
-    GoRoute(
-      path: '/home',
-      builder: (_, __) => const AppShell(),
+      builder: (_, __) => const RoleGate(
+        minimal: UserRole.anggota,
+        child: AbsenScreen(),
+      ),
     ),
   ],
 );

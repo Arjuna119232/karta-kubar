@@ -70,17 +70,17 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 26),
               const Text(
-                'KARTA KUBAR',
+                'KUBAR CONNECT',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 27,
+                  fontSize: 24,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.0,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Satu Komando, Satu Karya',
+                'Satu Kelurahan, Satu Komunitas, Satu Aplikasi',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.9),
                   fontSize: 15,
@@ -88,7 +88,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Karang Taruna Kelurahan Kuningan Barat',
+                'Kelurahan Kuningan Barat, Jakarta Selatan',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 12.5,
