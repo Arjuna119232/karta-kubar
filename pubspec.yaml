@@ -1,7 +1,7 @@
 name: kubar_connect
 description: "KUNBAR Connect — Kuningan Barat Connected Community. Satu Kelurahan, Satu Komunitas, Satu Aplikasi."
 publish_to: "none"
-version: 0.5.2+7
+version: 0.5.3+8
 
 environment:
   sdk: ">=3.4.0 <4.0.0"

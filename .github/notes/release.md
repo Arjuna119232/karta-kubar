@@ -1,18 +1,14 @@
-### KUNBAR Connect v0.5.2
+### KUNBAR Connect v0.5.3
 
-Splash dirancang ulang dan nama aplikasi resmi jadi **KUNBAR Connect**.
+Splash sekarang benar-benar di tengah layar dan ukurannya menyesuaikan HP.
 
-**Splash baru**
-- Mark hijau + monogram K, wordmark KUNBAR dengan aksen emas
-- Warna rata (bukan gradasian), mengikuti tema terang dan gelap
-- Indikator progres berupa batang tipis, bukan spinner bulat
-- Elemen masuk berurutan halus saat aplikasi dibuka
+**Posisi**
+- Blok konten di-center dengan cara yang benar, bukan perkiraan
+- Footer dipin di dasar, tidak lagi ikut menggeser isi ke atas
 
-**Perbaikan**
-- Alur masuk, OTP, dan keluar sekarang bisa dipakai
-- Sesi tidak hilang lagi tiap aplikasi ditutup lalu dibuka
-- Aplikasi langsung ke Beranda kalau masih login
+**Ukuran**
+- Semua ukuran diturunkan dari lebar layar, jadi ikut di HP besar maupun kecil
+- Tampilan ikut menyesuaikan ukuran font yang diatur sistem
 
-**Penggantian nama**
-- Semua teks di layar, judul aplikasi, dan judul rilis
-- Package id dan data tersimpan tetap, jadi bisa update langsung
+**Tambahan**
+- Baris kedua tagline: Dibuat bersama warga Kuningan Barat
