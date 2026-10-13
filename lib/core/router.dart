@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import '../features/absen/presentation/absen_screen.dart';
 import '../features/auth/presentation/auth_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/shell/presentation/app_shell.dart';
@@ -20,6 +21,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/auth',
       builder: (_, __) => const AuthScreen(),
+    ),
+    GoRoute(
+      path: '/absen',
+      builder: (_, __) => const AbsenScreen(),
     ),
     GoRoute(
       path: '/home',

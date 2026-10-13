@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -330,7 +331,7 @@ class _QuickActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final List<_QuickItem> items = <_QuickItem>[
       _QuickItem(Icons.qr_code_scanner_rounded, 'Absen', AppColors.primary,
-          () => _soon(context, 'Absen QR')),
+          () => context.go('/absen')),
       _QuickItem(Icons.account_balance_wallet_rounded, 'Iuran',
           AppColors.accent, () => ref.read(navigationIndexProvider.notifier).state = 2),
       _QuickItem(Icons.forum_rounded, 'Aspirasi',
