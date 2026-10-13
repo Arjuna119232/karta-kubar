@@ -34,7 +34,7 @@ jobs:
           mkdir -p android
           echo "${{ secrets.KK_KEYSTORE_BASE64 }}" | base64 -d > android/app/upload-keystore.jks
           cat > android/key.properties <<EOF
-          storeFile=app/upload-keystore.jks
+          storeFile=upload-keystore.jks
           storePassword=${{ secrets.KK_KEYSTORE_PASSWORD }}
           keyAlias=${{ secrets.KK_KEY_ALIAS }}
           keyPassword=${{ secrets.KK_KEY_PASSWORD }}

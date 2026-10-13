@@ -1,20 +1,31 @@
 #!/usr/bin/env python3
-"""Patch signing release Flutter agar memakai keystore asli, bukan debug key.
+"""Pasang signing release Flutter memakai keystore asli (bukan debug key).
 
-android/ di-generate ulang oleh `flutter create` di setiap CI run, sehingga
-build.gradle(.kts) selalu kembali ke signing config debug. Script ini menulis
-ulang blok signing release supaya membaca android/key.properties.
+KENAPA DIPERLUKAN
+-----------------
+Template resmi Flutter (`android-kotlin.tmpl/app/build.gradle.kts.tmpl`)
+TIDAK punya blok `signingConfigs` sama sekali — di buildTypes release hanya
+`signingConfig = signingConfigs.getByName("debug")`. Karena `android/` di-generate
+ulang tiap CI run, tanpa patch ini APK release tertandatangani `CN=Android Debug`.
 
-WAJIB pakai `keyProperties["..."]`, BUKAN `project.findProperty("...")`:
-findProperty hanya membaca Gradle project properties (-P / gradle.properties),
-TIDAK membaca file key.properties, jadi hasilnya null lalu build crash.
+STRATEGI (idempoten lewat marker)
+---------------------------------
+android/ selalu di-generate ulang, jadi kondisi awal file selalu template
+bersih. Script menyuntikkan satu blok bertanda; kalau marker sudah ada, blok
+tidak disuntik lagi (mencegah file korup saat dijalankan berulang).
 
-Kalau key.properties tidak ada, script keluar 0 tanpa mengubah apa pun.
+CATATAN TEKNIS
+--------------
+- `java` di build.gradle.kts sudah di-shadow plugin Gradle Java, jadi
+  `java.util.Properties()` -> "Unresolved reference 'util'".
+  Wajib `import java.util.Properties` + `Properties()`.
+- Kredensial WAJIB `keyProperties["..."] as String`, BUKAN
+  `project.findProperty("...")` (tidak membaca key.properties, hasilnya null).
+- `storeFile` relatif terhadap `android/app/` (tempat build.gradle.kts).
 """
 from __future__ import annotations
 
 import pathlib
-import re
 import sys
 
 GRADLE_CANDIDATES = [
@@ -22,6 +33,9 @@ GRADLE_CANDIDATES = [
     pathlib.Path("android/app/build.gradle"),
 ]
 KEYPROPS = pathlib.Path("android/key.properties")
+MARKER = "// KARTA-KUBAR-SIGNING"
+
+IMPORTS_KTS = "import java.util.Properties\nimport java.io.FileInputStream\n\n"
 
 LOADER_KTS = """// --- KARTA KUBAR: kredensial signing ---
 val keyProperties = Properties()
@@ -33,8 +47,6 @@ if (keyPropertiesFile.exists()) {
 android {
 """
 
-IMPORTS_KTS = "import java.util.Properties\nimport java.io.FileInputStream\n\n"
-
 LOADER_GROOVY = """// --- KARTA KUBAR: kredensial signing ---
 def keyProperties = new Properties()
 def keyPropertiesFile = rootProject.file('key.properties')
@@ -43,6 +55,28 @@ if (keyPropertiesFile.exists()) {
 }
 
 android {
+"""
+
+SIGNING_BLOCK_KTS = f"""    signingConfigs {{
+        // {MARKER}
+        create("release") {{
+            keyAlias = keyProperties["keyAlias"] as String
+            keyPassword = keyProperties["keyPassword"] as String
+            storeFile = file(keyProperties["storeFile"] as String)
+            storePassword = keyProperties["storePassword"] as String
+        }}
+    }}
+"""
+
+SIGNING_BLOCK_GROOVY = f"""    signingConfigs {{
+        // {MARKER}
+        release {{
+            keyAlias keyProperties["keyAlias"]
+            keyPassword keyProperties["keyPassword"]
+            storeFile file(keyProperties["storeFile"])
+            storePassword keyProperties["storePassword"]
+        }}
+    }}
 """
 
 
@@ -57,89 +91,72 @@ def load_props() -> dict[str, str]:
     return props
 
 
-def patch(path: pathlib.Path, props: dict[str, str]) -> bool:
+def patch(path: pathlib.Path) -> bool:
     is_kts = path.suffix == ".kts"
     src = path.read_text()
-    original = src
+    notes: list[str] = []
 
-    def value(key: str) -> str:
-        return f'keyProperties["{key}"] as String' if is_kts else f'keyProperties["{key}"]'
-
-    # 1) release buildType memakai signingConfig "release", bukan "debug"
-    if is_kts:
-        src, n_sig = re.subn(
-            r"signingConfig\s*=\s*signingConfigs\.getByName\(\s*\"debug\"\s*\)",
-            'signingConfig = signingConfigs.getByName("release")',
-            src,
-        )
-        if n_sig == 0:
-            src, n_sig = re.subn(
-                r"signingConfig\s+[\"']debug[\"']",
-                "signingConfig signingConfigs.release",
-                src,
-            )
-    else:
-        src, n_sig = re.subn(
-            r"signingConfig\s+[\"']debug[\"']",
-            "signingConfig signingConfigs.release",
-            src,
-        )
-
-    # 2) nilai kredensial di dalam blok signing config release
-    def sub_val(pattern: str, repl: str) -> None:
-        nonlocal src
-        src, _ = re.subn(pattern, repl, src, count=1, flags=re.MULTILINE)
-
-    sub_val(
-        r'storeFile\s*=\s*file\(\s*["\'][^"\']*["\']\s*\)',
-        f'storeFile = file("{props["storeFile"]}")',
-    )
-    sub_val(r'storePassword\s*=\s*["\'][^"\']*["\']', f"storePassword = {value('storePassword')}")
-    sub_val(r'keyPassword\s*=\s*["\'][^"\']*["\']', f"keyPassword = {value('keyPassword')}")
-    sub_val(r'keyAlias\s*=\s*["\'][^"\']*["\']', f"keyAlias = {value('keyAlias')}")
-
-    # Groovy: storePassword "android" / storePassword storePassword "android"
-    # Bagian tengah (nama variabel Gradle) opsional.
-    sub_val(
-        r'storePassword\s+(?:[\w."\']+\s+)?["\'][^"\']*["\']',
-        f"storePassword = {value('storePassword')}",
-    )
-    sub_val(
-        r'keyPassword\s+(?:[\w."\']+\s+)?["\'][^"\']*["\']',
-        f"keyPassword = {value('keyPassword')}",
-    )
-    sub_val(
-        r'keyAlias\s+(?:[\w."\']+\s+)?["\'][^"\']*["\']',
-        f"keyAlias = {value('keyAlias')}",
-    )
-    # Groovy: storeFile file("debug.keystore")
-    sub_val(
-        r'storeFile\s+file\(\s*["\'][^"\']*["\']\s*\)',
-        f'storeFile = file("{props["storeFile"]}")',
-    )
-
-    # 3) pastikan loader key.properties ada (dibutuhkan keyProperties[...])
-    if "keyProperties" not in original:
-        loader = LOADER_KTS if is_kts else LOADER_GROOVY
-        if "android {\n" in src:
-            src = src.replace("android {\n", loader, 1)
-        else:
-            print(f"FAIL: blok android tidak ditemukan di {path}")
-            return False
-
-        # Kotlin DSL: `java` di-build.gradle.kts已经被 plugin Java shadowing,
-        # jadi `java.util.Properties()` jadi "Unresolved reference 'util'".
-        # Wajib pakai import + nama kelas langsung.
-        if is_kts and "import java.util.Properties" not in src:
-            src = IMPORTS_KTS + src
-
-    if src == original:
-        print(f"FAIL: {path} tidak berubah — pola Flutter berubah? periksa manual.")
+    if "android {\n" not in src:
+        print(f"FAIL: blok 'android {{' tidak ditemukan di {path}")
         return False
 
+    # 1) release buildType memakai signingConfig "release", bukan "debug"
+    needle = 'signingConfig = signingConfigs.getByName("release")' if is_kts \
+        else "signingConfig signingConfigs.release"
+    if needle not in src:
+        if is_kts:
+            src = src.replace(
+                'signingConfig = signingConfigs.getByName("debug")', needle
+            ).replace('signingConfig "debug"', "signingConfig signingConfigs.release")
+        else:
+            src = src.replace('signingConfig "debug"', needle)
+        notes.append("signingConfig->release")
+    else:
+        notes.append("signingConfig->release (sudah)")
+
+    # 2) suntik blok signingConfigs + loader hanya sekali (pakai marker)
+    if MARKER in src:
+        notes.append("blok signingConfigs (sudah ada)")
+    else:
+        src = src.replace(
+            "android {\n",
+            "android {\n" + (SIGNING_BLOCK_KTS if is_kts else SIGNING_BLOCK_GROOVY),
+            1,
+        )
+        src = src.replace(
+            "android {\n",
+            (LOADER_KTS if is_kts else LOADER_GROOVY),
+            1,
+        )
+        if is_kts and "import java.util.Properties" not in src:
+            src = IMPORTS_KTS + src
+        notes.append("blok signingConfigs + loader: disuntik")
+
     path.write_text(src)
-    print(f"    + signing release: {path} (signingConfig hits={n_sig})")
+    print(f"    + {path}: " + ", ".join(notes))
     return True
+
+
+def verify(path: pathlib.Path) -> bool:
+    out = path.read_text()
+    is_kts = path.suffix == ".kts"
+    problems = []
+    if MARKER not in out:
+        problems.append("marker blok signing tidak ada")
+    if "keyProperties[" not in out:
+        problems.append("kredensial tidak membaca keyProperties")
+    expected = 'getByName("release")' if is_kts else "signingConfigs.release"
+    if expected not in out:
+        problems.append(f"buildTypes masih bukan {expected}")
+    if 'getByName("debug")' in out or 'signingConfig "debug"' in out:
+        problems.append("masih ada signingConfig debug")
+    if is_kts and "import java.util.Properties" not in out:
+        problems.append("import Properties hilang")
+    if out.count("signingConfigs {") != 1:
+        problems.append(f"signingConfigs块 jumlah = {out.count('signingConfigs {')}")
+    for p in problems:
+        print(f"FAIL: {p}")
+    return not problems
 
 
 def main() -> int:
@@ -148,7 +165,10 @@ def main() -> int:
         return 0
 
     props = load_props()
-    missing = [k for k in ("storeFile", "storePassword", "keyPassword", "keyAlias") if k not in props]
+    missing = [
+        k for k in ("storeFile", "storePassword", "keyPassword", "keyAlias")
+        if k not in props
+    ]
     if missing:
         print(f"FAIL: key.properties kurang: {missing}")
         return 1
@@ -156,7 +176,12 @@ def main() -> int:
     for g in GRADLE_CANDIDATES:
         if not g.exists():
             continue
-        return 0 if patch(g, props) else 1
+        if not patch(g):
+            return 1
+        if not verify(g):
+            return 1
+        print("==> patch_signing: OK")
+        return 0
 
     print("FAIL: android/app/build.gradle(.kts) tidak ditemukan")
     return 1
