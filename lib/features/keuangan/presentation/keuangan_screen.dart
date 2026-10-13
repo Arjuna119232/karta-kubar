@@ -1,0 +1,386 @@
+import 'package:flutter/material.dart';
+
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../shared/data/seed_data.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/section_header.dart';
+
+class KeuanganScreen extends StatelessWidget {
+  const KeuanganScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.screen, 12, AppSpacing.screen, 96),
+        children: <Widget>[
+          Text('Keuangan', style: context.text.headlineMedium),
+          const SizedBox(height: 16),
+          const _SaldoCard(),
+          const SizedBox(height: AppSpacing.section),
+          const SectionHeader(title: 'Kas 5 Bulan Terakhir'),
+          const AppCard(child: _KasChart()),
+          const SizedBox(height: AppSpacing.section),
+          const SectionHeader(title: 'Iuran Saya'),
+          const _IuranCard(),
+          const SizedBox(height: AppSpacing.section),
+          const SectionHeader(title: 'Transparansi'),
+          const _TransparansiCard(),
+        ],
+      ),
+    );
+  }
+}
+
+class _SaldoCard extends StatelessWidget {
+  const _SaldoCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: context.semantic.heroGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Saldo Kas Karang Taruna',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.85),
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Rp 12.450.000',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              height: 1.1,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _MiniStat(
+                  label: 'Masuk (Okt)',
+                  value: 'Rp 2.4 jt',
+                  icon: Icons.south_west_rounded,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _MiniStat(
+                  label: 'Keluar (Okt)',
+                  value: 'Rp 850 rb',
+                  icon: Icons.north_east_rounded,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  const _MiniStat({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(icon, color: Colors.white, size: 18),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 11,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _KasChart extends StatelessWidget {
+  const _KasChart();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        SizedBox(
+          height: 160,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              for (final List<Object> e in SeedData.kasBulanan)
+                Expanded(
+                  child: _Bar(
+                    label: e[0] as String,
+                    value: e[1] as double,
+                    max: 14,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Divider(height: 1),
+        const SizedBox(height: 12),
+        Row(
+          children: <Widget>[
+            Icon(Icons.trending_up_rounded,
+                size: 18, color: context.colors.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Kas naik 8,4% dibanding bulan lalu.',
+                style: context.text.bodySmall
+                    ?.copyWith(color: context.semantic.textSecondary),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _Bar extends StatelessWidget {
+  const _Bar({required this.label, required this.value, required this.max});
+
+  final String label;
+  final double value;
+  final double max;
+
+  @override
+  Widget build(BuildContext context) {
+    final double ratio = (value / max).clamp(0.05, 1.0);
+    final bool isLast = label == (SeedData.kasBulanan.last[0] as String);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: <Widget>[
+          Text(
+            value.toStringAsFixed(1),
+            style: context.text.labelSmall
+                ?.copyWith(color: context.semantic.textSecondary),
+          ),
+          const SizedBox(height: 4),
+          SizedBox(
+            height: 108,
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: FractionallySizedBox(
+                heightFactor: ratio,
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: isLast
+                        ? context.colors.primary
+                        : context.colors.primary.withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: context.text.labelSmall),
+        ],
+      ),
+    );
+  }
+}
+
+class _IuranCard extends StatelessWidget {
+  const _IuranCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: <Widget>[
+          for (int i = 0; i < SeedData.iuran.length; i++) ...<Widget>[
+            _IuranRow(
+              label: SeedData.iuran[i][0] as String,
+              amount: SeedData.iuran[i][1] as int,
+              paid: SeedData.iuran[i][2] as bool,
+            ),
+            if (i != SeedData.iuran.length - 1)
+              Divider(height: 1, color: context.semantic.line),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _IuranRow extends StatelessWidget {
+  const _IuranRow({
+    required this.label,
+    required this.amount,
+    required this.paid,
+  });
+
+  final String label;
+  final int amount;
+  final bool paid;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color tone = paid ? AppColors.success : AppColors.warning;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: tone.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              paid ? Icons.check_rounded : Icons.schedule_rounded,
+              color: tone,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(label, style: context.text.titleSmall),
+                const SizedBox(height: 2),
+                Text(
+                  'Rp ${_format(amount)}',
+                  style: context.text.bodySmall
+                      ?.copyWith(color: context.semantic.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: tone.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              paid ? 'Lunas' : 'Belum bayar',
+              style: context.text.labelSmall?.copyWith(color: tone),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _format(int v) {
+    final String s = v.toString();
+    final StringBuffer b = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) b.write('.');
+      b.write(s[i]);
+    }
+    return b.toString();
+  }
+}
+
+class _TransparansiCard extends StatelessWidget {
+  const _TransparansiCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(Icons.verified_user_outlined,
+                  color: context.colors.primary, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text('Laporan terbuka untuk semua anggota',
+                    style: context.text.titleSmall),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Setiap pemasukan dan pengeluaran dicatat bendahara dan bisa diaudit anggota. '
+            'Pembayaran iuran online (QRIS) akan hadir setelah integrasi backend.',
+            style: context.text.bodyMedium
+                ?.copyWith(color: context.semantic.textSecondary),
+          ),
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Unduh laporan segera hadir')),
+            ),
+            icon: const Icon(Icons.download_rounded, size: 18),
+            label: const Text('Unduh laporan'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.button),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
