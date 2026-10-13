@@ -112,7 +112,13 @@ layer repository tanpa mengubah UI).
    cek otomatis ke Dukcapil.
 2. **Guard role di aplikasi ini hanya untuk UX.** Keamanan sesungguhnya
    harus ditegakkan di sisi server lewat **Row Level Security Supabase**.
-3. **iOS butuh Mac/Codemagic** — tidak bisa di-build dari Termux.
+3. **iOS butuh mesin macOS** — tidak bisa di-build dari HP/Termux. Tapi
+   repo ini **PUBLIK**, jadi GitHub Actions runner macOS = **gratis &
+   tak terbatas**. Workflow-nya sudah disiapkan: `.github/workflows/
+   build-ios.yml` (manual-only, tidak jalan tiap push). Checklist +
+   langkah signing ada di [`tool/ios-checklist.md`](tool/ios-checklist.md).
+   **Tidak ada kode yang perlu ditulis ulang** — semua `lib/` dipakai
+   apa adanya oleh Android maupun iOS.
 4. **Certificate pinning tidak dipakai** — rotasi sertifikat dan captive
    portal membuat app mati untuk pengguna.
 5. Semua data masih **offline** (dari `seed_data.dart`).

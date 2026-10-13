@@ -1,0 +1,109 @@
+name: Build iOS (manual)
+
+# ============================================================
+#  KUBAR Connect — iOS build
+#
+#  STATUS: PERSIAPAN SAJA. Workflow ini SENGAJA tidak jalan otomatis.
+#  Tidak ada trigger `push`. Satu-satunya cara menjalankan: klik
+#  "Run workflow" manual di tab Actions, atau:
+#      gh workflow run build-ios.yml
+#
+#  Kenapa manual: fokus proyek masih Android. iOS baru dijalankan
+#  setelah Android-nya pas. Tidak ada kode Dart yang perlu ditulis
+#  ulang — semua layar, navigasi, dan state sudah lintas-platform.
+#
+#  Tanpa Apple Developer account, workflow ini hanya menghasilkan
+#  artefak .app/.ipa TANPA tanda tangan (--no-codesign) untuk
+#  memverifikasi bahwa kodenya memang bisa dikompilasi untuk iOS.
+#  Untuktainable IPA yang benar-benar bisa dipasang ke iPhone, lihat
+#  tool/ios-checklist.md (langkah signing).
+# ============================================================
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Show toolchain
+        run: |
+          flutter --version
+          xcodebuild -version
+          pod --version || echo "CocoaPods tidak ada (pod install akan dilewati)"
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      # Pola yang sama persis dengan build.yml (Android): folder native
+      # di-generate ulang di server supaya selalu ikut template Flutter
+      # terbaru dan tidak pernah usang di repo.
+      - name: Generate iOS platform (ios/ folder)
+        run: |
+          flutter create --org id.kubarkonek --project-name app --platforms=ios /tmp/scaffold
+          cp -r /tmp/scaffold/ios .
+          test -f ios/Runner/Info.plist || { echo "FAIL: ios/ tidak lengkap"; exit 1; }
+
+      - name: Apply iOS patches (bundle id, nama, permission, deep link)
+        run: python3 tool/patch_ios.py
+
+      # Analisa non-blocking: sama seperti Android, supaya satu warning
+      # tidak memblokir proses verifikasi.
+      - name: Analyze (non-blocking)
+        run: flutter analyze || true
+
+      - name: Build iOS (unsigned — verifikasi compile)
+        run: |
+          cd ios
+          pod install || echo "WARN: pod install gagal, lanjut tanpa pods"
+          cd ..
+          flutter build ios --release --no-codesign
+
+      - name: Upload .app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kubar-connect-ios-unsigned
+          path: build/ios/iphone/Runner.app
+          retention-days: 7
+
+      - name: Build IPA (unsigned)
+        run: 'flutter build ipa --no-codesign || echo "WARN: build ipa unsigned gagal, artefak .app di atas tetap valid"'
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kubar-connect-ipa-unsigned
+          path: |
+            build/ios/ipa/*.ipa
+            build/ios/ipa/*.app
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Ringkasan
+        run: |
+          VER=$(grep -E '^version:' pubspec.yaml | awk '{print $2}')
+          {
+            echo "### Build iOS selesai (belum ditandatangani)"
+            echo
+            echo "- Versi: $VER"
+            echo "- Artefak: \`kubar-connect-ios-unsigned\` (folder .app) dan \`kubar-connect-ipa-unsigned\`"
+            echo "- **Belum bisa dipasang ke iPhone** - belum ada tanda tangan Apple."
+            echo "- Langkah berikutnya: \`tool/ios-checklist.md\`"
+          } >> "$GITHUB_STEP_SUMMARY"
