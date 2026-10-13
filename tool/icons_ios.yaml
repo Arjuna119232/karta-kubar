@@ -1,8 +1,12 @@
 # Konfigurasi ikon app - iOS saja.
 #
-# File sumber (assets/icon/icon-1024.png) sudah mode RGB tanpa alpha, tapi
-# remove_alpha_ios tetap diaktifkan sebagai pengaman: kalau suatu saat sumber
-# diganti dengan PNG ber-alpha, iOS akan merendernya sebagai kotak hitam.
-ios: true
-image_path: "assets/icon/icon-1024.png"
-remove_alpha_ios: true
+# WAJIB dibungkus key `flutter_launcher_icons:` di level teratas (lihat catatan
+# di tool/icons_android.yaml). Selain itu `android: false` supaya paket ini
+# tidak menyentuh res/mipmap yang tidak ada di job macOS.
+flutter_launcher_icons:
+  android: false
+  ios: true
+  image_path: "assets/icon/icon-1024.png"
+  # Sumber sudah mode RGB tanpa alpha, tapi tetap diaktifkan sebagai
+  # pengaman: PNG ber-alpha akan dirender iOS sebagai kotak hitam.
+  remove_alpha_ios: true

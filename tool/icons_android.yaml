@@ -1,19 +1,19 @@
 # Konfigurasi ikon launcher - Android saja.
 #
-# Dipisah dari iOS karena folder android/ dan ios/ di-generate ulang pada job
-# yang berbeda. Kalau keduanya dijalankan di job yang sama, flutter_launcher_icons
-# gagal dengan:
-#   PathNotFoundException: ios/Runner/Assets.xcassets/AppIcon.appiconset/...
-# karena folder ios/ memang tidak ada di job Android.
-# `ios: false` WAJIB ditulis eksplisit. Default-nya `true`, jadi kalau
-# tidak diisi paket ini tetap mencoba menulis AppIcon dan build gagal.
-ios: false
-android: "launcher_icon"
-image_path: "assets/icon/icon-1024.png"
-min_sdk_android: 21
+# WAJIB dibungkus key `flutter_launcher_icons:` di level teratas. Source
+# flutter_launcher_icons hanya membaca json['flutter_launcher_icons'] dari file
+# ini; tanpa wrapper dia mengembalikan null lalu DIJATUHKAN ke pubspec.yaml -
+# dan karena itu `ios: false` di sini diam-diam tidak berlaku.
+flutter_launcher_icons:
+  # `ios: false` juga wajib eksplisit, default Config adalah true.
+  ios: false
+  android: "launcher_icon"
+  image_path: "assets/icon/icon-1024.png"
+  min_sdk_android: 21
 
-# inset 0 disengaja: file ikon sudah punya margin ~26% di semua sisi, sedangkan
-# area aman adaptive Android hanya butuh 19,5%. Inset default 16% hanya akan mengecilkan logo tanpa perlu.
-adaptive_icon_background: "#1B5E20"
-adaptive_icon_foreground: "assets/icon/icon-1024.png"
-adaptive_icon_foreground_inset: 0
+  # inset 0 disengaja: file ikon sudah punya margin ~26% di semua sisi,
+  # sedangkan area aman adaptive Android hanya butuh 19,5%. Inset default 16%
+  # hanya akan mengecilkan logo tanpa perlu.
+  adaptive_icon_background: "#1B5E20"
+  adaptive_icon_foreground: "assets/icon/icon-1024.png"
+  adaptive_icon_foreground_inset: 0
