@@ -1,0 +1,8 @@
+# Konfigurasi ikon app - iOS saja.
+#
+# File sumber (assets/icon/icon-1024.png) sudah mode RGB tanpa alpha, tapi
+# remove_alpha_ios tetap diaktifkan sebagai pengaman: kalau suatu saat sumber
+# diganti dengan PNG ber-alpha, iOS akan merendernya sebagai kotak hitam.
+ios: true
+image_path: "assets/icon/icon-1024.png"
+remove_alpha_ios: true

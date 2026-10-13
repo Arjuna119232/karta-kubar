@@ -50,7 +50,7 @@ jobs:
       # WAJIB setelah `flutter create` + patch. Folder android/ baru saja
       # dibuat ulang, jadi ikon harus digenerate ulang di sini juga.
       - name: Generate launcher icons
-        run: dart run flutter_launcher_icons
+        run: dart run flutter_launcher_icons -f tool/icons_android.yaml
 
       - name: Flutter pub get
         run: flutter pub get

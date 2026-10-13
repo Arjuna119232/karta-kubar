@@ -67,7 +67,7 @@ jobs:
       # WAJIB setelah `flutter create`. Folder ios/ baru dibuat ulang,
       # jadi AppIcon harus digenerate ulang juga.
       - name: Generate app icon (iOS)
-        run: dart run flutter_launcher_icons
+        run: dart run flutter_launcher_icons -f tool/icons_ios.yaml
 
       # Analisa non-blocking: sama seperti Android, supaya satu warning
       # tidak memblokir proses verifikasi.
