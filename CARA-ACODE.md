@@ -1,11 +1,11 @@
 # KARTA KUBAR — Cara Membuka di Acode
 
-Versi: **0.2.0+2 (FASE 1–2)**
+Versi: **0.3.0+3 (FASE 3 — Auth)**
 Karang Taruna Kelurahan Kuningan Barat — *Satu Komando, Satu Karya*
 
 ## Cara buka di Acode
 
-1. **Ekstrak** file `karta-kubar-v0.2.0-source.zip` ke folder mana saja di HP
+1. **Ekstrak** file `karta-kubar-v0.3.0-source.zip` ke folder mana saja di HP
    (misal `/storage/emulated/0/Acode/karta-kubar/`).
 2. Buka Acode → **Open Folder** → pilih folder `karta-kubar` (folder yang
    berisi `pubspec.yaml`).
@@ -22,13 +22,14 @@ Karang Taruna Kelurahan Kuningan Barat — *Satu Komando, Satu Karya*
 lib/
   main.dart                      entry point
   core/
-    router.dart                  rute: splash -> onboarding -> home
-    providers.dart               Riverpod state
+    router.dart                  rute: splash -> onboarding -> auth -> home
+    providers.dart               Riverpod state (tab, tema, sesi login)
     theme/                       warna, tipografi, tema terang/gelap
     utils/date_id.dart           format tanggal Bahasa Indonesia
   features/
     splash/                      layar pembuka
     onboarding/                  3 slide perkenalan
+    auth/                        masuk/daftar + OTP
     shell/                       kerangka 5 tab
     home/                        beranda
     kegiatan/                    daftar kegiatan + filter
@@ -42,18 +43,23 @@ assets/
   data/ fonts/ images/           (disiapkan, masih kosong)
 ```
 
-## Yang sudah jadi (FASE 1–2)
+## Yang sudah jadi (FASE 1–3)
 
-- **Splash** → **Onboarding** (3 slide, hanya muncul sekali) → **5 tab**
-- **Beranda**: sapaan sesuai waktu, pengumuman (carousel), 2 kartu statistik,
-  4 aksi cepat, agenda terdekat dengan hitung mundur, berita terbaru
+- **Splash** → **Onboarding** (3 slide, hanya muncul sekali) → **Auth** → **5 tab**
+- **Auth**: layar Masuk / Daftar (validasi nama + nomor WhatsApp, wajib centang
+  Syarat & Ketentuan), lalu **OTP 6 digit** dengan kotak kode, timer kirim
+  ulang, dan tombol "Jelajahi tanpa masuk". Kode demo: **123456**
+- **Beranda**: sapaan sesuai waktu **dan nama kamu**, pengumuman (carousel),
+  2 kartu statistik, 4 aksi cepat, agenda terdekat dengan hitung mundur,
+  berita terbaru
 - **Kegiatan**: filter kategori (Semua/Sosial/Olahraga/Keagamaan), dikelompokkan
   menjadi "Akan Datang" dan "Sudah Lewat", detail lewat bottom sheet
 - **Keuangan**: kartu saldo, grafik batang kas 5 bulan, riwayat iuran dengan
   status lunas/belum, kartu transparansi
 - **Galeri**: grid galeri kegiatan + daftar berita
 - **Profil**: header, kartu anggota digital (dengan QR), poin dan kegiatan,
-  menu, serta **pengalih tema terang/gelap/otomatis**
+  menu, **pengalih tema terang/gelap/otomatis**, dan tombol **Keluar**
+  (menghapus sesi, kembali ke layar auth)
 
 ## Catatan penting
 

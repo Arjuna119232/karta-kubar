@@ -29,8 +29,23 @@ jobs:
           flutter create --org id.kartakubar --project-name app --platforms=android /tmp/scaffold
           cp -r /tmp/scaffold/android .
 
+      - name: Restore upload keystore (release signing)
+        run: |
+          mkdir -p android
+          echo "${{ secrets.KK_KEYSTORE_BASE64 }}" | base64 -d > android/app/upload-keystore.jks
+          cat > android/key.properties <<EOF
+          storeFile=app/upload-keystore.jks
+          storePassword=${{ secrets.KK_KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.KK_KEY_ALIAS }}
+          keyPassword=${{ secrets.KK_KEY_PASSWORD }}
+          EOF
+          test -s android/app/upload-keystore.jks || { echo "FAIL: keystore kosong"; exit 1; }
+
       - name: Apply Android patches (branding, permissions)
         run: bash tool/patch_android.sh
+
+      - name: Apply release signing
+        run: python3 tool/patch_signing.py
 
       - name: Flutter pub get
         run: flutter pub get
@@ -58,5 +73,6 @@ jobs:
           name: KARTA KUBAR v${{ steps.ver.outputs.version }} (build ${{ github.run_number }})
           body_path: .github/notes/release.md
           files: build/app/outputs/flutter-apk/app-release.apk
+          draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
