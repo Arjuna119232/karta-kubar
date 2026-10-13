@@ -5,6 +5,9 @@
 # gagal dengan:
 #   PathNotFoundException: ios/Runner/Assets.xcassets/AppIcon.appiconset/...
 # karena folder ios/ memang tidak ada di job Android.
+# `ios: false` WAJIB ditulis eksplisit. Default-nya `true`, jadi kalau
+# tidak diisi paket ini tetap mencoba menulis AppIcon dan build gagal.
+ios: false
 android: "launcher_icon"
 image_path: "assets/icon/icon-1024.png"
 min_sdk_android: 21
