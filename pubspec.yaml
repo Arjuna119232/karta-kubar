@@ -28,19 +28,14 @@ flutter:
   assets:
     - assets/data/
 
-# Ikon launcher digenerate di CI (setelah `flutter create`), bukan secara
-# lokal, karena folder android/ di-generate ulang tiap build dan akan
-# menghapus file ikon yang sudah di-generate.
+# Catatan ikon launcher
+# --------------------
+# Konfigurasi ikon TIDAK ditulis di blok `flutter_launcher_icons:` pada
+# pubspec.yaml. Alasannya: paket itu MEMGABUNG config `-f` dengan config di
+# pubspec.yaml, dan nilai `ios: true` di pubspec tetap menang - Akibatnya job
+# Android tetap mencoba menulis AppIcon iOS lalu gagal:
+#   PathNotFoundException: ios/Runner/Assets.xcassets/AppIcon.appiconset/...
 #
-# inset: 0 disengaja - file ikon sudah punya margin ~26% di semua sisi,
-# sedangkan area aman adaptive Android hanya butuh 19,5%. Menambah inset
-# 16% akan mengecilkan logo tanpa perlu.
-flutter_launcher_icons:
-  android: "launcher_icon"
-  ios: true
-  image_path: "assets/icon/icon-1024.png"
-  min_sdk_android: 21
-  remove_alpha_ios: true
-  adaptive_icon_background: "#1B5E20"
-  adaptive_icon_foreground: "assets/icon/icon-1024.png"
-  adaptive_icon_foreground_inset: 0
+# Sumber kebenaran ada di dua file terpisah:
+#   tool/icons_android.yaml -> dipakai .github/workflows/build.yml
+#   tool/icons_ios.yaml    -> dipakai .github/workflows/build-ios.yml
