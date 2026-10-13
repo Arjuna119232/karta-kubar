@@ -77,7 +77,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.ver.outputs.version }}-${{ github.run_number }}
-          name: KUBAR Connect v${{ steps.ver.outputs.version }} (build ${{ github.run_number }})
+          name: KUNBAR Connect v${{ steps.ver.outputs.version }} (build ${{ github.run_number }})
           body_path: .github/notes/release.md
           files: build/app/outputs/flutter-apk/app-release.apk
           draft: true

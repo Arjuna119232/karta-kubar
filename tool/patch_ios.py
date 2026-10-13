@@ -8,7 +8,7 @@ committed and never drifts from the Flutter template.
 WHAT THIS DOES — and deliberately nothing else:
   * bundle id  -> id.kubarkonek.app  (already produced by --org/--project-name,
                  verified here so a Flutter template change can never pass silently)
-  * name shown under the icon -> "KUBAR Connect"
+  * name shown under the icon -> "KUNBAR Connect"
   * usage descriptions for the 2 capabilities the app actually asks for on
     Android (CAMERA + fine/coarse location) — iOS menolak jalan / memblokir app kalau string ini kosong
     without a NSCameraUsageDescription / NSLocationWhenInUseUsageDescription
@@ -33,7 +33,7 @@ PODFILE = IOS / "Podfile"
 PBXPROJ = IOS / "Runner.xcodeproj" / "project.pbxproj"
 
 BUNDLE_ID = "id.kubarkonek.app"
-APP_NAME = "KUBAR Connect"
+APP_NAME = "KUNBAR Connect"
 DEPLOYMENT_TARGET = "13.0"
 URL_SCHEMES = ["kubar", "karta-kubar"]
 
@@ -82,7 +82,7 @@ if plist.get("CFBundleDisplayName") != APP_NAME:
     changed = True
     ok(f"CFBundleDisplayName -> {APP_NAME}")
 # CFBundleName dibatasi 15 karakter oleh iOS saat submit; pakai bentuk pendek.
-short_name = "KUBAR Connect"
+short_name = "KUNBAR Connect"
 if plist.get("CFBundleName") != short_name:
     plist["CFBundleName"] = short_name
     changed = True

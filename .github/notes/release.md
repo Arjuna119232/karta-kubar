@@ -1,10 +1,18 @@
-### KARTA KUBAR v0.1.0 (FASE 0 — Fondasi)
+### KUNBAR Connect v0.5.2
 
-Rilis fondasi: aplikasi bisa di-build & di-install, siap dibangun per modul.
+Splash dirancang ulang dan nama aplikasi resmi jadi **KUNBAR Connect**.
 
-- Struktur project Clean Architecture + Repository (Riverpod, go_router)
-- Build otomatis di cloud (GitHub Actions) → APK tiap push
-- Material 3, palet Karang Taruna (hijau #1B5E20 / kuning #FFC107 / biru #0D47A1)
-- Layar fondasi bertema + status kesiapan
+**Splash baru**
+- Mark hijau + monogram K, wordmark KUNBAR dengan aksen emas
+- Warna rata (bukan gradasian), mengikuti tema terang dan gelap
+- Indikator progres berupa batang tipis, bukan spinner bulat
+- Elemen masuk berurutan halus saat aplikasi dibuka
 
-Langkah berikutnya: FASE 1 — Design System (theme.dart + komponen dasar).
+**Perbaikan**
+- Alur masuk, OTP, dan keluar sekarang bisa dipakai
+- Sesi tidak hilang lagi tiap aplikasi ditutup lalu dibuka
+- Aplikasi langsung ke Beranda kalau masih login
+
+**Penggantian nama**
+- Semua teks di layar, judul aplikasi, dan judul rilis
+- Package id dan data tersimpan tetap, jadi bisa update langsung

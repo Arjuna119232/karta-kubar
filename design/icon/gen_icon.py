@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generator ikon KUBAR Connect (1024x1024) — v3.
+"""Generator ikon KUNBAR Connect (1024x1024) — v3.
 
 Perbaikan atas v2:
 - Figur dibikin 3 orang, TIDAK saling tumpang tindih, tinggi berbeda jelas.

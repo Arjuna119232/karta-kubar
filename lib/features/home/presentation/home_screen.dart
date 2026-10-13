@@ -21,7 +21,7 @@ class HomeScreen extends ConsumerWidget {
     final List<Activity> upcoming =
         SeedData.activities.where((Activity a) => a.upcoming).toList();
     final Session session = ref.watch(sessionProvider);
-    final String nama = session.user?.name ?? 'Warga KUBAR';
+    final String nama = session.user?.name ?? 'Warga KUNBAR';
 
     return SafeArea(
       bottom: false,

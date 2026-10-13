@@ -1,4 +1,4 @@
-# Checklist iOS — KUBAR Connect
+# Checklist iOS — KUNBAR Connect
 
 Status per 13 Okt 2026: **persiapan selesai, belum ada build iOS yang dijalankan.**
 Semua yang bisa disiapkan tanpa biaya sudah ada di repo ini. Yang tersisa hanya
@@ -14,7 +14,7 @@ langkah yang butuh akun Apple dan keputusan biaya.
 | Workflow build iOS | **Siap, manual-only** (tidak jalan tiap push) | `.github/workflows/build-ios.yml` |
 | Script patch konfigurasi iOS | **Siap, idempotent** | `tool/patch_ios.py` |
 | Bundle ID `id.kubarkonek.app` | **Siap** (diverifikasi oleh script, gagal keras kalau salah) | `tool/patch_ios.py` |
-| Nama di bawah ikon "KUBAR Connect" | **Siap** | `tool/patch_ios.py` |
+| Nama di bawah ikon "KUNBAR Connect" | **Siap** | `tool/patch_ios.py` |
 | Permission string (kamera / lokasi / galeri) | **Siap** | `tool/patch_ios.py` |
 | Deep link `karta-kubar://absen/...` | **Siap** | `tool/patch_ios.py` |
 | Deployment target iOS 13.0 | **Siap** | `tool/patch_ios.py` |

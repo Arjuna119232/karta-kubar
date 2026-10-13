@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dart static checker untuk KUBAR Connect.
+"""Dart static checker untuk KUNBAR Connect.
 
 `flutter analyze` tidak bisa jalan di Termux (Flutter tidak terpasang), jadi
 script ini memeriksa hal yang sama yang paling sering jadi masalah nyata:
@@ -380,7 +380,7 @@ if router_path.is_file():
 
 # ---------------------------------------------------------------- report
 print("=" * 62)
-print("  KUBAR Connect - Dart static check")
+print("  KUNBAR Connect - Dart static check")
 print("=" * 62)
 print(f"file diperiksa : {len(files)}")
 print(f"file hidup     : {len(live)}")

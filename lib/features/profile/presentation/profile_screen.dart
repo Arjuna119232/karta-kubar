@@ -21,7 +21,7 @@ class ProfileScreen extends ConsumerWidget {
     final Session session = ref.watch(sessionProvider);
     final UserRole role = session.efektif;
     final AuthUser? user = session.user;
-    final String nama = user?.name ?? 'Warga KUBAR';
+    final String nama = user?.name ?? 'Warga KUNBAR';
 
     return SafeArea(
       bottom: false,

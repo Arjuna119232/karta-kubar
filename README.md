@@ -1,4 +1,4 @@
-# KUBAR Connect
+# KUNBAR Connect
 
 **Kuningan Barat Connected Community**
 *"Satu Kelurahan, Satu Komunitas, Satu Aplikasi"*
@@ -32,7 +32,7 @@ seluruh warga: anak muda, orang tua, RT/RW, UMKM, sampai pengurus kelurahan.
 | Level | Syarat | Kemampuan inti |
 |---|---|---|
 | **Tamu** | tanpa login | baca berita, agenda, UMKM, profil kelurahan |
-| **Warga** | NIK + alamat KUBAR terverifikasi | aspirations, lapor darurat, forum, booking, donasi sukarela |
+| **Warga** | NIK + alamat KUNBAR terverifikasi | aspirations, lapor darurat, forum, booking, donasi sukarela |
 | **Anggota KT** | dipilih pengurus | absensi QR + GPS, kartu digital, iuran wajib, voting, poin |
 | **Pengurus** | ditunjuk | buat sesi absensi, kelola kegiatan, verifikasi warga, broadcast |
 | **Admin** | super access | kelola role, moderasi konten, analytics, laporan |

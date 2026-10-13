@@ -1,4 +1,4 @@
-# KARTA KUBAR — Cara Membuka di Acode
+# KUNBAR Connect — Cara Membuka di Acode
 
 Versi: **0.3.0+3 (FASE 3 — Auth)**
 Karang Taruna Kelurahan Kuningan Barat — *Satu Komando, Satu Karya*

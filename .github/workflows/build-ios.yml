@@ -1,7 +1,7 @@
 name: Build iOS (manual)
 
 # ============================================================
-#  KUBAR Connect — iOS build
+#  KUNBAR Connect — iOS build
 #
 #  STATUS: PERSIAPAN SAJA. Workflow ini SENGAJA tidak jalan otomatis.
 #  Tidak ada trigger `push`. Satu-satunya cara menjalankan: klik

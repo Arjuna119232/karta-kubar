@@ -68,7 +68,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       return;
     }
     final String nama =
-        widget.nama.trim().isEmpty ? 'Warga KUBAR' : widget.nama.trim();
+        widget.nama.trim().isEmpty ? 'Warga KUNBAR' : widget.nama.trim();
     ref.read(sessionProvider.notifier).masuk(
           AuthUser(name: nama, phone: widget.nomor),
         );

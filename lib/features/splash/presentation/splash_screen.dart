@@ -42,85 +42,161 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool gelap = Theme.of(context).brightness == Brightness.dark;
+    final Color hijau = gelap ? const Color(0xFF7FC98A) : AppColors.primary;
+    final Color ink = gelap ? const Color(0xFFEEF5EF) : const Color(0xFF111813);
+    final Color inkLembut =
+        gelap ? const Color(0xFF96A89B) : const Color(0xFF6E7C72);
+    final Color track =
+        gelap ? const Color(0xFF26342B) : const Color(0xFFDDE6DF);
+    final Color garisBatas =
+        gelap ? const Color(0xFF26342B) : const Color(0xFFE8EDE8);
+
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: <Color>[Color(0xFF1B5E20), Color(0xFF2E7D32)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+        color: Theme.of(context).scaffoldBackgroundColor,
         child: SafeArea(
           child: Column(
             children: <Widget>[
-              const Spacer(),
-              Container(
-                width: 108,
-                height: 108,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: <BoxShadow>[
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.18),
-                      blurRadius: 30,
-                      offset: const Offset(0, 14),
-                    ),
-                  ],
-                ),
-                child: const Center(
+              const Spacer(flex: 41),
+              _Masuk(
+                child: Container(
+                  width: 104,
+                  height: 104,
+                  decoration: BoxDecoration(
+                    color: hijau,
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  alignment: Alignment.center,
                   child: Text(
-                    'KK',
+                    'K',
                     style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 40,
+                      color: gelap ? const Color(0xFF0E1C12) : Colors.white,
+                      fontSize: 46,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: 1.5,
+                      height: 1,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 26),
-              const Text(
-                'KUBAR CONNECT',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.0,
+              const SizedBox(height: 27),
+              _Masuk(
+                child: Text(
+                  'KUNBAR',
+                  style: TextStyle(
+                    color: ink,
+                    fontSize: 40,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 4,
+                    height: 1,
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 13),
+              _Masuk(
+                child: Container(
+                  width: 24,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              _Masuk(
+                child: Text(
+                  'CONNECT',
+                  style: TextStyle(
+                    color: hijau,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 4.2,
+                    height: 1,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 27),
+              _Masuk(
+                child: Text(
+                  'Satu Kelurahan, Satu Komunitas, Satu Aplikasi',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: inkLembut,
+                    fontSize: 13.5,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+              const Spacer(flex: 46),
+              Container(width: 150, height: 1, color: garisBatas),
+              const SizedBox(height: 13),
               Text(
-                'Satu Kelurahan, Satu Komunitas, Satu Aplikasi',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 15,
+                'Kelurahan Kuningan Barat  ·  Jakarta Selatan',
+                style: TextStyle(color: inkLembut, fontSize: 11.5),
+              ),
+              const SizedBox(height: 17),
+              SizedBox(
+                width: 116,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: LinearProgressIndicator(
+                    minHeight: 3,
+                    backgroundColor: track,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      gelap ? const Color(0xFFA8E0B0) : AppColors.primary,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Kelurahan Kuningan Barat, Jakarta Selatan',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontSize: 12.5,
-                ),
-              ),
-              const Spacer(),
-              const SizedBox(
-                width: 26,
-                height: 26,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.4,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 14),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Masuk halus: opacity 0 -> 1 dan bergeser naik sedikit.
+/// Memberi rasa hidup tanpa animasi berat yang memberatkan HP kelas bawah.
+class _Masuk extends StatefulWidget {
+  const _Masuk({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_Masuk> createState() => _MasukState();
+}
+
+class _MasukState extends State<_Masuk> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 420),
+  )..forward();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final CurvedAnimation anim = CurvedAnimation(
+      parent: _c,
+      curve: Curves.easeOutCubic,
+    );
+    return AnimatedBuilder(
+      animation: anim,
+      builder: (_, Widget? kid) => Opacity(
+        opacity: anim.value,
+        child: Transform.translate(
+          offset: Offset(0, 14 * (1 - anim.value)),
+          child: kid,
+        ),
+      ),
+      child: widget.child,
     );
   }
 }

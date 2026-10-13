@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// Palet KARTA KUBAR + token semantik per-tema.
+/// Palet KUNBAR Connect + token semantik per-tema.
 class AppColors {
   AppColors._();
 
   static const Color primary = Color(0xFF1B5E20); // Hijau Karang Taruna
   static const Color secondary = Color(0xFFFFC107); // Kuning energi muda
   static const Color accent = Color(0xFF0D47A1); // Biru kepercayaan
-  // Accent pink untuk highlight kegiatan sosial (identitas KUBAR Connect).
+  // Accent pink untuk highlight kegiatan sosial (identitas KUNBAR Connect).
   static const Color social = Color(0xFFE91E63);
   static const Color error = Color(0xFFD32F2F);
   static const Color success = Color(0xFF2E7D32);

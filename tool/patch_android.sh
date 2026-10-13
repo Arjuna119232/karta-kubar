@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Idempotent Android patches applied right after `flutter create` generates
-# android/. Keeps the generated folder in sync with KARTA KUBAR branding and
+# android/. Keeps the generated folder in sync with KUNBAR Connect branding and
 # the permissions each phase needs — WITHOUT committing the generated android/.
 set -euo pipefail
 
@@ -11,8 +11,8 @@ GRADLE="android/app/build.gradle.kts"
 echo "==> patch_android: manifest=$MANIFEST gradle=$GRADLE"
 
 # --- 1) Launcher label = real app name (never the package id) ---
-sed -i 's/android:label="[^"]*"/android:label="KUBAR Connect"/' "$MANIFEST"
-grep -q 'android:label="KUBAR Connect"' "$MANIFEST" || { echo "FAIL: label not set"; exit 1; }
+sed -i 's/android:label="[^"]*"/android:label="KUNBAR Connect"/' "$MANIFEST"
+grep -q 'android:label="KUNBAR Connect"' "$MANIFEST" || { echo "FAIL: label not set"; exit 1; }
 
 # --- 2) applicationId + namespace = id.kubarkonek.app ---
 sed -i 's/applicationId = "[^"]*"/applicationId = "id.kubarkonek.app"/' "$GRADLE" 2>/dev/null || true

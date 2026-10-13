@@ -33,11 +33,11 @@ GRADLE_CANDIDATES = [
     pathlib.Path("android/app/build.gradle"),
 ]
 KEYPROPS = pathlib.Path("android/key.properties")
-MARKER = "// KARTA-KUBAR-SIGNING"
+MARKER = "// KUNBAR-SIGNING"
 
 IMPORTS_KTS = "import java.util.Properties\nimport java.io.FileInputStream\n\n"
 
-LOADER_KTS = """// --- KARTA KUBAR: kredensial signing ---
+LOADER_KTS = """// --- KUNBAR Connect: kredensial signing ---
 val keyProperties = Properties()
 val keyPropertiesFile = rootProject.file("key.properties")
 if (keyPropertiesFile.exists()) {
@@ -47,7 +47,7 @@ if (keyPropertiesFile.exists()) {
 android {
 """
 
-LOADER_GROOVY = """// --- KARTA KUBAR: kredensial signing ---
+LOADER_GROOVY = """// --- KUNBAR Connect: kredensial signing ---
 def keyProperties = new Properties()
 def keyPropertiesFile = rootProject.file('key.properties')
 if (keyPropertiesFile.exists()) {

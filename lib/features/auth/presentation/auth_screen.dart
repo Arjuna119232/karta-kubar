@@ -201,7 +201,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                   ),
                                 ),
                                 const TextSpan(
-                                    text: ' serta Kebijakan Privasi KARTA KUBAR.'),
+                                    text: ' serta Kebijakan Privasi KUNBAR Connect.'),
                               ],
                             ),
                           ),

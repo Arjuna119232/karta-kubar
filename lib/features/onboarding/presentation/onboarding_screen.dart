@@ -20,7 +20,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   static const List<_Slide> _slides = <_Slide>[
     _Slide(
       icon: Icons.groups_2_rounded,
-      title: 'Selamat datang di KUBAR Connect',
+      title: 'Selamat datang di KUNBAR Connect',
       body:
           'Untuk seluruh warga Kuningan Barat — dari anak muda, orang tua, RT/RW, UMKM, sampai pengurus kelurahan.',
       tint: AppColors.primary,
@@ -114,7 +114,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   const SizedBox(height: 22),
                   PrimaryButton(
-                    label: _isLast ? 'Masuk KUBAR Connect' : 'Lanjut',
+                    label: _isLast ? 'Masuk KUNBAR Connect' : 'Lanjut',
                     icon: _isLast ? Icons.check_rounded : null,
                     onPressed: _next,
                   ),

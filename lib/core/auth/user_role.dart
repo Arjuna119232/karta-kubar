@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Lima level akses KUBAR Connect. Hierarkis: angka lebih besar = lebih tinggi.
+/// Lima level akses KUNBAR Connect. Hierarkis: angka lebih besar = lebih tinggi.
 ///
 ///  guest      -> belum login, hanya bisa baca
 ///  warga      -> NIK + alamat Kuningan Barat terverifikasi
