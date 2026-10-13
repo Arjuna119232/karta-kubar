@@ -24,14 +24,16 @@ GRADLE_CANDIDATES = [
 KEYPROPS = pathlib.Path("android/key.properties")
 
 LOADER_KTS = """// --- KARTA KUBAR: kredensial signing ---
-val keyProperties = java.util.Properties()
+val keyProperties = Properties()
 val keyPropertiesFile = rootProject.file("key.properties")
 if (keyPropertiesFile.exists()) {
-    keyPropertiesFile.inputStream().use { keyProperties.load(it) }
+    keyProperties.load(FileInputStream(keyPropertiesFile))
 }
 
 android {
 """
+
+IMPORTS_KTS = "import java.util.Properties\nimport java.io.FileInputStream\n\n"
 
 LOADER_GROOVY = """// --- KARTA KUBAR: kredensial signing ---
 def keyProperties = new Properties()
@@ -124,6 +126,12 @@ def patch(path: pathlib.Path, props: dict[str, str]) -> bool:
         else:
             print(f"FAIL: blok android tidak ditemukan di {path}")
             return False
+
+        # Kotlin DSL: `java` di-build.gradle.kts已经被 plugin Java shadowing,
+        # jadi `java.util.Properties()` jadi "Unresolved reference 'util'".
+        # Wajib pakai import + nama kelas langsung.
+        if is_kts and "import java.util.Properties" not in src:
+            src = IMPORTS_KTS + src
 
     if src == original:
         print(f"FAIL: {path} tidak berubah — pola Flutter berubah? periksa manual.")
