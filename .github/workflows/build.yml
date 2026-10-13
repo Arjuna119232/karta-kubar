@@ -50,6 +50,13 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
+      # WAJIB dan WAJIB memblokir (tanpa `|| true`).
+      # Flutter hanya mengompilasi file yang terjangkau dari main.dart, jadi
+      # bug di file yang tidak ter-import (mis. `undefined name`) TIDAK akan
+      # ketahuan oleh `flutter build`. Script ini yang menangkapnya.
+      - name: Dart static check (blocking)
+        run: python3 tool/check_dart.py
+
       - name: Analyze (non-blocking)
         run: flutter analyze || true
 

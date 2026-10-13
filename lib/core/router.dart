@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/absen/presentation/absen_screen.dart';
+import '../features/auth/presentation/auth_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/shell/presentation/app_shell.dart';
 import '../features/splash/presentation/splash_screen.dart';
@@ -71,6 +72,14 @@ class RoleGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final Session session = ref.watch(sessionProvider);
+    // Sesi dibaca dari SharedPreferences secara async. Selama itu belum
+    // selesai, `sudahLogin` masih false dan guard akan sempat menampilkan
+    // "Akses Ditolak" untuk user yang sebenarnya masih masuk.
+    if (!session.siap) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     if (!session.sudahLogin || !session.efektif.bisa(minimal)) {
       return AksesDitolakScreen(minimal: minimal);
     }
@@ -89,6 +98,13 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/onboarding',
       builder: (_, __) => const OnboardingScreen(),
+    ),
+    // Wajib ada: splash, tombol "Mulai" di onboarding, dan tombol "Masuk"
+    // di profil semuanya menuju '/auth'. Tanpa rute ini GoRouter melempar
+    // `GoException: no routes for location: /auth` = aplikasi crash.
+    GoRoute(
+      path: '/auth',
+      builder: (_, __) => const AuthScreen(),
     ),
     GoRoute(
       path: '/home',

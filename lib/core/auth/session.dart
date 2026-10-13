@@ -1,8 +1,23 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'user_role.dart';
+
+/// Kunci penyimpanan sesi.
+///
+/// Dipublikasikan supaya file lain (splash) membaca kunci yang sama persis —
+/// jangan tulis ulang string "kubar_role" di tempat lain, karena nanti
+/// bisa berbeda diam-diam.
+abstract final class SessionKeys {
+  /// Nama-nama user tersimpan sebagai JSON.
+  static const String user = 'kubar_user';
+
+  /// Role aktif, disimpan sebagai `UserRole.name`.
+  static const String role = 'kubar_role';
+}
 
 /// Data dasar warga yang sedang masuk.
 @immutable
@@ -15,6 +30,24 @@ class AuthUser {
     this.rt,
     this.rw,
   });
+
+  factory AuthUser.dariJson(Map<String, dynamic> json) => AuthUser(
+        name: json['name'] as String? ?? '',
+        phone: json['phone'] as String? ?? '',
+        nik: json['nik'] as String?,
+        alamat: json['alamat'] as String?,
+        rt: json['rt'] as String?,
+        rw: json['rw'] as String?,
+      );
+
+  Map<String, dynamic> keJson() => <String, dynamic>{
+        'name': name,
+        'phone': phone,
+        if (nik != null) 'nik': nik,
+        if (alamat != null) 'alamat': alamat,
+        if (rt != null) 'rt': rt,
+        if (rw != null) 'rw': rw,
+      };
 
   final String name;
   final String phone;
@@ -44,10 +77,17 @@ class AuthUser {
 /// State sesi: user + role. Null user = Tamu (guest).
 @immutable
 class Session {
-  const Session({this.user, this.role = UserRole.guest});
+  const Session({this.user, this.role = UserRole.guest, this.siap = false});
 
   final AuthUser? user;
   final UserRole role;
+
+  /// False selama [_muat] belum selesai membaca SharedPreferences.
+  ///
+  /// WAJIB dipakai guard/UI: tanpa ini, begitu aplikasi dibuka `[sudahLogin]`
+  /// masih false selama beberapa milidetik, sehingga RoleGate sempat
+  /// menampilkan "Akses Ditolak" padahal user sebenarnya masih masuk.
+  final bool siap;
 
   bool get sudahLogin => user != null;
 
@@ -55,9 +95,10 @@ class Session {
   UserRole get efektif =>
       user == null ? UserRole.guest : (role == UserRole.guest ? UserRole.warga : role);
 
-  Session copyWith({AuthUser? user, UserRole? role}) => Session(
+  Session copyWith({AuthUser? user, UserRole? role, bool? siap}) => Session(
         user: user ?? this.user,
         role: role ?? this.role,
+        siap: siap ?? this.siap,
       );
 }
 
@@ -66,35 +107,57 @@ class SessionNotifier extends StateNotifier<Session> {
     _muat();
   }
 
-  static const String _kRole = 'kubar_role';
-
-  /// Baca role tersimpan saat aplikasi dibuka.
+  /// Baca user + role tersimpan saat aplikasi dibuka.
+  ///
+  /// SEBELUMNYA fungsi ini hanya memulihkan role lewat
+  /// `Session(user: state.user, ...)` - padahal `state.user` SELALU null
+  /// di sini, jadi hasilnya `sudahLogin == false` terus. Akibatnya user
+  /// logout setiap aplikasi ditutup lalu dibuka lagi, dan role yang
+  /// disimpan tidak pernah terpakai.
   Future<void> _muat() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? tersimpan = prefs.getString(_kRole);
-    if (tersimpan == null) return;
-    final UserRole? role = UserRole.values.asNameMap()[tersimpan];
-    if (role == null) return;
-    state = Session(user: state.user, role: role);
+    final String? jsonUser = prefs.getString(SessionKeys.user);
+    final String? namaRole = prefs.getString(SessionKeys.role);
+
+    AuthUser? user;
+    if (jsonUser != null && jsonUser.isNotEmpty) {
+      try {
+        user = AuthUser.dariJson(jsonDecode(jsonUser) as Map<String, dynamic>);
+      } on FormatException {
+        // Data rusak (mis. versi app sebelumnya): buang, jangan bikin crash.
+        await prefs.remove(SessionKeys.user);
+      }
+    }
+
+    // Tanpa user tidak ada sesi, apa pun isi role.
+    UserRole role = UserRole.guest;
+    if (user != null) {
+      role = (namaRole == null ? null : UserRole.values.asNameMap()[namaRole]) ??
+          UserRole.warga;
+    }
+
+    state = Session(user: user, role: role, siap: true);
   }
 
   Future<void> simpanRole(UserRole role) async {
     state = state.copyWith(role: role);
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_kRole, roleToDb(role));
+    await prefs.setString(SessionKeys.role, roleToDb(role));
   }
 
   /// Setelah OTP terverifikasi. Role awal = warga.
   Future<void> masuk(AuthUser user) async {
-    state = Session(user: user, role: UserRole.warga);
+    state = Session(user: user, role: UserRole.warga, siap: true);
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_kRole, roleToDb(UserRole.warga));
+    await prefs.setString(SessionKeys.user, jsonEncode(user.keJson()));
+    await prefs.setString(SessionKeys.role, roleToDb(UserRole.warga));
   }
 
   Future<void> keluar() async {
-    state = const Session();
+    state = const Session(siap: true);
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_kRole);
+    await prefs.remove(SessionKeys.user);
+    await prefs.remove(SessionKeys.role);
   }
 }
 

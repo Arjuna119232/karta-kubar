@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/auth/session.dart';
 import '../../../core/theme/app_colors.dart';
 
-/// Splash 1,8 detik lalu ke onboarding (sekali) atau langsung ke shell.
+/// Splash 1,8 detik lalu ke beranda / onboarding (sekali) / login.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -22,9 +23,21 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _boot() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final bool seen = prefs.getBool('onboarding_seen') ?? false;
+    // Baca langsung dari prefs dengan kunci yang sama persis seperti yang
+    // ditulis SessionNotifier. SEBELUMNYA splash selalu membawa user ke
+    // '/auth' walau sesi masih aktif, jadi warga harus masuk ulang tiap
+    // kali aplikasi dibuka.
+    final bool sudahMasuk = prefs.getString(SessionKeys.user)?.isNotEmpty ?? false;
+
     await Future<void>.delayed(const Duration(milliseconds: 1800));
     if (!mounted) return;
-    context.go(seen ? '/auth' : '/onboarding');
+    if (!seen) {
+      context.go('/onboarding');
+    } else if (sudahMasuk) {
+      context.go('/home');
+    } else {
+      context.go('/auth');
+    }
   }
 
   @override
