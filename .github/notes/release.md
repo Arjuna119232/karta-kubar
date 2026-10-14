@@ -1,18 +1,22 @@
-### KUNBAR Connect v0.7.0
+### KUNBAR Connect v0.8.0
 
-Splash dan tiga sampul ditulis ulang: lebih bersih, lebih hidup, dan tidak melompat lagi.
+Mulai dari tahap ini, tampilan diuji di browser dulu sebelum jadi APK.
 
-**Splash**
-- Garis kuning di bawah tulisan KUNBAR dihapus
-- Tulisan "from Katar KunBar" pindah ke paling bawah, di bawah baris loading
-- Blok logo, tulisan, dan loading benar-benar di tengah layar
-- Huruf KUNBAR muncul satu per satu dari bawah
-- Loading berubah dari tiga titik statis jadi tiga pil yang melebar dan mengecil bergantian
-- Grid latar dibuat lebih halus supaya tidak bersaing dengan logo
+**Yang diperbaiki**
+- Tiga sampul yang kosong karena animasi tidak pernah diputar
+- Teks sampul yang terdorong keluar layar
+- Karakter asing yang nyasar ke komentar kode
 
-**Tiga sampul**
-- Ilustrasi masuk dengan lengkung pegas lalu melayang pelan-pelan
-- Judul dan isi keluar berurutan dari bawah
-- Cahaya lembut warna-warna sampul di belakang ilustrasi
-- Posisi ilustrasi dikunci, tidak lagi melompat saat halaman digeser
-- Ukuran ilustrasi mengikuti lebar layar, tidak meluber di HP kecil
+**Struktur**
+- Setiap fitur punya folder data, domain, dan presentation
+- Semua data lewat satu lapisan repository, layar tidak lagi baca data langsung
+- Validasi form pindah ke domain supaya bisa diuji
+
+**Backend**
+- Konfigurasi lewat file .env, tidak ada kunci API di dalam kode
+- Klien Supabase tanpa paket tambahan besar
+- Kartu Sumber data di halaman Profil
+
+**Build**
+- APK hanya untuk arm64, sekarang sekitar 18 MB
+- AAB tetap tersedia untuk Google Play
