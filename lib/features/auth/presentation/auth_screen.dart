@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/primary_button.dart';
 import 'otp_screen.dart';
 import '../../../shared/widgets/app_icon.dart';
+import '../domain/validasi.dart';
 
 enum AuthMode { masuk, daftar }
 
@@ -32,18 +33,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     super.dispose();
   }
 
-  String? _validNama(String? v) {
-    if (_mode == AuthMode.masuk) return null;
-    if (v == null || v.trim().length < 3) return 'Nama minimal 3 huruf';
-    return null;
-  }
+  // Aturannya ada di domain, bukan di sini, supaya bisa diuji tanpa merakit
+  // seluruh form dan bisa dipakai ulang untuk mode email (Supabase).
+  String? _validNama(String? v) =>
+      ValidasiAkun.nama(v, wajib: _mode == AuthMode.daftar);
 
-  String? _validTelepon(String? v) {
-    final String t = (v ?? '').replaceAll(RegExp(r'\D'), '');
-    if (t.length < 9) return 'Nomor WhatsApp tidak valid';
-    if (t.length > 15) return 'Nomor terlalu panjang';
-    return null;
-  }
+  String? _validTelepon(String? v) => ValidasiAkun.telepon(v);
 
   void _submit() {
     FocusScope.of(context).unfocus();
@@ -53,7 +48,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       return;
     }
     if (!valid) return;
-    final String nomor = '+${_telepon.text.replaceAll(RegExp(r'\D'), '')}';
+    final String nomor = ValidasiAkun.keFormatInternasional(_telepon.text);
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => OtpScreen(
