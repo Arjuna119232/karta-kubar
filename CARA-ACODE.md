@@ -1,11 +1,11 @@
 # KUNBAR Connect — Cara Membuka di Acode
 
-Versi: **0.3.0+3 (FASE 3 — Auth)**
-Karang Taruna Kelurahan Kuningan Barat — *Satu Komando, Satu Karya*
+Versi: **0.5.5**
+Kelurahan Kuningan Barat, Jakarta Selatan
 
 ## Cara buka di Acode
 
-1. **Ekstrak** file `karta-kubar-v0.3.0-source.zip` ke folder mana saja di HP
+1. **Ekstrak** file `KUNBAR-Connect-v0.5.5-source.zip` ke folder mana saja di HP
    (misal `/storage/emulated/0/Acode/karta-kubar/`).
 2. Buka Acode → **Open Folder** → pilih folder `karta-kubar` (folder yang
    berisi `pubspec.yaml`).
@@ -74,3 +74,69 @@ assets/
 Semua layar ada di `lib/features/<nama>/presentation/`. Untuk menambah
 halaman: buat folder baru, buat file `*_screen.dart`, lalu daftarkan di
 `lib/features/shell/presentation/app_shell.dart`.
+
+---
+
+# Tugas 1 - Splash pakai desain baru (prioritas utama)
+
+Folder `aset-dari-user/` berisi desain splash dari pemilik aplikasi.
+
+## Isi folder tersebut
+
+| File | Isi |
+|---|---|
+| `kubar_splash_master.svg` | desain splash lengkap + animasi |
+| `AppStore_x5f_1024.svg` | emblem berwarna untuk ikon |
+| `foreground_x5f_1024.svg` | emblem transparan untuk ikon adaptif |
+| `PNG-t ekstra-*.png` | emblem yang sudah diekstrak dari SVG |
+
+## Penting: file `.svg` itu sebenarnya bukan vektor
+
+Isinya **PNG 1024/1600 yang disembunyikan di dalam tag `<image>`** sebagai
+base64, bukan gambar vektor. Jadi tidak bisa diwarnai ulang atau di-scale
+dengan mulus.
+
+Yang **benar-benar vektor** cuma isi file PNG hasil ekstrak
+(`PNG-t ekstra-*.png`) — itu yang dipakai.
+
+## Penting: animasi SMIL tidak jalan di Flutter
+
+File SVG itu punya animasi (tag `<animate>` dan `<animateTransform>`), tetapi
+Flutter **tidak bisa memutar SMIL** — baik `Image.asset` maupun `flutter_svg`
+hanya menampilkan gambar diam.
+
+**Jadi animasinya harus ditulis ulang di Dart**, bukan memuat SVG-nya.
+Lapisan animasi pada desain:
+
+| Lapisan | Gerakan | Durasi | Berulang |
+|---|---|---|---|
+| Grid latar | geser 0,0 → 100,100 → 0,0 | 12 detik | ya |
+| Cahaya (glow) | jari-jari 430 → 470 → 430 | 4 detik | ya |
+| Logo | skala 1 → 1.03 → 1 | 3 detik | ya |
+| Titik loading | opasitas 0.3 → 1 → 0.3 | 1,2 detik | ya, jeda 0,2 dan 0,4 detik |
+
+Gunakan satu `AnimationController` untuk tiap lapisan, atau satu controller
+yang dipakai bersama dengan nilai berbeda.
+
+## Warna pada desain
+
+```
+latar      #1B5E20   (hijau tua solid)
+teks       #FFFFFF
+teks 2     #C8E6C9
+grid       #2E7D32
+cahaya     #FFC107 dengan opasitas rendah
+```
+
+⚠️ **Masalah yang harus diputuskan:** tema terang aplikasi sekarang
+`#F6F7F9` (abu netral). Kalau splash hijau tua, layar akan lompat warna saat
+aplikasi terbuka. Pilih salah satu:
+
+- (a) ubah tema terang jadi hijau muda lembut agar nyambung dengan splash
+- (b) biarkan tema terang abu-abu, terima lompatan warna
+- (c) dua versi splash, terang dan gelap, mengikuti tema perangkat
+
+## Perhatikan juga
+
+Teks di file SVG masih tertulis `KUBAR CONNECT`. Nama aplikasi yang benar
+adalah **`KUNBAR CONNECT`** — tolong dibetulkan.
