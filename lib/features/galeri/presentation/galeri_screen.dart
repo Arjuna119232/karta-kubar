@@ -8,6 +8,7 @@ import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../core/data/data_providers.dart';
 import '../../kegiatan/domain/kegiatan.dart';
+import '../../../shared/widgets/cover_pilih.dart';
 
 class GaleriScreen extends ConsumerWidget {
   const GaleriScreen({super.key});
@@ -125,7 +126,7 @@ class _NewsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Membuka: ${item.title}')),
+        SnackBar(content: Text('Membuka: ${item.judul}')),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,14 +148,14 @@ class _NewsCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  item.title,
+                  item.judul,
                   style: context.text.titleSmall,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '${item.source} · ${item.time}',
+                  '${item.sumber} · ${item.waktu}',
                   style: context.text.bodySmall
                       ?.copyWith(color: context.semantic.textSecondary),
                 ),

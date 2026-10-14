@@ -16,6 +16,7 @@ import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/stat_tile.dart';
 
 import '../../kegiatan/domain/kegiatan.dart';
+import '../../../shared/widgets/cover_pilih.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -316,7 +317,7 @@ class _AnnouncementCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            item.title,
+            item.judul,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -326,7 +327,7 @@ class _AnnouncementCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            item.body,
+            item.isi,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.85),
               fontSize: 13,
@@ -432,7 +433,7 @@ class _AgendaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool selesai = !activity.upcoming;
+    final bool selesai = !activity.mendatang;
     return AppCard(
       padding: const EdgeInsets.all(14),
       child: Row(
@@ -448,12 +449,12 @@ class _AgendaTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Text(
-                  '${activity.date.day}',
+                  '${activity.tanggal.day}',
                   style: context.text.titleLarge
                       ?.copyWith(color: context.colors.primary, height: 1),
                 ),
                 Text(
-                  DateId.bulanSingkat(activity.date),
+                  DateId.bulanSingkat(activity.tanggal),
                   style: context.text.labelSmall
                       ?.copyWith(color: context.colors.primary),
                 ),
@@ -466,7 +467,7 @@ class _AgendaTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  activity.title,
+                  activity.judul,
                   style: context.text.titleMedium,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -500,7 +501,7 @@ class _AgendaTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
-              selesai ? 'Selesai' : DateId.hitungMundur(activity.date),
+              selesai ? 'Selesai' : DateId.hitungMundur(activity.tanggal),
               style: context.text.labelSmall?.copyWith(
                 color: selesai
                     ? context.semantic.textSecondary
@@ -525,7 +526,7 @@ class _NewsTile extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       onTap: () {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Membuka: ${item.title}')),
+          SnackBar(content: Text('Membuka: ${item.judul}')),
         );
       },
       child: Row(
@@ -537,14 +538,14 @@ class _NewsTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  item.title,
+                  item.judul,
                   style: context.text.titleSmall,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${item.source} · ${item.time}',
+                  '${item.sumber} · ${item.waktu}',
                   style: context.text.bodySmall
                       ?.copyWith(color: context.semantic.textSecondary),
                 ),

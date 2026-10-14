@@ -1,6 +1,3 @@
-import 'package:flutter/material.dart';
-
-import '../../../core/theme/app_colors.dart';
 import '../domain/kegiatan.dart';
 
 /// Data demo kegiatan (dipakai saat backend belum dinyalakan).
@@ -74,28 +71,3 @@ class KegiatanLokal {
   static const int totalAnggota = 128;
   static const int kegiatanBulanIni = 12;
 }
-
-/// Warna kategori kegiatan. Turunan dari palet aplikasi, bukan warna karangan.
-Color warnaKategori(String kategori) => switch (kategori) {
-      'Sosial' => AppColors.success,
-      'Olahraga' => AppColors.accent,
-      'Keagamaan' => AppColors.warning,
-      _ => AppColors.primary,
-    };
-
-/// Gambar sampul menurut kategori kegiatan (file di `assets/ilustrasi/`).
-String coverKategori(String kategori) => switch (kategori) {
-      'Sosial' => 'cover_sosial',
-      'Olahraga' => 'cover_olahraga',
-      'Keagamaan' => 'cover_religi',
-      _ => 'cover_umum',
-    };
-
-/// Gambar sampul menurut tag berita.
-String coverBerita(String tag) => switch (tag) {
-      'Organisasi' => 'cover_rapat',
-      'Kegiatan' => 'cover_lomba',
-      'Keuangan' => 'cover_keuangan',
-      'Donor' => 'cover_donor',
-      _ => 'cover_umum',
-    };

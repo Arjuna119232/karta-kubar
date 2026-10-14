@@ -113,7 +113,7 @@ class _AbsenScreenState extends ConsumerState<AbsenScreen> {
                         padding: const EdgeInsets.only(bottom: AppSpacing.gap),
                         child: _SelesaiTile(
                           kegiatan: a,
-                          sudah: ctrl.sudahAbsen(a.title, a.date),
+                          sudah: ctrl.sudahAbsen(a.judul, a.tanggal),
                           onIsi: () => _catat(context, ctrl, a),
                         ),
                       ),
@@ -139,8 +139,8 @@ class _AbsenScreenState extends ConsumerState<AbsenScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(ok
-            ? 'Kehadiran tercatat untuk ${a.title}'
-            : 'Kehadiran untuk ${a.title} sudah tercatat'),
+            ? 'Kehadiran tercatat untuk ${a.judul}'
+            : 'Kehadiran untuk ${a.judul} sudah tercatat'),
       ),
     );
   }
@@ -203,16 +203,18 @@ class _ScannerCard extends StatelessWidget {
 }
 
 /// Simulasi viewfinder kamera: membaca payload QR kegiatan pertama yang tersedia.
-class _ScannerSheet extends StatefulWidget {
+/// Butuh Consumer karena `_cocok` membaca daftar kegiatan dari repository,
+/// bukan dari data demo.
+class _ScannerSheet extends ConsumerStatefulWidget {
   const _ScannerSheet({required this.ctrl});
 
   final AbsenNotifier ctrl;
 
   @override
-  State<_ScannerSheet> createState() => _ScannerSheetState();
+  ConsumerState<_ScannerSheet> createState() => _ScannerSheetState();
 }
 
-class _ScannerSheetState extends State<_ScannerSheet> {
+class _ScannerSheetState extends ConsumerState<_ScannerSheet> {
   bool _memindai = false;
   String? _hasil;
 
@@ -290,7 +292,7 @@ class _ScannerSheetState extends State<_ScannerSheet> {
   Kegiatan _cocok(String judul) {
     final List<Kegiatan> semua =
         ref.watch(kegiatanProvider).valueOrNull ?? const <Kegiatan>[];
-    if (semua.isEmpty) return const Kegiatan.cadangan;
+    if (semua.isEmpty) return Kegiatan.cadangan;
     for (final Kegiatan a in semua) {
       if (a.judul == judul) return a;
     }
@@ -316,7 +318,7 @@ class _ScannerSheetState extends State<_ScannerSheet> {
     HapticFeedback.mediumImpact();
     setState(() {
       _memindai = false;
-      _hasil = parsed ?? target.title;
+      _hasil = parsed ?? target.judul;
     });
   }
 }
@@ -561,10 +563,10 @@ class _PanelPenyelenggara extends StatelessWidget {
                   style: context.text.labelMedium
                       ?.copyWith(color: context.semantic.textSecondary)),
               const SizedBox(height: 4),
-              Text(a.title, style: context.text.headlineSmall),
+              Text(a.judul, style: context.text.headlineSmall),
               const SizedBox(height: 4),
               Text(
-                '${DateId.hariTanggal(a.date)} · ${a.location}',
+                '${DateId.hariTanggal(a.tanggal)} · ${a.lokasi}',
                 textAlign: TextAlign.center,
                 style: context.text.bodySmall
                     ?.copyWith(color: context.semantic.textSecondary),
@@ -627,7 +629,7 @@ class _PanelPenyelenggara extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    DateId.hitungMundur(k.date),
+                    DateId.hitungMundur(k.tanggal),
                     style: context.text.labelSmall
                         ?.copyWith(color: context.colors.primary),
                   ),

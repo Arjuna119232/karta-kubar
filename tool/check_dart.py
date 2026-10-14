@@ -382,6 +382,144 @@ if router_path.is_file():
                     f"navigasi ke '{target}' tapi rute itu tidak terdaftar di core/router.dart "
                     f"(terdaftar: {', '.join(sorted(registered))}) -> GoException saat runtime")
 
+
+# ------------------------------------------------- 11. MEMBER TIDAK ADA DI KELAS PROYEK
+# Bug yang DITEMUKAN CI tapi lolos analyzer: `a.title` padahal field-nya sudah
+# di-rename jadi `a.judul`. Cek import saja tidak menangkapnya, karena `a`
+# bukan simbol project.
+#
+# Cara: kumpulkan member tiap kelas project (field + getter + method), lalu
+# untuk setiap pemakaian `variance.member` - kalau tipe `variance` adalah kelas
+# project, pastikan member itu ada.
+PROJECT_TYPES = {}
+for f in files:
+    body = raw[f]
+    for m in re.finditer(r"\b(?:class|enum|extension)\s+(\w+)", body):
+        nama = m.group(1)
+        # body kelas = dari '{' hingga '}' pasangannya
+        i = body.find('{', m.end() - 1)
+        if i < 0:
+            continue
+        depth, j = 0, i
+        while j < len(body):
+            if body[j] == "{":
+                depth += 1
+            elif body[j] == "}":
+                depth -= 1
+                if depth == 0:
+                    break
+            j += 1
+        blk = body[i:j]
+        member = set(re.findall(r"\bget\s+(\w+)", blk))
+        member |= set(re.findall(r"\bset\s+(\w+)", blk))
+        member |= set(re.findall(r"^\s*(?:static\s+|final\s+|late\s+|const\s+)*"
+                                 r"[\w<>,?\s\[\]]*?\b(\w+)\s*(?:=|;)", blk, re.MULTILINE))
+        member |= set(re.findall(r"^[\w<>,?\s\[\]]*?\b(\w+)\s*\(", blk, re.MULTILINE))
+        member |= set(re.findall(r"\boperator\s*\[?=?\]?\s*(\w+)", blk))
+        member |= set(re.findall(r"\b(\w+)\s*\([^)]*\)\s*(?:async\s*)?\{", blk))
+        member |= {"hashCode", "toString", "runtimeType", "noSuchMethod"}
+        # enum punya `values`, `name`, `index` + nama konstantanya
+        if m.group(0).startswith("enum"):
+            member |= {"values", "name", "index"}
+            member |= set(re.findall(r"^\s*(\w+)\s*(?:,|$)", blk, re.MULTILINE))
+        # extension: nama method-nya adalah member yang dipakai implisit
+        if m.group(0).startswith("extension"):
+            member = extension_members(body) | {"toString", "hashCode", "runtimeType"}
+        PROJECT_TYPES.setdefault(nama, member)
+
+# tipe yang diketahui:
+#   `final X v = ...`   `for (final X v in ...)`   `late final X v`
+#   `final X v;`  (field kelas)   `const X v = ...`
+VAR_TIPE = re.compile(
+    r"\b(?:final|const|late\s+final|var)\s+([A-Z]\w+)(?:<[^>]*>)?\s+(\w+)\s*"
+    r"(?:;|=|\bin\b)"
+)
+# Parameter closure `(Kegiatan a) => ...` jugashitipe dikenal.
+VAR_CLOSURE = re.compile(r"\(\s*([A-Z]\w+)(?:<[^>]*>)?\s+(\w+)\s*\)\s*(?:async\s*)?=>")
+for f in files:
+    body = code[f]          # string sudah diganti spasi -> import tidak ikut
+    vars_diketahui = {}
+    ambigu = set()
+    for m in list(VAR_TIPE.finditer(body)) + list(VAR_CLOSURE.finditer(body)):
+        tipe, nama = m.group(1), m.group(2)
+        if tipe not in PROJECT_TYPES:
+            continue
+        if nama in vars_diketahui and vars_diketahui[nama] != tipe:
+            ambigu.add(nama)      # nama dipakai 2 tipe -> tidak bisa disimpulkan
+        vars_diketahui[nama] = tipe
+    for nama in ambigu:
+        vars_diketahui.pop(nama, None)
+    for nama, tipe in vars_diketahui.items():
+        member_boleh = PROJECT_TYPES[tipe] | {
+            x for o in files for x in extension_members(raw[o])
+        }
+        for m in re.finditer(r"(?<![\w.])" + re.escape(nama) + r"\.(\w+)", body):
+            attr = m.group(1)
+            if attr in member_boleh:
+                continue
+            # fungsi/method milik Flutter yang sah (dipanggil di receiver)
+            if attr in {"toString", "hashCode", "copyWith", "when", "fold", "map", "where",
+                        "toList", "toSet", "first", "last", "isEmpty", "isNotEmpty", "length",
+                        "add", "remove", "clear", "contains", "sublist", "reversed", "indexed",
+                        "addAll", "removeAt", "sort", "join", "containsKey"}:
+                continue
+            baris = body[:m.start()].count("\n") + 1
+            bad("UNDEF-MEMBER", f,
+                f"`{nama}.{attr}` tapi `{tipe}` tidak punya member '{attr}' "
+                f"(ada: {', '.join(sorted(x for x in PROJECT_TYPES[tipe] if not x.startswith('_'))[:12])}) "
+                f"-> compile error")
+
+# ------------------------------------------------- 12. CONSTRUCTOR TIDAK ADA
+# `Hasil.galat(...)` padahal named constructor-nya `Hasil.gagal`. Compiler
+# Dart menolaknya; analyzer statis kita tidak melihatnya.
+CTORS = {}
+
+
+def _body_kelas(teks, nama):
+    """Blok { ... } milik kelas `nama`, atau None."""
+    i = teks.find("class " + nama)
+    if i < 0:
+        return None
+    j = teks.find("{", i)
+    if j < 0:
+        return None
+    depth, k = 0, j
+    while k < len(teks):
+        if teks[k] == "{":
+            depth += 1
+        elif teks[k] == "}":
+            depth -= 1
+            if depth == 0:
+                return teks[j:k]
+        k += 1
+    return None
+
+
+for f in files:
+    for m in re.finditer(r"\bclass\s+(\w+)", raw[f]):
+        nama = m.group(1)
+        # named constructor: `const X.name(` / `factory X.name(`
+        for c in re.findall(r"\b(?:const\s+|factory\s+)?" + nama + r"\.(\w+)\s*\(", raw[f]):
+            CTORS.setdefault(nama, set()).add(c)
+        # static method: `static <T> nama(...)` di dalam body kelas
+        blk = _body_kelas(raw[f], nama)
+        if blk:
+            CTORS.setdefault(nama, set()).update(
+                re.findall(r"\bstatic\s+[\w<>,?\s\[\]]*?\b(\w+)\s*\(", blk)
+            )
+KNOWN_RUNTIME = {"new", "fromJson", "values", "keys", "generate"}
+for f in files:
+    for nama, ctor in re.findall(
+            r"(?<![\w.])([A-Z]\w+)(?:<[^;{}=]*?>)?\.(\w+)\s*\(", code[f]):
+        if nama not in CTORS:
+            continue
+        if ctor in CTORS[nama] or ctor in KNOWN_RUNTIME:
+            continue
+        bad("CTOR-UNKNOWN", f,
+            f"`{nama}.{ctor}()` tidak ada. Named constructor yang ada: "
+            f"{', '.join(sorted(CTORS[nama])) or '(nama constructor saja)'} -> compile error")
+
+
 # ---------------------------------------------------------------- report
 print("=" * 62)
 print("  KUNBAR Connect - Dart static check")
@@ -396,9 +534,10 @@ if notes:
         print(f"  · {n}")
 if problems:
     print(f"\nMASALAH ({len(problems)}):")
-    order = {"DEAD-FILE": 0, "MISSING-IMPORT": 1, "ROUTE-UNKNOWN": 2,
-             "IMPORT-RESOLVE": 3, "UNUSED-IMPORT": 4, "UNUSED-PRIVATE": 5,
-             "UNUSED-PROVIDER": 6, "BRACE": 7, "NON-LATIN": 8, "ASSET": 9}
+    order = {"DEAD-FILE": 0, "MISSING-IMPORT": 1, "UNDEF-MEMBER": 2,
+             "CTOR-UNKNOWN": 3, "ROUTE-UNKNOWN": 4,
+             "IMPORT-RESOLVE": 5, "UNUSED-IMPORT": 6, "UNUSED-PRIVATE": 7,
+             "UNUSED-PROVIDER": 8, "BRACE": 9, "NON-LATIN": 10, "ASSET": 11}
     for kind, path, msg in sorted(problems, key=lambda p: (order.get(p[0], 9), p[1])):
         print(f"  [{kind}] {path}\n      {msg}")
     sys.exit(1)

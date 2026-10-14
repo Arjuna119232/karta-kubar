@@ -10,6 +10,7 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/status_views.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../domain/kegiatan.dart';
+import '../../../shared/widgets/cover_pilih.dart';
 
 /// Layar kegiatan. Data lewat repository (`kegiatanProvider`), bukan data demo.
 class KegiatanScreen extends ConsumerStatefulWidget {
@@ -175,8 +176,8 @@ class _ActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color cat = warnaKategori(activity.category);
-    final bool selesai = !activity.upcoming;
+    final Color cat = warnaKategori(activity.kategori);
+    final bool selesai = !activity.mendatang;
 
     return AppCard(
       onTap: () => _showDetail(context),
@@ -186,7 +187,7 @@ class _ActivityCard extends StatelessWidget {
           SizedBox(
             height: 104,
             width: double.infinity,
-            child: AppCover(coverKategori(activity.category), radius: 14),
+            child: AppCover(coverKategori(activity.kategori), radius: 14),
           ),
           const SizedBox(height: 12),
           Row(
@@ -198,7 +199,7 @@ class _ActivityCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  activity.category,
+                  activity.kategori,
                   style: context.text.labelSmall?.copyWith(color: cat),
                 ),
               ),
@@ -212,7 +213,7 @@ class _ActivityCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  selesai ? 'Selesai' : DateId.hitungMundur(activity.date),
+                  selesai ? 'Selesai' : DateId.hitungMundur(activity.tanggal),
                   style: context.text.labelSmall?.copyWith(
                     color: selesai
                         ? context.semantic.textSecondary
@@ -223,14 +224,14 @@ class _ActivityCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(activity.title, style: context.text.titleMedium),
+          Text(activity.judul, style: context.text.titleMedium),
           const SizedBox(height: 10),
           _MetaRow(
             icon: Ik.calendar,
-            text: DateId.hariTanggal(activity.date),
+            text: DateId.hariTanggal(activity.tanggal),
           ),
           const SizedBox(height: 6),
-          _MetaRow(icon: Ik.place, text: activity.location),
+          _MetaRow(icon: Ik.place, text: activity.lokasi),
         ],
       ),
     );
@@ -241,7 +242,7 @@ class _ActivityCard extends StatelessWidget {
       context: context,
       showDragHandle: true,
       builder: (BuildContext c) {
-        final Color cat = warnaKategori(activity.category);
+        final Color cat = warnaKategori(activity.kategori);
         return Padding(
           padding: const EdgeInsets.fromLTRB(24, 4, 24, 32),
           child: Column(
@@ -251,7 +252,7 @@ class _ActivityCard extends StatelessWidget {
               SizedBox(
                 height: 130,
                 width: double.infinity,
-                child: AppCover(coverKategori(activity.category), radius: 18),
+                child: AppCover(coverKategori(activity.kategori), radius: 18),
               ),
               const SizedBox(height: 14),
               Container(
@@ -260,30 +261,30 @@ class _ActivityCard extends StatelessWidget {
                   color: cat.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: Text(activity.category,
+                child: Text(activity.kategori,
                     style: c.text.labelSmall?.copyWith(color: cat)),
               ),
               const SizedBox(height: 12),
-              Text(activity.title, style: c.text.headlineSmall),
+              Text(activity.judul, style: c.text.headlineSmall),
               const SizedBox(height: 16),
               _MetaRow(
                 icon: Ik.calendar,
-                text: DateId.hariTanggal(activity.date),
+                text: DateId.hariTanggal(activity.tanggal),
               ),
               const SizedBox(height: 8),
-              _MetaRow(icon: Ik.place, text: activity.location),
+              _MetaRow(icon: Ik.place, text: activity.lokasi),
               const SizedBox(height: 8),
               _MetaRow(
-                icon: activity.upcoming
+                icon: activity.mendatang
                     ? Ik.clock
                     : Ik.checkCircle,
-                text: activity.upcoming
-                    ? DateId.hitungMundur(activity.date)
+                text: activity.mendatang
+                    ? DateId.hitungMundur(activity.tanggal)
                     : 'Kegiatan sudah selesai',
               ),
               const SizedBox(height: 20),
               Text(
-                activity.upcoming
+                activity.mendatang
                     ? 'Tandai kehadiran kamu lewat menu Absen di Beranda saat kegiatan berlangsung.'
                     : 'Terima kasih untuk partisipasi kamu pada kegiatan ini.',
                 style: c.text.bodyMedium

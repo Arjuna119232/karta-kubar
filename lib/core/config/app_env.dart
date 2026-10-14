@@ -36,13 +36,23 @@ class AppEnv {
   });
 
   /// Membaca konfigurasi yang di-inject saat build.
-  factory AppEnv.fromBuild() => const AppEnv(
+  factory AppEnv.fromBuild() => const AppEnv.fromDefine(
         sumberData: _vSumber,
         supabaseUrl: _vUrl,
         supabaseAnonKey: _vAnon,
         scheme: _vSkema.isEmpty ? 'public' : _vSkema,
         bucketStorage: _vBucket.isEmpty ? 'kunar-uploads' : _vBucket,
       );
+
+  /// Konfigurasi dibaca dari `--dart-define`. Bentuknya const supaya bisa
+  /// dipakai di `const` context; named constructor juga boleh const.
+  const AppEnv.fromDefine({
+    required this.sumberData,
+    required this.supabaseUrl,
+    required this.supabaseAnonKey,
+    required this.scheme,
+    required this.bucketStorage,
+  });
 
   /// Konfigurasi kosong untuk pratinjau/tes.
   static const AppEnv kosong = AppEnv(

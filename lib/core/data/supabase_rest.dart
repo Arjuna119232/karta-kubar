@@ -111,7 +111,7 @@ class SupabaseRest {
     try {
       final HttpClient client = _klien();
       final HttpClientRequest req = await client.openUrl(method, url);
-      req.headers.addAll(header ?? _header());
+      req.headers.setAll(header ?? _header());
       if (body != null) req.write(jsonEncode(body));
       final HttpClientResponse res = await req.close().timeout(
             const Duration(seconds: 20),
@@ -210,9 +210,11 @@ class SupabaseRest {
     final Map<String, String> q = <String, String>{'select': '*'};
     if (urut != null) q['order'] = urut;
     if (batas != null) q['limit'] = '$batas';
-    filter?.forEach((String kolom, String nilai) {
-      q[kolum] = 'eq.$nilai';
-    });
+    if (filter != null) {
+      filter.forEach((String kolom, String nilai) {
+        q[kolom] = 'eq.$nilai';
+      });
+    }
     final Hasil<Map<String, dynamic>> r = await _kirim(
       'GET',
       _uri('/rest/v1/$tabel', q),
@@ -238,7 +240,7 @@ class SupabaseRest {
       'POST',
       _uri('/rest/v1/$tabel'),
       baris,
-      header: _header()..addAll(<String, String>{'Prefer': 'return=minimal'}),
+      header: _headerTambah(<String, String>{'Prefer': 'return=minimal'}),
     );
     return r.peta((_) {});
   }
@@ -253,14 +255,18 @@ class SupabaseRest {
     filter.forEach((String kolom, String nilai) {
       q[kolum] = 'eq.$nilai';
     });
+    // ignore: unnecessary_statements
     final Hasil<Map<String, dynamic>> r = await _kirim(
       'PATCH',
       _uri('/rest/v1/$tabel', q),
       baris,
-      header: _header()..addAll(<String, String>{'Prefer': 'return=minimal'}),
+      header: _headerTambah(<String, String>{'Prefer': 'return=minimal'}),
     );
     return r.peta((_) {});
   }
+
+  Map<String, String> _headerTambah(Map<String, String> tambahan) =>
+      <String, String>{..._header(), ...tambahan};
 
   // ---------------- STORAGE ----------------
 
@@ -282,7 +288,7 @@ class SupabaseRest {
         '/storage/v1/object/$bucket/$jalur',
       );
       final HttpClientRequest req = await client.putUrl(url);
-      req.headers.addAll(<String, String>{
+      req.headers.setAll(<String, String>{
         'apikey': _env.supabaseAnonKey,
         'Authorization': 'Bearer ${_accessToken ?? ''}',
         'Content-Type': tipeKonten,

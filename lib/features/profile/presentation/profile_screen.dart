@@ -38,12 +38,12 @@ class ProfileScreen extends ConsumerWidget {
           _Header(nama: nama, role: role),
           const SizedBox(height: 18),
           if (user != null && role.bisa(UserRole.anggota))
-            _KartuAnggota(nama: nama, role: role)
+            _KartuAnggota(nama: nama, role: role, anggota: anggota)
           else
             _AjukanVerifikasi(role: role, sudahLogin: user != null),
           if (user != null && role.bisa(UserRole.anggota)) ...<Widget>[
             const SizedBox(height: 18),
-            _Statistik(role: role),
+            _Statistik(role: role, anggota: anggota),
           ],
           const SizedBox(height: 22),
           const SectionHeader(title: 'Hak akses kamu'),
@@ -132,10 +132,17 @@ class _Header extends StatelessWidget {
 }
 
 class _KartuAnggota extends StatelessWidget {
-  const _KartuAnggota({required this.nama, required this.role});
+  const _KartuAnggota({
+    required this.nama,
+    required this.role,
+    required this.anggota,
+  });
 
   final String nama;
   final UserRole role;
+
+  /// Datanya lewat repository (lihat `profilProvider` di ProfileScreen).
+  final Anggota anggota;
 
   @override
   Widget build(BuildContext context) {
@@ -280,9 +287,10 @@ class _AjukanVerifikasi extends StatelessWidget {
 }
 
 class _Statistik extends StatelessWidget {
-  const _Statistik({required this.role});
+  const _Statistik({required this.role, required this.anggota});
 
   final UserRole role;
+  final Anggota anggota;
 
   @override
   Widget build(BuildContext context) {

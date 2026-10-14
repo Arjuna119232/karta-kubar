@@ -5,8 +5,8 @@ import '../../kegiatan/domain/kegiatan.dart';
 
 /// Format payload QR absen. Dipakai untuk membuat QR dan membacanya kembali.
 String absenPayload(Kegiatan a) =>
-    'karta-kubar://absen/${a.date.year}${a.date.month.toString().padLeft(2, '0')}'
-    '${a.date.day.toString().padLeft(2, '0')}/${Uri.encodeComponent(a.title)}';
+    'karta-kubar://absen/${a.tanggal!.year}${a.tanggal!.month.toString().padLeft(2, '0')}'
+    '${a.tanggal!.day.toString().padLeft(2, '0')}/${Uri.encodeComponent(a.judul)}';
 
 /// Baca balik payload QR -> judul kegiatan, atau null kalau bukan QR absen.
 String? parseAbsenPayload(String payload) {
@@ -64,13 +64,13 @@ class AbsenNotifier extends StateNotifier<List<Kehadiran>> {
     StatusKehadiran status, {
     DateTime? pada,
   }) {
-    final DateTime waktu = pada ?? kegiatan.date;
-    if (sudahAbsen(kegiatan.title, waktu)) return false;
+    final DateTime waktu = pada ?? kegiatan.tanggal ?? DateTime.now();
+    if (sudahAbsen(kegiatan.judul, waktu)) return false;
     state = <Kehadiran>[
       Kehadiran(
-        kegiatan: kegiatan.title,
+        kegiatan: kegiatan.judul,
         tanggal: waktu,
-        lokasi: kegiatan.location,
+        lokasi: kegiatan.lokasi,
         status: status,
       ),
       ...state,

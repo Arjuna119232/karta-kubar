@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// Hasil operasi data: berhasil atau gagal **dengan alasan yang bisa dibaca**.
 ///
 /// Kenapa tidak pakai `throw`? Karena kegagalan koneksi itu HAL NORMAL (HP
@@ -19,6 +21,9 @@
 class Hasil<T> {
   const Hasil.berhasil(this.data) : galat = null;
   const Hasil.gagal(this.galat) : data = null;
+
+  /// Alias Bahasa Indonesia supaya panggilan di lapisan fitur enak dibaca.
+  const Hasil.galat(GalatData e) : this.gagal(e);
 
   /// Data bila berhasil, `null` bila gagal.
   final T? data;
@@ -48,6 +53,9 @@ class Hasil<T> {
     throw (galat ?? const GalatData('Gagal tanpa alasan'));
   }
 
+  /// Alias Bahasa Indonesia dari [atauLempar].
+  T get orLempar => atauLempar;
+
   @override
   String toString() => berhasil ? 'Hasil.berhasil($data)' : 'Hasil.gagal($galat)';
 }
@@ -67,5 +75,5 @@ class GalatData implements Exception {
   final String? asli;
 
   @override
-  String toString() => 'GalatData($kode ?? '-', $pesan)';
+  String toString() => 'GalatData(${kode ?? '-'}, $pesan)';
 }
