@@ -237,7 +237,7 @@ class _GridPainter extends CustomPainter {
     final double k = 1 - (1 - (t < 0.5 ? t * 2 : (1 - t) * 2)).abs();
     final double geser = k * 100;
     final Paint cat = Paint()
-      ..color = AppColors.success.withValues(alpha: 0.20)
+      ..color = Colors.white.withValues(alpha: 0.15)
       ..strokeWidth = 0.9;
 
     canvas.save();
