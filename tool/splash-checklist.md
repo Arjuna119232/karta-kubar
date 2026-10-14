@@ -57,6 +57,26 @@ Widget splash buatan sendiri sudah **dihapus** dari `lib/features/splash/`.
 - [ ] **Harus pakai folder density, BUKAN `drawable-nodpi`.** Di `nodpi`,
       600 px = 600 dp = **delapan kali** lebih besar dari slot 200 dp.
 
+### Format kredit
+
+- [x] **Satu baris, campur huruf besar-kecil:** `from Katar KunBar`
+      (bukan dua baris `From` / `KATAR KUNBAR` seperti versi pertama).
+- [x] **Bobot ringan** (Roboto **Light**) — desain asli memakai font ringan.
+- [x] **Putih semi-transparan** (alpha 158/255 ≈ 62%).
+- [x] **Menempati 71% lebar slot 200 dp**, sisa 29 dp kiri-kanan.
+      Ada guard: teks **>90%** akan terpotong tepi glyph, **<45%** jadi
+      kekecilan — keduanya exit 1.
+- [x] **Tidak ada elemen apa pun di antara `CONNECT` dan kredit.**
+- [x] **Titik 3 / loading dots TIDAK ADA.** Semuanya ikut terhapus bersama
+      widget splash Flutter (`_MuatTitikTiga`) waktu `lib/features/splash/`
+      dihapus di commit `c100e61`. `smooth_page_indicator` tidak pernah
+      dipakai, jadi tidak ada dependency yang perlu dihapus dari pubspec.
+- [x] **Tidak ada spinner di jalur splash.** Satu-satunya
+      `CircularProgressIndicator` yang tersisa ada di `core/router.dart:81`
+      (`RoleGate`) — HANYA di rute `/absen`, bukan splash. **Tidak boleh
+      dihapus**: itu penjaga bug "Akses Ditolak" kilat sebelum sesi selesai
+      dibaca (lihat riwayat v0.5.1).
+
 ### iOS: tidak ada slot terpisah sama sekali
 
 - [x] `UILaunchScreen` (Apple docs, iOS 14+) hanya menerima `UIColorName`,

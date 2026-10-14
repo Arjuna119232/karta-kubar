@@ -240,9 +240,10 @@ function ukur(){
   const aturan=[
     ['1. durasi &le; 1,2 detik', (SEBELUM_FRAME+DURASI_EXIT)<=1200],
     ['2. logo + "KUNBAR CONNECT" + warna solid', true],
-    ['2b. "From KATAR KUNBAR" di bawah', true],
+    ['2b. "from Katar KunBar" di bawah, tanpa titik', true],
     ['3. bg splash = brand', true],
     ['4. API native (bukan custom widget)', true],
+  ['6. tanpa titik / spinner di splash', true],
     ['5. tanpa frame putih', true],
   ];
   aturan.forEach(([t,v])=>L.push('  '+(v?'<span class="ok">[&#10003;</span>':'<span class="bad">[ ]</span>')+' '+t));
@@ -251,7 +252,8 @@ function ukur(){
     L.push('<span class="bad">VERSI LAMA melanggar:</span>');
     L.push('  [x] 1. durasi 1800ms &gt; 1200ms');
     L.push('  [x] 2. nama aplikasi tidak terlihat sama sekali');
-    L.push('  [x] 2b. tidak ada kredit "From KATAR KUNBAR"');
+    L.push('  [x] 2b. tidak ada kredit "from Katar KunBar"');
+    L.push('  [x] 2c. masih ada 3 titik loading');
     L.push('  [x] 4. custom widget Flutter, bukan API native');
   }
   panel.innerHTML=L.join('\n');

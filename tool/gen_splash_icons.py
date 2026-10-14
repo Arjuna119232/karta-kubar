@@ -37,7 +37,7 @@ PUTIH = (255, 255, 255)
 
 # --- teks yang diminta ---
 WORDMARK = "KUNBAR"
-KREDIT = "From KATAR KUNBAR"
+KREDIT = "from Katar KunBar"
 
 FONT = "/system/fonts/RobotoFlex-Regular.ttf"
 
@@ -52,9 +52,9 @@ DP_PER_PX = KOTAK_DP / CANVAS
 JARI_PX = (CIRCLE_DP / 2.0) * AMAN / DP_PER_PX
 
 
-def font_tebal(px: int) -> ImageFont.FreeTypeFont:
+def font_robot(px: int, bobot: str = "Bold") -> ImageFont.FreeTypeFont:
     f = ImageFont.truetype(FONT, px)
-    f.set_variation_by_name("Bold")
+    f.set_variation_by_name(bobot)
     return f
 
 
@@ -110,6 +110,7 @@ def teks_tracking(
     rgb: tuple[int, int, int],
     tracking: float = 0.0,
     bobot: str = "Bold",
+    alpha: int = 255,
 ) -> tuple[float, float]:
     """Gambar teks satu per huruf supaya letter-spacing bisa diatur.
 
@@ -117,12 +118,12 @@ def teks_tracking(
     Meng pakai tinggi font bikin baris meleset: Roboto punya ruang ascender
     yang jauh lebih besar dari tinggi huruf yang terlihat.
     """
-    f = font_tebal(fs)
+    f = font_robot(fs, bobot)
     d = ImageDraw.Draw(kanvas)
     lebar = sum(d.textlength(c, font=f) for c in teks) + tracking * (len(teks) - 1)
     x = cx - lebar / 2
     for c in teks:
-        d.text((x, cy), c, font=f, fill=rgb + (255,), anchor="lm")
+        d.text((x, cy), c, font=f, fill=rgb + (alpha,), anchor="lm")
         x += d.textlength(c, font=f) + tracking
     bb = d.textbbox((0, 0), teks, font=f)
     return lebar, bb[3] - bb[1]
@@ -203,22 +204,29 @@ def buat_ikon_android() -> Image.Image:
 
 
 def buat_branding() -> dict[str, Image.Image]:
-    """Gambar 'From KATAR KUNBAR' untuk slot 200x80dp di paling bawah.
+    """Kredit "from Katar KunBar" untuk slot paling bawah 200x80 dp.
 
-    Android hanya menyediakan SATU slot branding, jadi nama "From KATAR
-    KUNBAR" harus muat di sana. Lebar 200dp dipakai penuh; teks dibungkus ke
-    dua baris supaya proporsinya terbaca di layar 360dp.
+    Android hanya menyediakan SATU slot branding, jadi kredit harus muat di
+    sana. Format sengaja dipertahankan seperti desain aslinya:
+      * satu baris, campur huruf besar-kecil ("from Katar KunBar")
+      * bobot ringan (Light), bukan tebal
+      * putih agak transparan
+      * dipusatkan, tidak ada elemen lain di slot ini
+
+    Pembatasnya: slot branding TIDAK ikut berskala dengan lebar layar
+    (selalu 200dp), jadi ukuran font dipilih agar proporsinya di dalam kotak
+    200x80dp - bukan mengikuti ukuran layar.
     """
     hasil: dict[str, Image.Image] = {}
     for dens, px in (("hdpi", 1.5), ("xhdpi", 2.0), ("xxhdpi", 3.0), ("xxxhdpi", 4.0)):
         W = round(BRANDING_DP[0] * px)
         H = round(BRANDING_DP[1] * px)
         c = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-        fs = round(H * 0.26)
-        # "From KATAR KUNBAR" -> dua baris supaya proporsinya pas di 200dp
-        teks_tracking(c, "From", W / 2, H * 0.36, fs, PUTIH, tracking=fs * 0.14)
-        teks_tracking(c, "KATAR KUNBAR", W / 2, H * 0.70, fs, PUTIH,
-                      tracking=fs * 0.10)
+        fs = round(H * 0.21)
+        teks_tracking(
+            c, KREDIT, W / 2, H / 2, fs, PUTIH,
+            tracking=fs * 0.02, bobot="Light", alpha=158,
+        )
         hasil[f"splash_branding_{dens}.png"] = c
     return hasil
 
@@ -276,10 +284,20 @@ def cek_branding(nama: str, dens: float) -> None:
     mau = (round(BRANDING_DP[0] * dens), round(BRANDING_DP[1] * dens))
     if im.size != mau:
         raise SystemExit(f"FAIL: {nama} {im.size}, harusnya {mau}")
-    if im.convert("RGBA").split()[3].getbbox() is None:
+    bb = im.convert("RGBA").split()[3].getbbox()
+    if bb is None:
         raise SystemExit(f"FAIL: {nama} kosong")
+    # Teks tidak boleh <= 90% atau >= 95% lebar slot: kecil sekali hilang
+    # credibility, penuh sampai tepi akan terpotong tepi glyph.
+    isi = (bb[2] - bb[0]) / im.size[0] * 100
+    if isi > 90:
+        raise SystemExit(
+            f"FAIL: {nama} teks mengisi {isi:.0f}% dari slot - tepi glyph akan terpotong"
+        )
+    if isi < 45:
+        raise SystemExit(f"FAIL: {nama} teks cuma {isi:.0f}% dari slot - kekecilan")
     print(f"      OK  {nama:32s} {im.size[0]}x{im.size[1]}px = "
-          f"{im.size[0] / dens:.0f}x{im.size[1] / dens:.0f}dp")
+          f"{im.size[0] / dens:.0f}x{im.size[1] / dens:.0f}dp  teks {isi:.0f}%")
 
 
 def main() -> int:
