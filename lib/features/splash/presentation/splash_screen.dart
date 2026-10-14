@@ -8,6 +8,12 @@ import '../../../core/auth/session.dart';
 import '../../../core/theme/app_colors.dart';
 
 /// Splash 1,8 detik lalu ke beranda / onboarding (sekali) / login.
+///
+/// Tata letak: blok konten (logo - wordmark - lokasi - loading) memakai
+/// `Center` di dalam `Stack`, sehingga benar-benar berada di tengah area
+/// aman. `from Katar KunBar` menempel di paling bawah lewat `Positioned`.
+/// Jangan pakai `Column` + `Spacer(flex:)` untuk ini: Spacer bukan centering
+/// dan footer ikut merebut ruang, sehingga blok konten terlihat meleset ke atas.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -16,6 +22,10 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  /// Hijau muda netral untuk teks di atas hijau solid. Bukan warna karangan:
+  /// diturunkan dari `AppColors.primary` denganCampuran putih.
+  static const Color hijauMuda = Color(0xFFE8F5E9);
+
   @override
   void initState() {
     super.initState();
@@ -59,84 +69,76 @@ class _SplashScreenState extends State<SplashScreen> {
           Container(color: AppColors.primary),
           const _GridBergerak(),
           // (2) cahaya berdenyut di belakang logo
-          Center(child: _DenyutRadial(ukuran: 210 * u)),
-          // (3) blok konten: centering sejati di area aman
+          Center(child: _DenyutRadial(ukuran: 250 * u)),
+          // (3) Stack di dalam SafeArea: blok konten centering SEJATI di
+          // tengah area aman, footer menempel di paling bawah. Jangan pakai
+          // Column + Spacer(flex:) - Spacer bukan centering.
           SafeArea(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  // (4) logo: emblem + bernapas
-                  const _LogoBernapas(),
-                  SizedBox(height: 34 * u),
-                  // teks
-                  _Masuk(
-                    delay: 0,
-                    scale: true,
-                    child: Column(
-                      children: <Widget>[
-                        Text(
-                          'KUNBAR',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 30 * u,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 5.0 * u,
-                            height: 1,
-                          ),
-                        ),
-                        SizedBox(height: 9 * u),
-                        Container(
-                          width: 26 * u,
-                          height: 3 * u,
-                          decoration: BoxDecoration(
-                            color: AppColors.secondary,
-                            borderRadius: BorderRadius.circular(2 * u),
-                          ),
-                        ),
-                        SizedBox(height: 9 * u),
-                        Text(
+            child: Stack(
+              children: <Widget>[
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      // (4) logo: emblem + bernapas, masuk dengan lengkung pegas
+                      _Masuk(
+                        scale: true,
+                        child: _LogoBernapas(ukuran: 136 * u),
+                      ),
+                      SizedBox(height: 30 * u),
+                      // (5) wordmark: huruf muncul satu per satu
+                      _Wordmark(u: u),
+                      SizedBox(height: 11 * u),
+                      _Masuk(
+                        delay: 560,
+                        child: Text(
                           'CONNECT',
                           style: TextStyle(
-                            color: const Color(0xFFC8E6C9),
-                            fontSize: 11 * u,
+                            color: hijauMuda.withValues(alpha: 0.72),
+                            fontSize: 10.5 * u,
                             fontWeight: FontWeight.w600,
-                            letterSpacing: 5.5 * u,
+                            letterSpacing: 6 * u,
                             height: 1,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 26 * u),
-                  _Masuk(
-                    delay: 220,
-                    child: Text(
-                      'Kuningan Barat  ·  Jakarta Selatan',
-                      style: TextStyle(
-                        color: const Color(0xFFC8E6C9).withValues(alpha: 0.78),
-                        fontSize: 12.5 * u,
-                        height: 1.2,
                       ),
-                    ),
+                      SizedBox(height: 26 * u),
+                      _Masuk(
+                        delay: 240,
+                        child: Text(
+                          'Kuningan Barat  ·  Jakarta Selatan',
+                          style: TextStyle(
+                            color: hijauMuda.withValues(alpha: 0.80),
+                            fontSize: 12.5 * u,
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 30 * u),
+                      // (6) loading: tiga pill yang berubah bentuk
+                      _Masuk(delay: 340, child: _MuatPill(u: u)),
+                    ],
                   ),
-                  SizedBox(height: 12 * u),
-                  _Masuk(
-                    delay: 300,
+                ),
+                // (7) footer: paling bawah, DI BAWAH loading
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 18 * u,
+                  child: _Masuk(
+                    delay: 520,
                     child: Text(
                       'from Katar KunBar',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: const Color(0xFFC8E6C9).withValues(alpha: 0.55),
-                        fontSize: 10 * u,
+                        color: hijauMuda.withValues(alpha: 0.55),
+                        fontSize: 10.5 * u,
                         height: 1.2,
                       ),
                     ),
                   ),
-                  SizedBox(height: 46 * u),
-                  // (5) tiga titik loading berdenyut
-                  _TitikMemuat(),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -189,7 +191,7 @@ class _GridPainter extends CustomPainter {
     final double k = 1 - (1 - (t < 0.5 ? t * 2 : (1 - t) * 2)).abs();
     final double geser = k * 100;
     final Paint cat = Paint()
-      ..color = AppColors.success.withValues(alpha: 0.30)
+      ..color = AppColors.success.withValues(alpha: 0.20)
       ..strokeWidth = 0.9;
 
     canvas.save();
@@ -210,7 +212,9 @@ class _GridPainter extends CustomPainter {
   bool shouldRepaint(covariant _GridPainter old) => old.t != t;
 }
 
-/// (2) Cahaya radial: jari-jari bernapas 430 -> 470 -> 430 (4 detik).
+/// (2) Cahaya radial di belakang logo: jari-jari bernapas + intensitas.
+/// Warnanya putih netral, bukan kuning, supaya tidak tersisa warna kuning
+/// di layar splash.
 class _DenyutRadial extends StatefulWidget {
   const _DenyutRadial({required this.ukuran});
 
@@ -238,11 +242,11 @@ class _DenyutRadialState extends State<_DenyutRadial>
     return AnimatedBuilder(
       animation: _c,
       builder: (_, __) {
-        final double denyut = 1 + 0.045 * math.sin(_c.value * 2 * math.pi);
+        final double denyut = 1 + 0.05 * math.sin(_c.value * 2 * math.pi);
         return Transform.scale(
           scale: denyut,
           child: Opacity(
-            opacity: 0.82 + 0.18 * _c.value,
+            opacity: 0.70 + 0.30 * _c.value,
             child: Container(
               width: widget.ukuran,
               height: widget.ukuran,
@@ -250,7 +254,7 @@ class _DenyutRadialState extends State<_DenyutRadial>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: <Color>[
-                    AppColors.secondary.withValues(alpha: 0.16),
+                    Colors.white.withValues(alpha: 0.13),
                     AppColors.primary.withValues(alpha: 0),
                   ],
                 ),
@@ -265,7 +269,9 @@ class _DenyutRadialState extends State<_DenyutRadial>
 
 /// (4) Logo emblem (PNG monokrom putih) + bernapas 1 -> 1.03 -> 1 (3 detik).
 class _LogoBernapas extends StatefulWidget {
-  const _LogoBernapas();
+  const _LogoBernapas({required this.ukuran});
+
+  final double ukuran;
 
   @override
   State<_LogoBernapas> createState() => _LogoBernapasState();
@@ -286,16 +292,14 @@ class _LogoBernapasState extends State<_LogoBernapas>
 
   @override
   Widget build(BuildContext context) {
-    final Size layar = MediaQuery.sizeOf(context);
-    final double u = (layar.shortestSide / 360).clamp(1.0, 1.22);
     return AnimatedBuilder(
       animation: _c,
       builder: (_, __) => Transform.scale(
         scale: 1 + 0.03 * _c.value,
         child: Image.asset(
           'assets/brand/emblem-512.png',
-          width: 150 * u,
-          height: 150 * u,
+          width: widget.ukuran,
+          height: widget.ukuran,
           fit: BoxFit.contain,
           // Logos biasanya tidak ikut filter tema gelap.
           filterQuality: FilterQuality.high,
@@ -305,17 +309,106 @@ class _LogoBernapasState extends State<_LogoBernapas>
   }
 }
 
-/// (5) Tiga titik loading berdenyut, jeda 0,2 dan 0,4 detik.
-class _TitikMemuat extends StatefulWidget {
+/// (5) Wordmark KUNBAR: tiap huruf masuk bergeser dari bawah, berurutan.
+class _Wordmark extends StatefulWidget {
+  const _Wordmark({required this.u});
+
+  final double u;
+
   @override
-  State<_TitikMemuat> createState() => _TitikMemuatState();
+  State<_Wordmark> createState() => _WordmarkState();
 }
 
-class _TitikMemuatState extends State<_TitikMemuat>
+class _WordmarkState extends State<_Wordmark>
     with SingleTickerProviderStateMixin {
+  static const String teks = 'KUNBAR';
+
+  /// Jeda antar huruf sebagai pecahan dari total animasi.
+  static const double stagger = 0.09;
+
   late final AnimationController _c = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1200),
+    duration: const Duration(milliseconds: 900),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    // Logo sudah masuk duluan, jadi wordmark baru mulai sedikit kemudian.
+    Future<void>.delayed(const Duration(milliseconds: 120), () {
+      if (mounted) _c.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final double fs = 31 * widget.u;
+    final double jarak = 5.5 * widget.u;
+    final List<String> huruf = teks.split('');
+    // Huruf terakhir harus selesai tepat di nilai 1.0.
+    final double rentang = 1 - stagger * (huruf.length - 1);
+
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (_, __) => Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: List<Widget>.generate(huruf.length, (int i) {
+          final double v =
+              ((_c.value - stagger * i) / rentang).clamp(0.0, 1.0);
+          final double k = Curves.easeOutCubic.transform(v);
+          return Padding(
+            padding: EdgeInsets.only(
+              right: i == huruf.length - 1 ? 0 : jarak,
+            ),
+            child: Opacity(
+              opacity: k,
+              child: Transform.translate(
+                offset: Offset(0, 14 * (1 - k)),
+                child: Text(
+                  huruf[i],
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: fs,
+                    fontWeight: FontWeight.w800,
+                    height: 1,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+/// (6) Loading modern: tiga pill yang berubah dari bulat jadi lonjong,
+/// saling bergeser fase. Bentuknya "melompat" lembut, bukan titik statis.
+class _MuatPill extends StatefulWidget {
+  const _MuatPill({required this.u});
+
+  final double u;
+
+  @override
+  State<_MuatPill> createState() => _MuatPillState();
+}
+
+class _MuatPillState extends State<_MuatPill>
+    with SingleTickerProviderStateMixin {
+  static const double lebarDasar = 7;
+  static const double lebarMaks = 26;
+  static const double tinggi = 7;
+
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1500),
   )..repeat();
 
   @override
@@ -326,33 +419,41 @@ class _TitikMemuatState extends State<_TitikMemuat>
 
   @override
   Widget build(BuildContext context) {
-    final Size layar = MediaQuery.sizeOf(context);
-    final double u = (layar.shortestSide / 360).clamp(1.0, 1.22);
+    final double jarak = 9 * widget.u;
     return AnimatedBuilder(
       animation: _c,
       builder: (_, __) => Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          _titik(_c.value, 0),
-          SizedBox(width: 14 * u),
-          _titik(_c.value, 0.2),
-          SizedBox(width: 14 * u),
-          _titik(_c.value, 0.4),
+          _pill(_c.value, 0.00, jarak, true),
+          _pill(_c.value, 0.18, jarak, true),
+          _pill(_c.value, 0.36, jarak, false),
         ],
       ),
     );
   }
 
-  Widget _titik(double t, double jeda) {
-    // geser fase supaya titik berikutnya ikut berdenyut
-    final double p = ((t + jeda) % 1.0);
-    final double v = 0.35 + 0.65 * (0.5 - 0.5 * math.cos(p * 2 * math.pi));
-    return Container(
-      width: 7,
-      height: 7,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: const Color(0xFFC8E6C9).withValues(alpha: v),
+  Widget _pill(double t, double jeda, double jarak, bool adaJarak) {
+    final double p = (t + jeda) % 1.0;
+    // 0 -> 1 -> 0 dengan ease-in-out, lalu dihaluskan lagi (smoothstep)
+    // supaya tidak terlihat "patah" di titik balik.
+    final double m = 0.5 - 0.5 * math.cos(p * 2 * math.pi);
+    final double k = m * m * (3 - 2 * m);
+    final double lebar = lebarDasar + (lebarMaks - lebarDasar) * k;
+    // Jarak hanya di antara pill. Kalau pill terakhir juga diberi padding,
+    // barisnya melebar 1x jarak dan seluruh kelompok bergeser ke kiri.
+    return Padding(
+      padding: EdgeInsets.only(right: adaJarak ? jarak : 0),
+      // Container biasa, bukan AnimatedContainer: lebarnya sudah berubah
+      // tiap frame dari AnimatedBuilder, animasi tambahan justru menambah
+      // jank.
+      child: Container(
+        width: lebar,
+        height: tinggi,
+        decoration: BoxDecoration(
+          color: _SplashScreenState.hijauMuda.withValues(alpha: 0.55 + 0.45 * k),
+          borderRadius: BorderRadius.circular(tinggi),
+        ),
       ),
     );
   }

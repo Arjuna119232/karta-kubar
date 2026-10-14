@@ -1,17 +1,18 @@
-### KUNBAR Connect v0.6.1
+### KUNBAR Connect v0.7.0
 
-Ikon sendiri, ilustrasi sendiri, dan splash memakai desain baru.
+Splash dan tiga sampul ditulis ulang: lebih bersih, lebih hidup, dan tidak melompat lagi.
 
-**Ikon & ilustrasi**
-- 125 ikon dan 13 ilustrasi buatan sendiri, bukan ikon bawaan sistem
-- Dua warna: aktif dan non-aktif
+**Splash**
+- Garis kuning di bawah tulisan KUNBAR dihapus
+- Tulisan "from Katar KunBar" pindah ke paling bawah, di bawah baris loading
+- Blok logo, tulisan, dan loading benar-benar di tengah layar
+- Huruf KUNBAR muncul satu per satu dari bawah
+- Loading berubah dari tiga titik statis jadi tiga pil yang melebar dan mengecil bergantian
+- Grid latar dibuat lebih halus supaya tidak bersaing dengan logo
 
-**Splash baru**
-- Latar hijau dengan pola halus yang bergerak
-- Logo emblem BERDENYUT dan cahaya di belakangnya ikut berdenyut
-- Tiga titik loading berdenyut berurutan
-- Teks masuk berurutan saat aplikasi dibuka
-
-**Mode demo**
-- Kode OTP 123456 dan pengalih level akses aktif
-- Setelah backend siap, build dengan KUNBAR_DEMO=false
+**Tiga sampul**
+- Ilustrasi masuk dengan lengkung pegas lalu melayang pelan-pelan
+- Judul dan isi keluar berurutan dari bawah
+- Cahaya lembut warna-warna sampul di belakang ilustrasi
+- Posisi ilustrasi dikunci, tidak lagi melompat saat halaman digeser
+- Ukuran ilustrasi mengikuti lebar layar, tidak meluber di HP kecil

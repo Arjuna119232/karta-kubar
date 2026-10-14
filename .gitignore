@@ -23,3 +23,7 @@ web/
 key.properties
 .env
 google-services.json
+
+# Hasil render pratinjau (dihasilkan ulang oleh design/preview_baru.py)
+design/pratinjau-*.png
+design/.cache-*.png
