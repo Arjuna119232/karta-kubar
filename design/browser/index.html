@@ -64,6 +64,12 @@ body{
   width:110px;height:4px;border-radius:999px;background:rgba(255,255,255,.55);
 }
 .sysbar.dark{color:#111}
+.baterai{display:flex;gap:2px;align-items:flex-end}
+.baterai i{display:block;width:3px;background:currentColor;border-radius:1px}
+.baterai i:nth-child(1){height:4px}
+.baterai i:nth-child(2){height:6px}
+.baterai i:nth-child(3){height:8px}
+.baterai i:nth-child(4){height:10px}
 
 /* ======================= SPLASH ======================= */
 #splash{position:absolute;inset:0;background:var(--primary);overflow:hidden}
@@ -247,7 +253,7 @@ body{
 </div>
 
 <div class="hp" id="hp">
-  <div class="sysbar" id="sysbar"><span>07:58</span><span>▮▮▮ 100%</span></div>
+  <div class="sysbar" id="sysbar"><span>07:58</span><span class="baterai"><i></i><i></i><i></i><i></i></span></div>
 
   <!-- ============ SPLASH ============ -->
   <div id="splash">

@@ -153,7 +153,7 @@ def verify(path: pathlib.Path) -> bool:
     if is_kts and "import java.util.Properties" not in out:
         problems.append("import Properties hilang")
     if out.count("signingConfigs {") != 1:
-        problems.append(f"signingConfigs块 jumlah = {out.count('signingConfigs {')}")
+        problems.append(f"jumlah blok signingConfigs = {out.count('signingConfigs {')}")
     for p in problems:
         print(f"FAIL: {p}")
     return not problems

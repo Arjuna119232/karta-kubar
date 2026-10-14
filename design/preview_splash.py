@@ -22,7 +22,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 OUT = Path(__file__).resolve().parent
 
-#设备 nyata
+# Perangkat nyata
 DEVICES = [
     # nama, lebar dp, tinggi dp, inset atas, inset bawah
     ("kecil", 360, 800, 28, 24),
