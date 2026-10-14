@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/data/data_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/data/seed_data.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/app_icon.dart';
+import '../domain/keuangan.dart';
 
-class KeuanganScreen extends StatelessWidget {
+/// Layar keuangan. Data SELALU lewat repository (`iuranProvider`), bukan
+/// membaca data demo langsung, supaya sumber data bisa diganti tanpa mengubah
+/// satu baris pun di sini.
+class KeuanganScreen extends ConsumerWidget {
   const KeuanganScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AsyncValue<List<Iuran>> iuran = ref.watch(iuranProvider);
     return SafeArea(
       bottom: false,
       child: ListView(
@@ -26,7 +32,7 @@ class KeuanganScreen extends StatelessWidget {
           const AppCard(child: _KasChart()),
           const SizedBox(height: AppSpacing.section),
           const SectionHeader(title: 'Iuran Saya'),
-          const _IuranCard(),
+          _IuranCard(iuran: iuran),
           const SizedBox(height: AppSpacing.section),
           const SectionHeader(title: 'Transparansi'),
           const _TransparansiCard(),
@@ -147,28 +153,39 @@ class _MiniStat extends StatelessWidget {
   }
 }
 
-class _KasChart extends StatelessWidget {
+class _KasChart extends ConsumerWidget {
   const _KasChart();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Grafik kas diambil lewat repository yang sama dengan iuran.
+    final Future<List<KasBulanan>> kas =
+        ref.read(iuranProvider.notifier).kas();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         SizedBox(
           height: 160,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: <Widget>[
-              for (final List<Object> e in SeedData.kasBulanan)
-                Expanded(
-                  child: _Bar(
-                    label: e[0] as String,
-                    value: e[1] as double,
-                    max: 14,
-                  ),
-                ),
-            ],
+          child: FutureBuilder<List<KasBulanan>>(
+            future: kas,
+            builder: (BuildContext context,
+                AsyncSnapshot<List<KasBulanan>> snap) {
+              final List<KasBulanan> data = snap.data ?? const <KasBulanan>[];
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  for (int i = 0; i < data.length; i++)
+                    Expanded(
+                      child: _Bar(
+                        label: data[i].label,
+                        value: data[i].juta,
+                        max: 14,
+                        isLast: i == data.length - 1,
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         ),
         const SizedBox(height: 12),
@@ -194,16 +211,23 @@ class _KasChart extends StatelessWidget {
 }
 
 class _Bar extends StatelessWidget {
-  const _Bar({required this.label, required this.value, required this.max});
+  const _Bar({
+    required this.label,
+    required this.value,
+    required this.max,
+    required this.isLast,
+  });
 
   final String label;
   final double value;
   final double max;
 
+  /// Bar bulan terakhir diberi warna penuh, yang lain redup.
+  final bool isLast;
+
   @override
   Widget build(BuildContext context) {
     final double ratio = (value / max).clamp(0.05, 1.0);
-    final bool isLast = label == (SeedData.kasBulanan.last[0] as String);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 5),
@@ -243,24 +267,46 @@ class _Bar extends StatelessWidget {
 }
 
 class _IuranCard extends StatelessWidget {
-  const _IuranCard();
+  const _IuranCard({required this.iuran});
+
+  final AsyncValue<List<Iuran>> iuran;
 
   @override
   Widget build(BuildContext context) {
     return AppCard(
       padding: EdgeInsets.zero,
-      child: Column(
-        children: <Widget>[
-          for (int i = 0; i < SeedData.iuran.length; i++) ...<Widget>[
-            _IuranRow(
-              label: SeedData.iuran[i][0] as String,
-              amount: SeedData.iuran[i][1] as int,
-              paid: SeedData.iuran[i][2] as bool,
-            ),
-            if (i != SeedData.iuran.length - 1)
-              Divider(height: 1, color: context.semantic.line),
-          ],
-        ],
+      child: iuran.when(
+        loading: () => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 28),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (Object e, StackTrace st) => Padding(
+          padding: const EdgeInsets.all(20),
+          child: Text('Iuran belum bisa dimuat: $e',
+              style: context.text.bodyMedium
+                  ?.copyWith(color: context.colors.error)),
+        ),
+        data: (List<Iuran> rows) {
+          if (rows.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(24),
+              child: Text('Belum ada riwayat iuran.'),
+            );
+          }
+          return Column(
+            children: <Widget>[
+              for (int i = 0; i < rows.length; i++) ...<Widget>[
+                _IuranRow(
+                  label: rows[i].periode,
+                  amount: rows[i].nominal,
+                  paid: rows[i].lunas,
+                ),
+                if (i != rows.length - 1)
+                  Divider(height: 1, color: context.semantic.line),
+              ],
+            ],
+          );
+        },
       ),
     );
   }

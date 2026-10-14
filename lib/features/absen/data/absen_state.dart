@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/data/seed_data.dart';
 import '../domain/kehadiran.dart';
+import '../../kegiatan/domain/kegiatan.dart';
 
 /// Format payload QR absen. Dipakai untuk membuat QR dan membacanya kembali.
-String absenPayload(Activity a) =>
+String absenPayload(Kegiatan a) =>
     'karta-kubar://absen/${a.date.year}${a.date.month.toString().padLeft(2, '0')}'
     '${a.date.day.toString().padLeft(2, '0')}/${Uri.encodeComponent(a.title)}';
 
@@ -60,7 +60,7 @@ class AbsenNotifier extends StateNotifier<List<Kehadiran>> {
 
   /// Catat kehadiran. Tidak menimpa data yang sudah ada.
   bool catat(
-    Activity kegiatan,
+    Kegiatan kegiatan,
     StatusKehadiran status, {
     DateTime? pada,
   }) {

@@ -5,23 +5,27 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/session.dart';
 import '../../../core/providers.dart';
+import '../../../core/data/data_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_id.dart';
-import '../../../shared/data/seed_data.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/fade_slide_in.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/stat_tile.dart';
 
+import '../../kegiatan/domain/kegiatan.dart';
+
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final List<Activity> upcoming =
-        SeedData.activities.where((Activity a) => a.upcoming).toList();
+    final List<Kegiatan> upcoming = (ref.watch(kegiatanProvider).valueOrNull ??
+            const <Kegiatan>[])
+        .where((Kegiatan a) => a.mendatang)
+        .toList();
     final Session session = ref.watch(sessionProvider);
     final String nama = session.user?.name ?? 'Warga KUNBAR';
 
@@ -69,7 +73,7 @@ class HomeScreen extends ConsumerWidget {
             onAction: () =>
                 ref.read(navigationIndexProvider.notifier).state = 1,
           ),
-          for (final (int i, Activity a) in upcoming.indexed)
+          for (final (int i, Kegiatan a) in upcoming.indexed)
             FadeSlideIn(
               index: 4 + i,
               child: Padding(
@@ -79,7 +83,8 @@ class HomeScreen extends ConsumerWidget {
             ),
           const SizedBox(height: 10),
           const SectionHeader(title: 'Berita Terbaru'),
-          for (final (int i, NewsItem n) in SeedData.news.indexed)
+          for (final (int i, Berita n) in
+              (ref.watch(beritaProvider).valueOrNull ?? const <Berita>[]).indexed)
             FadeSlideIn(
               index: 6 + i,
               child: Padding(
@@ -198,14 +203,15 @@ class _IconBadge extends StatelessWidget {
   }
 }
 
-class _AnnouncementCarousel extends StatefulWidget {
+class _AnnouncementCarousel extends ConsumerStatefulWidget {
   const _AnnouncementCarousel();
 
   @override
-  State<_AnnouncementCarousel> createState() => _AnnouncementCarouselState();
+  ConsumerState<_AnnouncementCarousel> createState() =>
+      _AnnouncementCarouselState();
 }
 
-class _AnnouncementCarouselState extends State<_AnnouncementCarousel> {
+class _AnnouncementCarouselState extends ConsumerState<_AnnouncementCarousel> {
   final PageController _controller = PageController();
   int _page = 0;
 
@@ -217,7 +223,21 @@ class _AnnouncementCarouselState extends State<_AnnouncementCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    const List<Announcement> items = SeedData.announcements;
+    // Pengumuman lewat repository, sama seperti berita di atas.
+    final Future<List<Pengumuman>> memuat =
+        ref.read(beritaProvider.notifier).pengumuman();
+    return FutureBuilder<List<Pengumuman>>(
+      future: memuat,
+      builder: (BuildContext context, AsyncSnapshot<List<Pengumuman>> snap) {
+        final List<Pengumuman> items =
+            snap.data ?? const <Pengumuman>[];
+        return _carousel(items);
+      },
+    );
+  }
+
+  Widget _carousel(List<Pengumuman> items) {
+    if (items.isEmpty) return const SizedBox(height: 158);
     return Column(
       children: <Widget>[
         SizedBox(
@@ -227,7 +247,7 @@ class _AnnouncementCarouselState extends State<_AnnouncementCarousel> {
             itemCount: items.length,
             onPageChanged: (int i) => setState(() => _page = i),
             itemBuilder: (BuildContext context, int i) {
-              final Announcement a = items[i];
+              final Pengumuman a = items[i];
               return _AnnouncementCard(item: a);
             },
           ),
@@ -259,7 +279,7 @@ class _AnnouncementCarouselState extends State<_AnnouncementCarousel> {
 class _AnnouncementCard extends StatelessWidget {
   const _AnnouncementCard({required this.item});
 
-  final Announcement item;
+  final Pengumuman item;
 
   @override
   Widget build(BuildContext context) {
@@ -408,7 +428,7 @@ class _QuickItem {
 class _AgendaTile extends StatelessWidget {
   const _AgendaTile({required this.activity});
 
-  final Activity activity;
+  final Kegiatan activity;
 
   @override
   Widget build(BuildContext context) {
@@ -459,7 +479,7 @@ class _AgendaTile extends StatelessWidget {
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(
-                        '${activity.location} · ${DateId.tanggal(activity.date)}',
+                        '${activity.lokasi} · ${DateId.tanggal(activity.tanggal)}',
                         style: context.text.bodySmall
                             ?.copyWith(color: context.semantic.textSecondary),
                         overflow: TextOverflow.ellipsis,
@@ -497,7 +517,7 @@ class _AgendaTile extends StatelessWidget {
 class _NewsTile extends StatelessWidget {
   const _NewsTile({required this.item});
 
-  final NewsItem item;
+  final Berita item;
 
   @override
   Widget build(BuildContext context) {

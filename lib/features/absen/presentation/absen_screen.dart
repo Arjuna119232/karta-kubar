@@ -3,16 +3,18 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import '../../../core/data/data_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_id.dart';
-import '../../../shared/data/seed_data.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/stat_tile.dart';
 import '../data/absen_state.dart';
 import '../domain/kehadiran.dart';
 import '../../../shared/widgets/app_icon.dart';
+
+import '../../kegiatan/domain/kegiatan.dart';
 
 class AbsenScreen extends ConsumerStatefulWidget {
   const AbsenScreen({super.key});
@@ -29,12 +31,12 @@ class _AbsenScreenState extends ConsumerState<AbsenScreen> {
     final List<Kehadiran> riwayat = ref.watch(absenProvider);
     final AbsenNotifier ctrl = ref.read(absenProvider.notifier);
 
-    final List<Activity> selesai = SeedData.activities
-        .where((Activity a) => !a.upcoming)
-        .toList();
-    final List<Activity> mendatang = SeedData.activities
-        .where((Activity a) => a.upcoming)
-        .toList();
+    final List<Kegiatan> semua =
+        ref.watch(kegiatanProvider).valueOrNull ?? const <Kegiatan>[];
+    final List<Kegiatan> selesai =
+        semua.where((Kegiatan a) => !a.mendatang).toList();
+    final List<Kegiatan> mendatang =
+        semua.where((Kegiatan a) => a.mendatang).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -106,7 +108,7 @@ class _AbsenScreenState extends ConsumerState<AbsenScreen> {
                   if (selesai.isNotEmpty) ...<Widget>[
                     const SizedBox(height: 8),
                     const SectionHeader(title: 'Kegiatan Selesai'),
-                    for (final Activity a in selesai)
+                    for (final Kegiatan a in selesai)
                       Padding(
                         padding: const EdgeInsets.only(bottom: AppSpacing.gap),
                         child: _SelesaiTile(
@@ -131,7 +133,7 @@ class _AbsenScreenState extends ConsumerState<AbsenScreen> {
   }
 
   void _catat(
-      BuildContext context, AbsenNotifier ctrl, Activity a) {
+      BuildContext context, AbsenNotifier ctrl, Kegiatan a) {
     final bool ok = ctrl.catat(a, StatusKehadiran.hadir);
     HapticFeedback.mediumImpact();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -282,11 +284,17 @@ class _ScannerSheetState extends State<_ScannerSheet> {
     );
   }
 
-  Activity _cocok(String judul) {
-    for (final Activity a in SeedData.activities) {
-      if (a.title == judul) return a;
+  /// Cari kegiatan dari daftar yang sudah dimuat repository.
+  /// Kalau tidak ketemu (mis. judul kegiatan dihapus admin), pakai yang
+  /// pertama - lebih baik daripada `.first` yang bisa melempar.
+  Kegiatan _cocok(String judul) {
+    final List<Kegiatan> semua =
+        ref.watch(kegiatanProvider).valueOrNull ?? const <Kegiatan>[];
+    if (semua.isEmpty) return const Kegiatan.cadangan;
+    for (final Kegiatan a in semua) {
+      if (a.judul == judul) return a;
     }
-    return SeedData.activities.first;
+    return semua.first;
   }
 
   Future<void> _mulai() async {
@@ -294,9 +302,15 @@ class _ScannerSheetState extends State<_ScannerSheet> {
     HapticFeedback.selectionClick();
     await Future<void>.delayed(const Duration(milliseconds: 1400));
     if (!mounted) return;
-    final Activity target = SeedData.activities.firstWhere(
-      (Activity a) => !a.upcoming,
-      orElse: () => SeedData.activities.first,
+    final List<Kegiatan> semua =
+        ref.watch(kegiatanProvider).valueOrNull ?? const <Kegiatan>[];
+    if (semua.isEmpty) {
+      setState(() => _memindai = false);
+      return;
+    }
+    final Kegiatan target = semua.firstWhere(
+      (Kegiatan a) => !a.mendatang,
+      orElse: () => semua.first,
     );
     final String? parsed = parseAbsenPayload(absenPayload(target));
     HapticFeedback.mediumImpact();
@@ -474,7 +488,7 @@ class _SelesaiTile extends StatelessWidget {
     required this.onIsi,
   });
 
-  final Activity kegiatan;
+  final Kegiatan kegiatan;
   final bool sudah;
   final VoidCallback onIsi;
 
@@ -488,10 +502,10 @@ class _SelesaiTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(kegiatan.title, style: context.text.titleSmall),
+                Text(kegiatan.judul, style: context.text.titleSmall),
                 const SizedBox(height: 2),
                 Text(
-                  '${DateId.tanggal(kegiatan.date)} · ${kegiatan.location}',
+                  '${DateId.tanggal(kegiatan.tanggal)} · ${kegiatan.lokasi}',
                   style: context.text.bodySmall
                       ?.copyWith(color: context.semantic.textSecondary),
                 ),
@@ -522,7 +536,7 @@ class _SelesaiTile extends StatelessWidget {
 class _PanelPenyelenggara extends StatelessWidget {
   const _PanelPenyelenggara({required this.kegiatan, required this.ctrl});
 
-  final List<Activity> kegiatan;
+  final List<Kegiatan> kegiatan;
   final AbsenNotifier ctrl;
 
   @override
@@ -533,7 +547,7 @@ class _PanelPenyelenggara extends StatelessWidget {
             style: context.text.bodyMedium),
       );
     }
-    final Activity a = kegiatan.first;
+    final Kegiatan a = kegiatan.first;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -591,7 +605,7 @@ class _PanelPenyelenggara extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.section),
         const SectionHeader(title: 'Kegiatan Mendatang'),
-        for (final Activity k in kegiatan)
+        for (final Kegiatan k in kegiatan)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.gap),
             child: AppCard(
@@ -602,10 +616,10 @@ class _PanelPenyelenggara extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Text(k.title, style: context.text.titleSmall),
+                        Text(k.judul, style: context.text.titleSmall),
                         const SizedBox(height: 2),
                         Text(
-                          '${DateId.tanggal(k.date)} · ${k.location}',
+                          '${DateId.tanggal(k.tanggal)} · ${k.lokasi}',
                           style: context.text.bodySmall?.copyWith(
                               color: context.semantic.textSecondary),
                         ),

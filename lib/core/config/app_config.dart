@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'app_env.dart';
+
 /// Konfigurasi build, diatur lewat `--dart-define` saat `flutter build`.
 class AppConfig {
   AppConfig._();
@@ -12,4 +14,23 @@ class AppConfig {
   /// - Setelah backend siap: build dengan `KUNBAR_DEMO=false`.
   static const bool demoMode =
       kDebugMode || bool.fromEnvironment('KUNBAR_DEMO', defaultValue: false);
+
+  /// Bank data yang dipakai aplikasi.
+  ///
+  /// - `lokal`    : data di perangkat + seed demo. Tanpa internet, tanpa server.
+  /// - `supabase` : data dari Supabase. Butuh [AppEnv] terisi lengkap.
+  ///
+  /// Nilai diambil dari `--dart-define` (lihat `.env.example`). Bawaan `lokal`
+  /// supaya aplikasi yang belum punya konfigurasi backend tetap jalan utuh.
+  static String get sumberData {
+    const String v = String.fromEnvironment('SUMBER_DATA');
+    return v.isEmpty ? 'lokal' : v;
+  }
+
+  /// True kalau aplikasi harus memakai sumber data Supabase.
+  static bool get pakaiSupabase =>
+      sumberData == 'supabase' && AppEnv.fromBuild().supabaseSiap;
+
+  /// Konfigurasi backend hasil build.
+  static AppEnv get env => AppEnv.fromBuild();
 }

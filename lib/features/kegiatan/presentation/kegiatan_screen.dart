@@ -1,36 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/data/data_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_id.dart';
-import '../../../shared/data/seed_data.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/status_views.dart';
 import '../../../shared/widgets/app_icon.dart';
+import '../domain/kegiatan.dart';
 
-class KegiatanScreen extends StatefulWidget {
+/// Layar kegiatan. Data lewat repository (`kegiatanProvider`), bukan data demo.
+class KegiatanScreen extends ConsumerStatefulWidget {
   const KegiatanScreen({super.key});
 
   @override
-  State<KegiatanScreen> createState() => _KegiatanScreenState();
+  ConsumerState<KegiatanScreen> createState() => _KegiatanScreenState();
 }
 
-class _KegiatanScreenState extends State<KegiatanScreen> {
+class _KegiatanScreenState extends ConsumerState<KegiatanScreen> {
   String _category = 'Semua';
-
-  List<Activity> get _filtered => _category == 'Semua'
-      ? SeedData.activities
-      : SeedData.activities
-          .where((Activity a) => a.category == _category)
-          .toList();
 
   @override
   Widget build(BuildContext context) {
-    final List<Activity> upcoming =
-        _filtered.where((Activity a) => a.upcoming).toList();
-    final List<Activity> past =
-        _filtered.where((Activity a) => !a.upcoming).toList();
+    final AsyncValue<List<Kegiatan>> async = ref.watch(kegiatanProvider);
+    final List<Kegiatan> semua = async.valueOrNull ?? const <Kegiatan>[];
+    final List<Kegiatan> _filtered = _category == 'Semua'
+        ? semua
+        : semua.where((Kegiatan a) => a.kategori == _category).toList();
+    final List<Kegiatan> upcoming =
+        _filtered.where((Kegiatan a) => a.mendatang).toList();
+    final List<Kegiatan> past =
+        _filtered.where((Kegiatan a) => !a.mendatang).toList();
 
     return SafeArea(
       bottom: false,
@@ -59,7 +61,12 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
               children: <Widget>[
-                for (final String c in SeedData.activityCategories)
+                for (final String c in const <String>[
+                  'Semua',
+                  'Sosial',
+                  'Olahraga',
+                  'Keagamaan',
+                ])
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: _CategoryChip(
@@ -85,7 +92,7 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
                     children: <Widget>[
                       if (upcoming.isNotEmpty) ...<Widget>[
                         const _GroupLabel('Akan Datang'),
-                        for (final Activity a in upcoming)
+                        for (final Kegiatan a in upcoming)
                           Padding(
                             padding:
                                 const EdgeInsets.only(bottom: AppSpacing.gap),
@@ -94,7 +101,7 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
                       ],
                       if (past.isNotEmpty) ...<Widget>[
                         const _GroupLabel('Sudah Lewat'),
-                        for (final Activity a in past)
+                        for (final Kegiatan a in past)
                           Padding(
                             padding:
                                 const EdgeInsets.only(bottom: AppSpacing.gap),
@@ -164,11 +171,11 @@ class _CategoryChip extends StatelessWidget {
 class _ActivityCard extends StatelessWidget {
   const _ActivityCard({required this.activity});
 
-  final Activity activity;
+  final Kegiatan activity;
 
   @override
   Widget build(BuildContext context) {
-    final Color cat = categoryColor(activity.category);
+    final Color cat = warnaKategori(activity.category);
     final bool selesai = !activity.upcoming;
 
     return AppCard(
@@ -234,7 +241,7 @@ class _ActivityCard extends StatelessWidget {
       context: context,
       showDragHandle: true,
       builder: (BuildContext c) {
-        final Color cat = categoryColor(activity.category);
+        final Color cat = warnaKategori(activity.category);
         return Padding(
           padding: const EdgeInsets.fromLTRB(24, 4, 24, 32),
           child: Column(

@@ -9,11 +9,12 @@ import '../../../core/config/app_config.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/data/seed_data.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/pseudo_qr.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/app_icon.dart';
+import '../../../core/data/data_providers.dart';
+import '../domain/anggota.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -24,6 +25,9 @@ class ProfileScreen extends ConsumerWidget {
     final UserRole role = session.efektif;
     final AuthUser? user = session.user;
     final String nama = user?.name ?? 'Warga KUNBAR';
+    // Kartu anggota lewat repository, bukan data demo langsung.
+    final Anggota anggota = ref.watch(profilProvider).valueOrNull ??
+        Anggota.kosong;
 
     return SafeArea(
       bottom: false,
@@ -44,6 +48,8 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 22),
           const SectionHeader(title: 'Hak akses kamu'),
           _HakAksesCard(role: role),
+          const SectionHeader(title: 'Sumber data'),
+          const _KartuBackend(),
           const SizedBox(height: AppSpacing.gap),
           if (AppConfig.demoMode) ...<Widget>[
             const _RoleSwitcher(),
@@ -169,7 +175,7 @@ class _KartuAnggota extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '${SeedData.memberId} · ${role.label}',
+                  '${anggota.nomorAnggota} · ${role.label}',
                   style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.9), fontSize: 12),
                 ),
@@ -182,7 +188,7 @@ class _KartuAnggota extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    SeedData.memberDivision,
+                    anggota.divisi,
                     style: const TextStyle(
                         color: Colors.white,
                         fontSize: 11,
@@ -199,7 +205,7 @@ class _KartuAnggota extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
             ),
             child: PseudoQr(
-              seed: SeedData.memberId,
+              seed: anggota.nomorAnggota,
               size: 88,
               color: grad.first,
             ),
@@ -285,7 +291,7 @@ class _Statistik extends StatelessWidget {
         Expanded(
           child: _KartuAngka(
             icon: Ik.trophy,
-            nilai: '${SeedData.memberPoin}',
+            nilai: '${anggota.poin}',
             label: 'Poin kontribusi',
             warna: AppColors.warning,
           ),
@@ -294,7 +300,7 @@ class _Statistik extends StatelessWidget {
         Expanded(
           child: _KartuAngka(
             icon: Ik.checkCircle,
-            nilai: '${SeedData.memberKegiatan}',
+            nilai: '${anggota.totalKegiatan}',
             label: 'Kegiatan diikuti',
             warna: AppColors.success,
           ),
@@ -604,6 +610,52 @@ class _Baris extends StatelessWidget {
                   color: context.semantic.textSecondary),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Menampilkan sumber data yang sedang dipakai. Ini bukti bahwa lapisan
+/// repository benar-benar bekerja: layar ini tidak tahu datanya dari perangkat
+/// atau dari server, dia cuma membaca nama sumber dari repository.
+class _KartuBackend extends ConsumerWidget {
+  const _KartuBackend();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final StatusBackend s = ref.watch(statusBackendProvider);
+    final Color tone = s.supabaseSiap ? AppColors.success : AppColors.warning;
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              AppIcon(s.supabaseSiap ? Ik.shieldCheck : Ik.cloudOff,
+                  color: tone, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(s.sumber, style: context.text.titleSmall),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            s.supabaseSiap
+                ? 'Terhubung ke Supabase. Data diambil dari server.'
+                : 'Mode lokal aktif: aplikasi tetap jalan penuh tanpa internet. '
+                    'Untuk menyalakan backend, isi .env lalu build dengan '
+                    'SUMBER_DATA=supabase.',
+            style: context.text.bodyMedium
+                ?.copyWith(color: context.semantic.textSecondary),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Kunci API: ${s.ringkasanKunci}',
+            style: context.text.labelSmall
+                ?.copyWith(color: context.semantic.textSecondary),
+          ),
+        ],
       ),
     );
   }

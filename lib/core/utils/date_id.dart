@@ -11,16 +11,26 @@ class DateId {
     'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu',
   ];
 
-  static String tanggal(DateTime d) => '${d.day} ${_bulan[d.month - 1]} ${d.year}';
+  /// Tanggal lengkap, mis. "18 Okt 2026".
+  ///
+  /// [d] boleh null (kegiatan tanpa tanggal) -> hasil "&mdash;" supaya
+  /// pemanggil tidak harus menulis cek null di setiap tempat.
+  static String tanggal(DateTime? d) {
+    if (d == null) return '-';
+    return '${d.day} ${_bulan[d.month - 1]} ${d.year}';
+  }
 
   static String bulanSingkat(DateTime d) => _bulan[d.month - 1];
 
-  static String hariTanggal(DateTime d) =>
-      '${_hari[d.weekday - 1]}, ${tanggal(d)}';
+  static String hariTanggal(DateTime? d) {
+    if (d == null) return '-';
+    return '${_hari[d.weekday - 1]}, ${tanggal(d)}';
+  }
 
   static String hari(DateTime d) => _hari[d.weekday - 1];
 
-  static String hitungMundur(DateTime d) {
+  static String hitungMundur(DateTime? d) {
+    if (d == null) return '-';
     final DateTime now = DateTime.now();
     final DateTime today = DateTime(now.year, now.month, now.day);
     final DateTime target = DateTime(d.year, d.month, d.day);

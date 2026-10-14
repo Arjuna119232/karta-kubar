@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/data/seed_data.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/section_header.dart';
+import '../../../core/data/data_providers.dart';
+import '../../kegiatan/domain/kegiatan.dart';
 
-class GaleriScreen extends StatelessWidget {
+class GaleriScreen extends ConsumerWidget {
   const GaleriScreen({super.key});
 
   static const List<_Media> _media = <_Media>[
@@ -20,7 +22,7 @@ class GaleriScreen extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SafeArea(
       bottom: false,
       child: ListView(
@@ -55,7 +57,8 @@ class GaleriScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.section),
           const SectionHeader(title: 'Berita'),
-          for (final NewsItem n in SeedData.news)
+          for (final Berita n in
+              ref.watch(beritaProvider).valueOrNull ?? const <Berita>[])
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.gap),
               child: _NewsCard(item: n),
@@ -116,7 +119,7 @@ class _MediaTile extends StatelessWidget {
 class _NewsCard extends StatelessWidget {
   const _NewsCard({required this.item});
 
-  final NewsItem item;
+  final Berita item;
 
   @override
   Widget build(BuildContext context) {
