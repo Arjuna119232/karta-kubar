@@ -6,9 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/session.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/app_icon.dart';
 
 /// Kode demo karena backend belum aktif.
 const String _kodeDemo = '123456';
@@ -59,6 +61,14 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   void _verifikasi() {
     if (!_lengkap) return;
     FocusScope.of(context).unfocus();
+    if (!AppConfig.demoMode) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Verifikasi nomor belum aktif. Coba lagi di versi berikutnya.'),
+        ),
+      );
+      return;
+    }
     if (_kode.text != _kodeDemo) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -97,7 +107,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     color: context.colors.primary.withValues(alpha: 0.10),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.sms_rounded,
+                  child: AppIcon(Ik.chat,
                       size: 34, color: context.colors.primary),
                 ),
               ),
@@ -168,17 +178,19 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 14),
-              Text(
-                'Kode demo: 123456',
-                textAlign: TextAlign.center,
-                style: context.text.bodySmall
-                    ?.copyWith(color: context.semantic.textSecondary),
-              ),
+              if (AppConfig.demoMode) ...<Widget>[
+                const SizedBox(height: 14),
+                Text(
+                  'Kode demo: 123456',
+                  textAlign: TextAlign.center,
+                  style: context.text.bodySmall
+                      ?.copyWith(color: context.semantic.textSecondary),
+                ),
+              ],
               const SizedBox(height: 28),
               PrimaryButton(
                 label: 'Verifikasi',
-                icon: Icons.check_rounded,
+                icon: Ik.check,
                 onPressed: _lengkap ? _verifikasi : null,
               ),
               const SizedBox(height: 12),

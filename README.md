@@ -10,7 +10,7 @@ seluruh warga: anak muda, orang tua, RT/RW, UMKM, sampai pengurus kelurahan.
 
 ## Status Saat Ini
 
-**Versi 0.5.0+5** — Fondasi + Role System selesai.
+**Versi 0.6.1+12** — Role System + tampilan modern, siap rilis pratinjau.
 
 | Fase | Isi | Status |
 |---|---|---|

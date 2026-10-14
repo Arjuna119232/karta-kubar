@@ -7,6 +7,7 @@ import '../../../core/utils/date_id.dart';
 import '../../../shared/data/seed_data.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/status_views.dart';
+import '../../../shared/widgets/app_icon.dart';
 
 class KegiatanScreen extends StatefulWidget {
   const KegiatanScreen({super.key});
@@ -46,7 +47,7 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
                   onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Kalender kegiatan segera hadir')),
                   ),
-                  icon: const Icon(Icons.calendar_month_outlined),
+                  icon: const AppIcon(Ik.calendar),
                   tooltip: 'Kalender',
                 ),
               ],
@@ -74,7 +75,7 @@ class _KegiatanScreenState extends State<KegiatanScreen> {
           Expanded(
             child: _filtered.isEmpty
                 ? const AppEmptyState(
-                    icon: Icons.event_busy_rounded,
+                    art: 'empty_kegiatan',
                     title: 'Belum ada kegiatan',
                     message: 'Kegiatan pada kategori ini belum tersedia.',
                   )
@@ -175,6 +176,12 @@ class _ActivityCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          SizedBox(
+            height: 104,
+            width: double.infinity,
+            child: AppCover(coverKategori(activity.category), radius: 14),
+          ),
+          const SizedBox(height: 12),
           Row(
             children: <Widget>[
               Container(
@@ -212,11 +219,11 @@ class _ActivityCard extends StatelessWidget {
           Text(activity.title, style: context.text.titleMedium),
           const SizedBox(height: 10),
           _MetaRow(
-            icon: Icons.event_rounded,
+            icon: Ik.calendar,
             text: DateId.hariTanggal(activity.date),
           ),
           const SizedBox(height: 6),
-          _MetaRow(icon: Icons.place_outlined, text: activity.location),
+          _MetaRow(icon: Ik.place, text: activity.location),
         ],
       ),
     );
@@ -234,6 +241,12 @@ class _ActivityCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              SizedBox(
+                height: 130,
+                width: double.infinity,
+                child: AppCover(coverKategori(activity.category), radius: 18),
+              ),
+              const SizedBox(height: 14),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -247,16 +260,16 @@ class _ActivityCard extends StatelessWidget {
               Text(activity.title, style: c.text.headlineSmall),
               const SizedBox(height: 16),
               _MetaRow(
-                icon: Icons.event_rounded,
+                icon: Ik.calendar,
                 text: DateId.hariTanggal(activity.date),
               ),
               const SizedBox(height: 8),
-              _MetaRow(icon: Icons.place_outlined, text: activity.location),
+              _MetaRow(icon: Ik.place, text: activity.location),
               const SizedBox(height: 8),
               _MetaRow(
                 icon: activity.upcoming
-                    ? Icons.schedule_rounded
-                    : Icons.check_circle_outline_rounded,
+                    ? Ik.clock
+                    : Ik.checkCircle,
                 text: activity.upcoming
                     ? DateId.hitungMundur(activity.date)
                     : 'Kegiatan sudah selesai',
@@ -280,14 +293,14 @@ class _ActivityCard extends StatelessWidget {
 class _MetaRow extends StatelessWidget {
   const _MetaRow({required this.icon, required this.text});
 
-  final IconData icon;
+  final Ik icon;
   final String text;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: <Widget>[
-        Icon(icon, size: 16, color: context.semantic.textSecondary),
+        AppIcon(icon, size: 16, color: context.semantic.textSecondary),
         const SizedBox(width: 8),
         Expanded(
           child: Text(

@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/data/seed_data.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/section_header.dart';
+import '../../../shared/widgets/app_icon.dart';
 
 class KeuanganScreen extends StatelessWidget {
   const KeuanganScreen({super.key});
@@ -77,7 +78,7 @@ class _SaldoCard extends StatelessWidget {
                 child: _MiniStat(
                   label: 'Masuk (Okt)',
                   value: 'Rp 2.4 jt',
-                  icon: Icons.south_west_rounded,
+                  icon: Ik.southWest,
                 ),
               ),
               const SizedBox(width: 12),
@@ -85,7 +86,7 @@ class _SaldoCard extends StatelessWidget {
                 child: _MiniStat(
                   label: 'Keluar (Okt)',
                   value: 'Rp 850 rb',
-                  icon: Icons.north_east_rounded,
+                  icon: Ik.northEast,
                 ),
               ),
             ],
@@ -105,7 +106,7 @@ class _MiniStat extends StatelessWidget {
 
   final String label;
   final String value;
-  final IconData icon;
+  final Ik icon;
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +118,7 @@ class _MiniStat extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          Icon(icon, color: Colors.white, size: 18),
+          AppIcon(icon, color: Colors.white, size: 18),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,7 +176,7 @@ class _KasChart extends StatelessWidget {
         const SizedBox(height: 12),
         Row(
           children: <Widget>[
-            Icon(Icons.trending_up_rounded,
+            AppIcon(Ik.trendingUp,
                 size: 18, color: context.colors.primary),
             const SizedBox(width: 8),
             Expanded(
@@ -290,8 +291,8 @@ class _IuranRow extends StatelessWidget {
               color: tone.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              paid ? Icons.check_rounded : Icons.schedule_rounded,
+            child: AppIcon(
+              paid ? Ik.check : Ik.clock,
               color: tone,
               size: 20,
             ),
@@ -349,7 +350,7 @@ class _TransparansiCard extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Icon(Icons.verified_user_outlined,
+              AppIcon(Ik.shieldCheck,
                   color: context.colors.primary, size: 22),
               const SizedBox(width: 10),
               Expanded(
@@ -370,7 +371,7 @@ class _TransparansiCard extends StatelessWidget {
             onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Unduh laporan segera hadir')),
             ),
-            icon: const Icon(Icons.download_rounded, size: 18),
+            icon: const AppIcon(Ik.download, size: 18),
             label: const Text('Unduh laporan'),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size.fromHeight(48),

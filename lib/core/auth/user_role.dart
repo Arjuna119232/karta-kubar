@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../shared/widgets/app_icon.dart';
 
 /// Lima level akses KUNBAR Connect. Hierarkis: angka lebih besar = lebih tinggi.
 ///
@@ -37,12 +38,12 @@ extension UserRoleX on UserRole {
   /// Guest tidak punya session, jadi selalu perlu login dulu.
   bool get perluLogin => this != UserRole.guest;
 
-  IconData get ikon => switch (this) {
-        UserRole.guest => Icons.person_outline_rounded,
-        UserRole.warga => Icons.badge_outlined,
-        UserRole.anggota => Icons.groups_rounded,
-        UserRole.pengurus => Icons.how_to_reg_rounded,
-        UserRole.admin => Icons.admin_panel_settings_rounded,
+  Ik get ikon => switch (this) {
+        UserRole.guest => Ik.person,
+        UserRole.warga => Ik.badge,
+        UserRole.anggota => Ik.groups,
+        UserRole.pengurus => Ik.personCheck,
+        UserRole.admin => Ik.adminShield,
       };
 
   Color get warna => switch (this) {

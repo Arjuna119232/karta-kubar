@@ -10,6 +10,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_id.dart';
 import '../../../shared/data/seed_data.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_icon.dart';
+import '../../../shared/widgets/fade_slide_in.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/stat_tile.dart';
 
@@ -29,15 +31,17 @@ class HomeScreen extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(
             AppSpacing.screen, 12, AppSpacing.screen, 96),
         children: <Widget>[
-          _Greeting(nama: nama),
+          FadeSlideIn(index: 0, child: _Greeting(nama: nama)),
           const SizedBox(height: 18),
-          const _AnnouncementCarousel(),
+          const FadeSlideIn(index: 1, child: _AnnouncementCarousel()),
           const SizedBox(height: 18),
-          const Row(
+          const FadeSlideIn(
+            index: 2,
+            child: Row(
             children: <Widget>[
               Expanded(
                 child: StatTile(
-                  icon: Icons.groups_rounded,
+                  icon: Ik.groups,
                   value: '128',
                   label: 'Anggota aktif',
                   tint: AppColors.primary,
@@ -46,7 +50,7 @@ class HomeScreen extends ConsumerWidget {
               SizedBox(width: AppSpacing.gap),
               Expanded(
                 child: StatTile(
-                  icon: Icons.event_available_rounded,
+                  icon: Ik.calendarCheck,
                   value: '12',
                   label: 'Kegiatan bulan ini',
                   tint: AppColors.accent,
@@ -54,9 +58,10 @@ class HomeScreen extends ConsumerWidget {
               ),
             ],
           ),
+          ),
           const SizedBox(height: 22),
           const SectionHeader(title: 'Aksi Cepat'),
-          const _QuickActions(),
+          const FadeSlideIn(index: 3, child: _QuickActions()),
           const SizedBox(height: 22),
           SectionHeader(
             title: 'Agenda Terdekat',
@@ -64,17 +69,23 @@ class HomeScreen extends ConsumerWidget {
             onAction: () =>
                 ref.read(navigationIndexProvider.notifier).state = 1,
           ),
-          for (final Activity a in upcoming)
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.gap),
-              child: _AgendaTile(activity: a),
+          for (final (int i, Activity a) in upcoming.indexed)
+            FadeSlideIn(
+              index: 4 + i,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.gap),
+                child: _AgendaTile(activity: a),
+              ),
             ),
           const SizedBox(height: 10),
           const SectionHeader(title: 'Berita Terbaru'),
-          for (final NewsItem n in SeedData.news)
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.gap),
-              child: _NewsTile(item: n),
+          for (final (int i, NewsItem n) in SeedData.news.indexed)
+            FadeSlideIn(
+              index: 6 + i,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.gap),
+                child: _NewsTile(item: n),
+              ),
             ),
         ],
       ),
@@ -106,7 +117,7 @@ class _Greeting extends StatelessWidget {
           ),
         ),
         _IconBadge(
-          icon: Icons.notifications_none_rounded,
+          icon: Ik.bell,
           showDot: true,
           onTap: () {
             HapticFeedback.selectionClick();
@@ -127,10 +138,10 @@ class _Greeting extends StatelessWidget {
             ),
             shape: BoxShape.circle,
           ),
-          child: const Center(
+          child: Center(
             child: Text(
-              'SK',
-              style: TextStyle(
+              _inisial(nama),
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
                 fontSize: 15,
@@ -146,7 +157,7 @@ class _Greeting extends StatelessWidget {
 class _IconBadge extends StatelessWidget {
   const _IconBadge({required this.icon, this.showDot = false, this.onTap});
 
-  final IconData icon;
+  final Ik icon;
   final bool showDot;
   final VoidCallback? onTap;
 
@@ -164,7 +175,7 @@ class _IconBadge extends StatelessWidget {
             child: const SizedBox(
               width: 46,
               height: 46,
-              child: Icon(Icons.notifications_none_rounded, size: 22),
+              child: AppIcon(Ik.bell, size: 22),
             ),
           ),
         ),
@@ -304,7 +315,7 @@ class _AnnouncementCard extends StatelessWidget {
           const Spacer(),
           Row(
             children: <Widget>[
-              Icon(Icons.campaign_rounded,
+              AppIcon(Ik.megaphone,
                   color: Colors.white.withValues(alpha: 0.9), size: 16),
               const SizedBox(width: 6),
               Text(
@@ -315,7 +326,7 @@ class _AnnouncementCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              const Icon(Icons.arrow_forward_rounded,
+              const AppIcon(Ik.arrowForward,
                   color: Colors.white, size: 18),
             ],
           ),
@@ -331,13 +342,13 @@ class _QuickActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final List<_QuickItem> items = <_QuickItem>[
-      _QuickItem(Icons.qr_code_scanner_rounded, 'Absen', AppColors.primary,
+      _QuickItem(Ik.qrScan, 'Absen', AppColors.primary,
           () => context.go('/absen')),
-      _QuickItem(Icons.account_balance_wallet_rounded, 'Iuran',
+      _QuickItem(Ik.wallet, 'Iuran',
           AppColors.accent, () => ref.read(navigationIndexProvider.notifier).state = 2),
-      _QuickItem(Icons.forum_rounded, 'Aspirasi',
+      _QuickItem(Ik.chat, 'Aspirasi',
           AppColors.warning, () => _soon(context, 'Aspirasi')),
-      _QuickItem(Icons.photo_library_rounded, 'Galeri',
+      _QuickItem(Ik.gallery, 'Galeri',
           AppColors.success, () => ref.read(navigationIndexProvider.notifier).state = 3),
     ];
 
@@ -362,7 +373,7 @@ class _QuickActions extends ConsumerWidget {
                         color: it.tint.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(18),
                       ),
-                      child: Icon(it.icon, color: it.tint, size: 26),
+                      child: AppIcon(it.icon, color: it.tint, size: 26),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -388,7 +399,7 @@ class _QuickActions extends ConsumerWidget {
 
 class _QuickItem {
   _QuickItem(this.icon, this.label, this.tint, this.onTap);
-  final IconData icon;
+  final Ik icon;
   final String label;
   final Color tint;
   final VoidCallback onTap;
@@ -443,7 +454,7 @@ class _AgendaTile extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: <Widget>[
-                    Icon(Icons.place_outlined,
+                    AppIcon(Ik.place,
                         size: 14, color: context.semantic.textSecondary),
                     const SizedBox(width: 4),
                     Flexible(
@@ -499,16 +510,7 @@ class _NewsTile extends StatelessWidget {
       },
       child: Row(
         children: <Widget>[
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: context.colors.primary.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(Icons.article_outlined,
-                color: context.colors.primary, size: 24),
-          ),
+          AppCover(coverBerita(item.tag), width: 56, height: 56, radius: 14),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -530,10 +532,22 @@ class _NewsTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          Icon(Icons.chevron_right_rounded,
+          AppIcon(Ik.chevronRight,
               color: context.semantic.textSecondary),
         ],
       ),
     );
   }
+}
+
+/// Dua huruf awal dari nama (mis. "Siti Kartika" -> "SK").
+String _inisial(String nama) {
+  final List<String> kata = nama
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((String k) => k.isNotEmpty)
+      .toList();
+  if (kata.isEmpty) return 'K';
+  if (kata.length == 1) return kata.first.substring(0, 1).toUpperCase();
+  return (kata.first.substring(0, 1) + kata.last.substring(0, 1)).toUpperCase();
 }

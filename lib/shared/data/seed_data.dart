@@ -131,3 +131,19 @@ Color categoryColor(String category) {
       return const Color(0xFF1B5E20);
   }
 }
+
+/// Gambar sampul menurut kategori kegiatan (file di assets/ilustrasi/).
+String coverKategori(String kategori) => switch (kategori) {
+      'Sosial' => 'cover_sosial',
+      'Olahraga' => 'cover_olahraga',
+      'Keagamaan' => 'cover_religi',
+      _ => 'cover_umum',
+    };
+
+/// Gambar sampul menurut tag berita.
+String coverBerita(String tag) => switch (tag) {
+      'Organisasi' => 'cover_rapat',
+      'Kegiatan' => 'cover_lomba',
+      'Keuangan' => 'cover_keuangan',
+      _ => 'cover_umum',
+    };

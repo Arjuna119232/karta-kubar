@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/primary_button.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -19,21 +20,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   static const List<_Slide> _slides = <_Slide>[
     _Slide(
-      icon: Icons.groups_2_rounded,
+      art: 'onb_komunitas',
       title: 'Selamat datang di KUNBAR Connect',
       body:
           'Untuk seluruh warga Kuningan Barat — dari anak muda, orang tua, RT/RW, UMKM, sampai pengurus kelurahan.',
       tint: AppColors.primary,
     ),
     _Slide(
-      icon: Icons.campaign_rounded,
+      art: 'onb_aspirasi',
       title: 'Sampaikan tanpa ribet',
       body:
           'Kirim aspirasi, laporan masalah, sampai kondisi darurat keamanan. Semua tercatat dan bisa dilacak statusnya.',
       tint: AppColors.social,
     ),
     _Slide(
-      icon: Icons.handshake_rounded,
+      art: 'onb_terhubung',
       title: 'Terhubung & terbuka',
       body:
           'Baca pengumuman RT/RW, lihat agenda, dukung UMKM warga, dan pesan fasilitas balai tanpa datang langsung.',
@@ -115,7 +116,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   const SizedBox(height: 22),
                   PrimaryButton(
                     label: _isLast ? 'Masuk KUNBAR Connect' : 'Lanjut',
-                    icon: _isLast ? Icons.check_rounded : null,
+                    icon: _isLast ? Ik.check : null,
                     onPressed: _next,
                   ),
                 ],
@@ -130,12 +131,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
 class _Slide {
   const _Slide({
-    required this.icon,
+    required this.art,
     required this.title,
     required this.body,
     required this.tint,
   });
-  final IconData icon;
+  final String art;
   final String title;
   final String body;
   final Color tint;
@@ -153,16 +154,8 @@ class _SlideView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Container(
-            width: 160,
-            height: 160,
-            decoration: BoxDecoration(
-              color: slide.tint.withValues(alpha: 0.10),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(slide.icon, size: 72, color: slide.tint),
-          ),
-          const SizedBox(height: 40),
+          AppIllustration(slide.art, height: 230),
+          const SizedBox(height: 28),
           Text(
             slide.title,
             textAlign: TextAlign.center,

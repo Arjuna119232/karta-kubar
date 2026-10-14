@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/session.dart';
 import '../../../core/auth/user_role.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -12,6 +13,7 @@ import '../../../shared/data/seed_data.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/pseudo_qr.dart';
 import '../../../shared/widgets/section_header.dart';
+import '../../../shared/widgets/app_icon.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -43,8 +45,10 @@ class ProfileScreen extends ConsumerWidget {
           const SectionHeader(title: 'Hak akses kamu'),
           _HakAksesCard(role: role),
           const SizedBox(height: AppSpacing.gap),
-          const _RoleSwitcher(),
-          const SizedBox(height: AppSpacing.gap),
+          if (AppConfig.demoMode) ...<Widget>[
+            const _RoleSwitcher(),
+            const SizedBox(height: AppSpacing.gap),
+          ],
           const _MenuUmum(),
           if (user != null) ...<Widget>[
             const SizedBox(height: 20),
@@ -54,7 +58,7 @@ class ProfileScreen extends ConsumerWidget {
                 ref.read(navigationIndexProvider.notifier).state = 0;
                 context.go('/home');
               },
-              icon: Icon(Icons.logout_rounded, color: context.colors.error),
+              icon: AppIcon(Ik.logout, color: context.colors.error),
               label: Text('Keluar',
                   style: TextStyle(color: context.colors.error)),
             ),
@@ -106,7 +110,7 @@ class _Header extends StatelessWidget {
               const SizedBox(height: 4),
               Row(
                 children: <Widget>[
-                  Icon(role.ikon, size: 14, color: role.warna),
+                  AppIcon(role.ikon, size: 14, color: role.warna),
                   const SizedBox(width: 5),
                   Text(role.label,
                       style: context.text.bodySmall
@@ -220,7 +224,7 @@ class _AjukanVerifikasi extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Icon(Icons.verified_user_outlined,
+              AppIcon(Ik.shieldCheck,
                   color: role.warna, size: 22),
               const SizedBox(width: 10),
               Expanded(
@@ -253,8 +257,8 @@ class _AjukanVerifikasi extends StatelessWidget {
                 );
               }
             },
-            icon: Icon(
-                sudahLogin ? Icons.badge_outlined : Icons.login_rounded,
+            icon: AppIcon(
+                sudahLogin ? Ik.badge : Ik.login,
                 size: 18),
             label: Text(sudahLogin ? 'Verifikasi sekarang' : 'Masuk dulu'),
             style: OutlinedButton.styleFrom(
@@ -280,7 +284,7 @@ class _Statistik extends StatelessWidget {
       children: <Widget>[
         Expanded(
           child: _KartuAngka(
-            icon: Icons.emoji_events_rounded,
+            icon: Ik.trophy,
             nilai: '${SeedData.memberPoin}',
             label: 'Poin kontribusi',
             warna: AppColors.warning,
@@ -289,7 +293,7 @@ class _Statistik extends StatelessWidget {
         const SizedBox(width: AppSpacing.gap),
         Expanded(
           child: _KartuAngka(
-            icon: Icons.check_circle_rounded,
+            icon: Ik.checkCircle,
             nilai: '${SeedData.memberKegiatan}',
             label: 'Kegiatan diikuti',
             warna: AppColors.success,
@@ -308,7 +312,7 @@ class _KartuAngka extends StatelessWidget {
     required this.warna,
   });
 
-  final IconData icon;
+  final Ik icon;
   final String nilai;
   final String label;
   final Color warna;
@@ -327,7 +331,7 @@ class _KartuAngka extends StatelessWidget {
               color: warna.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: warna, size: 20),
+            child: AppIcon(icon, color: warna, size: 20),
           ),
           const SizedBox(height: 12),
           Text(nilai, style: context.text.headlineSmall),
@@ -354,7 +358,7 @@ class _HakAksesCard extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Icon(role.ikon, color: role.warna, size: 20),
+              AppIcon(role.ikon, color: role.warna, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text('Level ${role.label}',
@@ -375,7 +379,7 @@ class _HakAksesCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Icon(Icons.check_circle_rounded,
+                  AppIcon(Ik.checkCircle,
                       size: 16, color: role.warna),
                   const SizedBox(width: 8),
                   Expanded(
@@ -405,7 +409,7 @@ class _RoleSwitcher extends ConsumerWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Icon(Icons.developer_mode_rounded,
+              AppIcon(Ik.code,
                   size: 20, color: context.semantic.textSecondary),
               const SizedBox(width: 8),
               Expanded(
@@ -474,7 +478,7 @@ class _RoleChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(role.ikon,
+              AppIcon(role.ikon,
                   size: 15, color: aktif ? Colors.white : role.warna),
               const SizedBox(width: 6),
               Text(
@@ -498,49 +502,62 @@ class _MenuUmum extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeMode mode = ref.watch(themeModeProvider);
+    final bool lansia = ref.watch(elderModeProvider);
 
     return AppCard(
       padding: EdgeInsets.zero,
       child: Column(
         children: <Widget>[
           _Baris(
-            icon: Icons.brightness_6_outlined,
+            icon: Ik.autoMode,
             label: 'Tema',
             trailing: SegmentedButton<ThemeMode>(
               segments: const <ButtonSegment<ThemeMode>>[
                 ButtonSegment<ThemeMode>(
                     value: ThemeMode.system,
-                    icon: Icon(Icons.brightness_auto_rounded, size: 18)),
+                    icon: AppIcon(Ik.autoMode, size: 18)),
                 ButtonSegment<ThemeMode>(
                     value: ThemeMode.light,
-                    icon: Icon(Icons.light_mode_rounded, size: 18)),
+                    icon: AppIcon(Ik.sun, size: 18)),
                 ButtonSegment<ThemeMode>(
                     value: ThemeMode.dark,
-                    icon: Icon(Icons.dark_mode_rounded, size: 18)),
+                    icon: AppIcon(Ik.moon, size: 18)),
               ],
               selected: <ThemeMode>{mode},
               showSelectedIcon: false,
               onSelectionChanged: (Set<ThemeMode> s) {
                 HapticFeedback.selectionClick();
-                ref.read(themeModeProvider.notifier).state = s.first;
+                ref.read(themeModeProvider.notifier).atur(s.first);
               },
             ),
           ),
           Divider(height: 1, color: context.semantic.line),
           _Baris(
-            icon: Icons.edit_outlined,
+            icon: Ik.accessibility,
+            label: 'Mode lansia (teks lebih besar)',
+            trailing: Switch(
+              value: lansia,
+              onChanged: (bool v) {
+                HapticFeedback.selectionClick();
+                ref.read(elderModeProvider.notifier).atur(v);
+              },
+            ),
+          ),
+          Divider(height: 1, color: context.semantic.line),
+          _Baris(
+            icon: Ik.edit,
             label: 'Edit profil',
             onTap: () => _segera(context, 'Edit profil'),
           ),
           Divider(height: 1, color: context.semantic.line),
           _Baris(
-            icon: Icons.notifications_none_rounded,
+            icon: Ik.bell,
             label: 'Notifikasi',
             onTap: () => _segera(context, 'Notifikasi'),
           ),
           Divider(height: 1, color: context.semantic.line),
           _Baris(
-            icon: Icons.help_outline_rounded,
+            icon: Ik.help,
             label: 'Bantuan',
             onTap: () => _segera(context, 'Bantuan'),
           ),
@@ -564,7 +581,7 @@ class _Baris extends StatelessWidget {
     this.onTap,
   });
 
-  final IconData icon;
+  final Ik icon;
   final String label;
   final Widget? trailing;
   final VoidCallback? onTap;
@@ -577,13 +594,13 @@ class _Baris extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: <Widget>[
-            Icon(icon, size: 21, color: context.semantic.textSecondary),
+            AppIcon(icon, size: 21, color: context.semantic.textSecondary),
             const SizedBox(width: 14),
             Expanded(child: Text(label, style: context.text.titleSmall)),
             if (trailing != null)
               trailing!
             else
-              Icon(Icons.chevron_right_rounded,
+              AppIcon(Ik.chevronRight,
                   color: context.semantic.textSecondary),
           ],
         ),

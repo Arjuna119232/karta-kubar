@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/session.dart';
 import '../../../core/auth/user_role.dart';
 import '../../../core/providers.dart';
+import '../../../shared/widgets/app_icon.dart';
 import '../data/app_tabs.dart';
 
 /// Kerangka utama. Bottom navigation ditentukan oleh role yang sedang aktif.
@@ -33,15 +35,16 @@ class AppShell extends ConsumerWidget {
           for (final AppTab t in tabs)
             NavigationDestination(
               icon: t.badge == null
-                  ? Icon(t.icon)
-                  : Badge.count(count: t.badge!, child: Icon(t.icon)),
-              selectedIcon: Icon(t.selectedIcon),
+                  ? AppIcon(t.icon)
+                  : Badge.count(count: t.badge!, child: AppIcon(t.icon)),
+              selectedIcon: AppIcon(t.selectedIcon, aktif: true),
               label: t.label,
               tooltip: t.label,
             ),
         ],
         onDestinationSelected: (int i) {
           if (i >= tabs.length) return;
+          if (i != aman) HapticFeedback.selectionClick();
           ref.read(navigationIndexProvider.notifier).state = i;
         },
       ),

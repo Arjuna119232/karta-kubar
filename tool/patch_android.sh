@@ -21,16 +21,16 @@ sed -i 's/namespace = "[^"]*"/namespace = "id.kubarkonek.app"/' "$GRADLE" 2>/dev
 sed -i 's/applicationId "[^"]*"/applicationId "id.kubarkonek.app"/' "$GRADLE" 2>/dev/null || true
 sed -i 's/namespace "[^"]*"/namespace "id.kubarkonek.app"/' "$GRADLE" 2>/dev/null || true
 
-# --- 3) Permissions needed by later phases (idempotent insert before <application) ---
+# --- 3) Permissions (idempotent insert before <application) ---
 add_permission() {
   local perm="$1"
   grep -q "android.permission.$perm" "$MANIFEST" && return 0
   sed -i "s#<application#<uses-permission android:name=\"android.permission.$perm\"/>\n    <application#" "$MANIFEST"
   echo "    + permission: $perm"
 }
+# Hanya izin yang BENAR-BENAR dipakai. Tambahkan CAMERA / lokasi di sini
+# saat fitur pindai QR dan absensi GPS sungguhan sudah dibuat (Play Store
+# menolak/mempersulit review kalau izin diminta tapi tidak dipakai).
 add_permission INTERNET
-add_permission CAMERA
-add_permission ACCESS_FINE_LOCATION
-add_permission ACCESS_COARSE_LOCATION
 
 echo "==> patch_android: done"

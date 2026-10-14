@@ -111,6 +111,9 @@ class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: isDark ? AppColors.cardDark : Colors.white,
         indicatorColor: scheme.primary.withValues(alpha: 0.14),
+        indicatorShape: const StadiumBorder(),
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
         height: 68,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       ),

@@ -7,6 +7,7 @@ import '../../home/presentation/home_screen.dart';
 import '../../keuangan/presentation/keuangan_screen.dart';
 import '../../kegiatan/presentation/kegiatan_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
+import '../../../shared/widgets/app_icon.dart';
 
 /// Satu tab di bottom navigation.
 class AppTab {
@@ -20,8 +21,8 @@ class AppTab {
   });
 
   final String label;
-  final IconData icon;
-  final IconData selectedIcon;
+  final Ik icon;
+  final Ik selectedIcon;
   final Widget screen;
 
   /// Role minimum yang boleh melihat tab ini.
@@ -42,15 +43,15 @@ List<AppTab> tabsUntuk(UserRole role) {
   final List<AppTab> dasar = <AppTab>[
     AppTab(
       label: 'Beranda',
-      icon: Icons.home_outlined,
-      selectedIcon: Icons.home_rounded,
+      icon: Ik.home,
+      selectedIcon: Ik.home,
       screen: const HomeScreen(),
       minimalRole: UserRole.guest,
     ),
     AppTab(
       label: role.bisa(UserRole.anggota) ? 'Agenda' : 'Kegiatan',
-      icon: Icons.event_outlined,
-      selectedIcon: Icons.event_rounded,
+      icon: Ik.calendar,
+      selectedIcon: Ik.calendar,
       screen: const KegiatanScreen(),
       minimalRole: UserRole.guest,
     ),
@@ -62,8 +63,8 @@ List<AppTab> tabsUntuk(UserRole role) {
       1,
       const AppTab(
         label: 'Absen',
-        icon: Icons.qr_code_scanner_outlined,
-        selectedIcon: Icons.qr_code_scanner_rounded,
+        icon: Ik.qrScan,
+        selectedIcon: Ik.qrScan,
         screen: AbsenScreen(),
         minimalRole: UserRole.anggota,
       ),
@@ -75,8 +76,8 @@ List<AppTab> tabsUntuk(UserRole role) {
     dasar.add(
       const AppTab(
         label: 'Kas',
-        icon: Icons.account_balance_wallet_outlined,
-        selectedIcon: Icons.account_balance_wallet_rounded,
+        icon: Ik.wallet,
+        selectedIcon: Ik.wallet,
         screen: KeuanganScreen(),
         minimalRole: UserRole.anggota,
       ),
@@ -85,8 +86,8 @@ List<AppTab> tabsUntuk(UserRole role) {
     dasar.add(
       const AppTab(
         label: 'Galeri',
-        icon: Icons.photo_library_outlined,
-        selectedIcon: Icons.photo_library_rounded,
+        icon: Ik.gallery,
+        selectedIcon: Ik.gallery,
         screen: GaleriScreen(),
         minimalRole: UserRole.guest,
       ),
@@ -96,8 +97,8 @@ List<AppTab> tabsUntuk(UserRole role) {
   dasar.add(
     const AppTab(
       label: 'Profil',
-      icon: Icons.person_outline_rounded,
-      selectedIcon: Icons.person_rounded,
+      icon: Ik.person,
+      selectedIcon: Ik.person,
       screen: ProfileScreen(),
       minimalRole: UserRole.guest,
     ),

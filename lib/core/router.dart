@@ -9,6 +9,7 @@ import '../features/shell/presentation/app_shell.dart';
 import '../features/splash/presentation/splash_screen.dart';
 import 'auth/session.dart';
 import 'auth/user_role.dart';
+import '../shared/widgets/app_icon.dart';
 
 /// Halaman "kamu belum punya akses" — muncul kalau guard menolak rute.
 class AksesDitolakScreen extends ConsumerWidget {
@@ -28,7 +29,7 @@ class AksesDitolakScreen extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(Icons.lock_outline_rounded, size: 56, color: Theme.of(context).colorScheme.error),
+              AppIcon(Ik.lock, size: 56, color: Theme.of(context).colorScheme.error),
               const SizedBox(height: 18),
               Text('Akses perlu ${minimal.label}',
                   style: Theme.of(context).textTheme.titleLarge,
@@ -87,6 +88,31 @@ class RoleGate extends ConsumerWidget {
   }
 }
 
+/// Transisi halaman: fade + geser naik tipis (halus, tanpa lompatan).
+CustomTransitionPage<void> _halaman(GoRouterState state, Widget child) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 320),
+    reverseTransitionDuration: const Duration(milliseconds: 240),
+    transitionsBuilder: (BuildContext context, Animation<double> anim,
+        Animation<double> secondary, Widget c) {
+      final Animation<double> curved =
+          CurveTween(curve: Curves.easeOutCubic).animate(anim);
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.04),
+            end: Offset.zero,
+          ).animate(curved),
+          child: c,
+        ),
+      );
+    },
+  );
+}
+
 /// Rute aplikasi.
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -97,24 +123,28 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/onboarding',
-      builder: (_, __) => const OnboardingScreen(),
+      pageBuilder: (_, GoRouterState s) =>
+          _halaman(s, const OnboardingScreen()),
     ),
     // Wajib ada: splash, tombol "Mulai" di onboarding, dan tombol "Masuk"
     // di profil semuanya menuju '/auth'. Tanpa rute ini GoRouter melempar
     // `GoException: no routes for location: /auth` = aplikasi crash.
     GoRoute(
       path: '/auth',
-      builder: (_, __) => const AuthScreen(),
+      pageBuilder: (_, GoRouterState s) => _halaman(s, const AuthScreen()),
     ),
     GoRoute(
       path: '/home',
-      builder: (_, __) => const AppShell(),
+      pageBuilder: (_, GoRouterState s) => _halaman(s, const AppShell()),
     ),
     GoRoute(
       path: '/absen',
-      builder: (_, __) => const RoleGate(
-        minimal: UserRole.anggota,
-        child: AbsenScreen(),
+      pageBuilder: (_, GoRouterState s) => _halaman(
+        s,
+        const RoleGate(
+          minimal: UserRole.anggota,
+          child: AbsenScreen(),
+        ),
       ),
     ),
   ],

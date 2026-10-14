@@ -4,6 +4,12 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      demo:
+        description: 'Mode demo (OTP 123456 + pengalih role). Matikan setelah backend aktif.'
+        type: choice
+        options: ['true', 'false']
+        default: 'true'
 
 permissions:
   contents: write
@@ -66,13 +72,19 @@ jobs:
         run: flutter analyze || true
 
       - name: Build release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define=KUNBAR_DEMO=${{ github.event.inputs.demo || 'true' }}
+
+      # Play Store mewajibkan AAB (bukan APK) untuk aplikasi baru.
+      - name: Build release AAB (Play Store)
+        run: flutter build appbundle --release --dart-define=KUNBAR_DEMO=${{ github.event.inputs.demo || 'true' }}
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: karta-kubar-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
 
       - name: Read version from pubspec.yaml
         id: ver
@@ -84,7 +96,9 @@ jobs:
           tag_name: v${{ steps.ver.outputs.version }}-${{ github.run_number }}
           name: KUNBAR Connect v${{ steps.ver.outputs.version }} (build ${{ github.run_number }})
           body_path: .github/notes/release.md
-          files: build/app/outputs/flutter-apk/app-release.apk
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
           draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

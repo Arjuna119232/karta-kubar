@@ -1,16 +1,17 @@
-### KUNBAR Connect v0.5.5
+### KUNBAR Connect v0.6.1
 
-Splash tampil lebih modern dan warnanya sekarang satu sumber dengan tema aplikasi.
+Ikon sendiri, ilustrasi sendiri, dan splash memakai desain baru.
 
-**Tampilan**
-- Cahaya lembut di belakang logo memberi rasa kedalaman
-- Latar memakai gradasian aksen yang sangat halus, bukan warna datar
-- Logo punya bayangan lembut supaya tidak terlihat menempel
+**Ikon & ilustrasi**
+- 125 ikon dan 13 ilustrasi buatan sendiri, bukan ikon bawaan sistem
+- Dua warna: aktif dan non-aktif
 
-**Gerak**
-- Logo masuk dengan pegas halus
-- Tulisan menyusul berjenjang dengan kurva Material 3
+**Splash baru**
+- Latar hijau dengan pola halus yang bergerak
+- Logo emblem BERDENYUT dan cahaya di belakangnya ikut berdenyut
+- Tiga titik loading berdenyut berurutan
+- Teks masuk berurutan saat aplikasi dibuka
 
-**Warna**
-- Semua warna splash diambil dari tema aplikasi
-- Tidak ada lagi lompatan warna saat aplikasi kebuka
+**Mode demo**
+- Kode OTP 123456 dan pengalih level akses aktif
+- Setelah backend siap, build dengan KUNBAR_DEMO=false

@@ -1,7 +1,7 @@
 name: kubar_connect
 description: "KUNBAR Connect — Kuningan Barat Connected Community. Satu Kelurahan, Satu Komunitas, Satu Aplikasi."
 publish_to: "none"
-version: 0.5.5+10
+version: 0.6.1+12
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -15,6 +15,7 @@ dependencies:
   shared_preferences: ^2.3.2
   qr_flutter: ^4.1.0
   google_fonts: ^6.2.1
+  flutter_svg: ^2.0.10+1
   intl: ^0.19.0
 
 dev_dependencies:
@@ -27,6 +28,9 @@ flutter:
   uses-material-design: true
   assets:
     - assets/data/
+    - assets/icons/
+    - assets/ilustrasi/
+    - assets/brand/
 
 # Catatan ikon launcher
 # --------------------

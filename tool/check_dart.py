@@ -279,14 +279,18 @@ for f in files:
     if f in dead:
         continue
     body = code[f]
-    priv = set(re.findall(r"^\s*(?:class|enum|mixin|extension)\s+_([A-Za-z_$][\w$]*)", body, re.MULTILINE))
+    # PENTING: garis bawah harus ikut tertangkap. Kalau tidak, nama yang
+    # dicari jadi "QrPainter" lalu `\bQrPainter\b` TIDAK PERNAH cocok di dalam
+    # "_QrPainter" (karena `_` adalah karakter kata) -> semua State/painter
+    #private dilaporkan mati padahal jelas dipakai.
+    priv = set(re.findall(r"^\s*(?:class|enum|mixin|extension)\s+(_[A-Za-z_$][\w$]*)", body, re.MULTILINE))
     priv |= set(re.findall(r"^[A-Za-z_$][\w$<>,?\s]*\s(_[a-z_$][\w$]*)\s*\(", body, re.MULTILINE))
     if not priv:
         continue
     for name in sorted(priv):
-        uses = len(re.findall(r"\b_" + re.escape(name) + r"\b", body))
+        uses = len(re.findall(r"\b" + re.escape(name) + r"\b", body))
         if uses <= 1:
-            bad("UNUSED-PRIVATE", f, f"'_ {name}' dideklarasi tapi tidak pernah dipakai")
+            bad("UNUSED-PRIVATE", f, f"'{name}' dideklarasi tapi tidak pernah dipakai")
 
 # ---------------------------------------------------------------- 5. provider tak terpakai
 for f in files:

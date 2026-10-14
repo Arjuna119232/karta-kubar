@@ -12,6 +12,7 @@ import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/stat_tile.dart';
 import '../data/absen_state.dart';
 import '../domain/kehadiran.dart';
+import '../../../shared/widgets/app_icon.dart';
 
 class AbsenScreen extends ConsumerStatefulWidget {
   const AbsenScreen({super.key});
@@ -44,9 +45,9 @@ class _AbsenScreenState extends ConsumerState<AbsenScreen> {
             tooltip: _modePenyelenggara ? 'Mode anggota' : 'Mode penyelenggara',
             onPressed: () =>
                 setState(() => _modePenyelenggara = !_modePenyelenggara),
-            icon: Icon(_modePenyelenggara
-                ? Icons.person_rounded
-                : Icons.qr_code_2_rounded),
+            icon: AppIcon(_modePenyelenggara
+                ? Ik.person
+                : Ik.qrCode),
           ),
         ],
       ),
@@ -62,7 +63,7 @@ class _AbsenScreenState extends ConsumerState<AbsenScreen> {
                     children: <Widget>[
                       Expanded(
                         child: StatTile(
-                          icon: Icons.event_available_rounded,
+                          icon: Ik.calendarCheck,
                           value: '${ctrl.hadirBulanIni}',
                           label: 'Hadir bulan ini',
                           tint: AppColors.primary,
@@ -71,7 +72,7 @@ class _AbsenScreenState extends ConsumerState<AbsenScreen> {
                       const SizedBox(width: AppSpacing.gap),
                       Expanded(
                         child: StatTile(
-                          icon: Icons.history_rounded,
+                          icon: Ik.history,
                           value: '${riwayat.length}',
                           label: 'Total catatan',
                           tint: AppColors.accent,
@@ -163,7 +164,7 @@ class _ScannerCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(Icons.qr_code_scanner_rounded,
+          AppIcon(Ik.qrScan,
               color: Colors.white.withValues(alpha: 0.9), size: 34),
           const SizedBox(height: 14),
           const Text(
@@ -183,7 +184,7 @@ class _ScannerCard extends StatelessWidget {
               HapticFeedback.selectionClick();
               onScan();
             },
-            icon: const Icon(Icons.photo_camera_outlined, size: 20),
+            icon: const AppIcon(Ik.camera, size: 20),
             label: const Text('Buka Kamera Pindai'),
             style: FilledButton.styleFrom(
               backgroundColor: Colors.white,
@@ -268,7 +269,7 @@ class _ScannerSheetState extends State<_ScannerSheet> {
                   SnackBar(content: Text('Kehadiran tercatat: $judul')),
                 );
               },
-              icon: const Icon(Icons.check_rounded, size: 20),
+              icon: const AppIcon(Ik.check, size: 20),
               label: const Text('Ya, saya hadir'),
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(52),
@@ -330,7 +331,7 @@ class _Viewfinder extends StatelessWidget {
                   Text('Mendekode...', style: context.text.bodyMedium),
                 ],
               )
-            : Icon(Icons.qr_code_2_rounded,
+            : AppIcon(Ik.qrCode,
                 size: 92, color: context.colors.primary.withValues(alpha: 0.35)),
       ),
     );
@@ -351,7 +352,7 @@ class _HasilCard extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Icon(Icons.check_circle_rounded,
+              AppIcon(Ik.checkCircle,
                   color: AppColors.success, size: 22),
               const SizedBox(width: 10),
               Expanded(
@@ -393,7 +394,7 @@ class _RiwayatTile extends StatelessWidget {
               color: item.status.color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(_ikon, color: item.status.color, size: 22),
+            child: AppIcon(_ikon, color: item.status.color, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -429,10 +430,10 @@ class _RiwayatTile extends StatelessWidget {
     );
   }
 
-  IconData get _ikon => switch (item.status) {
-        StatusKehadiran.hadir => Icons.check_rounded,
-        StatusKehadiran.izin => Icons.mail_outline_rounded,
-        StatusKehadiran.alpha => Icons.cancel_outlined,
+  Ik get _ikon => switch (item.status) {
+        StatusKehadiran.hadir => Ik.check,
+        StatusKehadiran.izin => Ik.mail,
+        StatusKehadiran.alpha => Ik.xCircle,
       };
 
   void _gantiStatus(BuildContext context) {
@@ -448,10 +449,10 @@ class _RiwayatTile extends StatelessWidget {
             ),
             for (final StatusKehadiran s in StatusKehadiran.values)
               ListTile(
-                leading: Icon(Icons.circle, color: s.color, size: 14),
+                leading: AppIcon(Ik.dot, color: s.color, size: 14),
                 title: Text(s.label),
                 trailing: item.status == s
-                    ? Icon(Icons.check_rounded, color: s.color)
+                    ? AppIcon(Ik.check, color: s.color)
                     : null,
                 onTap: () {
                   ctrl.ubahStatus(item.id, s);
@@ -501,7 +502,7 @@ class _SelesaiTile extends StatelessWidget {
           if (sudah)
             Row(
               children: <Widget>[
-                Icon(Icons.check_circle_rounded,
+                AppIcon(Ik.checkCircle,
                     color: AppColors.success, size: 18),
                 const SizedBox(width: 6),
                 Text('Tercatat',

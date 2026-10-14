@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/theme/app_theme.dart';
+import 'app_icon.dart';
 
 /// Tombol utama: pill full-width 56dp + haptic feedback.
 class PrimaryButton extends StatelessWidget {
@@ -16,7 +17,7 @@ class PrimaryButton extends StatelessWidget {
 
   final String label;
   final VoidCallback? onPressed;
-  final IconData? icon;
+  final Ik? icon;
   final bool loading;
   final PrimaryButtonTone tone;
 
@@ -37,7 +38,7 @@ class PrimaryButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               if (icon != null) ...<Widget>[
-                Icon(icon, size: 20),
+                AppIcon(icon!, size: 20),
                 const SizedBox(width: 8),
               ],
               Text(label),

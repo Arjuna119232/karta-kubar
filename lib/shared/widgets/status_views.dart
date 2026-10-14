@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import 'app_icon.dart';
 import 'primary_button.dart';
 
 /// Skeleton dengan animasi pulse.
@@ -51,14 +52,14 @@ class _AppSkeletonState extends State<AppSkeleton>
 class AppEmptyState extends StatelessWidget {
   const AppEmptyState({
     super.key,
-    required this.icon,
+    this.art = 'empty_kegiatan',
     required this.title,
     required this.message,
     this.actionLabel,
     this.onAction,
   });
 
-  final IconData icon;
+  final String art;
   final String title;
   final String message;
   final String? actionLabel;
@@ -72,16 +73,8 @@ class AppEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Container(
-              width: 88,
-              height: 88,
-              decoration: BoxDecoration(
-                color: context.colors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 40, color: context.colors.primary),
-            ),
-            const SizedBox(height: 20),
+            AppIllustration(art, height: 170),
+            const SizedBox(height: 12),
             Text(title, style: context.text.titleMedium, textAlign: TextAlign.center),
             const SizedBox(height: 6),
             Text(
@@ -122,8 +115,8 @@ class AppErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(Icons.cloud_off_rounded, size: 56, color: context.colors.error),
-            const SizedBox(height: 16),
+            const AppIllustration('error_offline', height: 170),
+            const SizedBox(height: 12),
             Text('Gagal memuat', style: context.text.titleMedium),
             const SizedBox(height: 6),
             Text(
@@ -136,7 +129,7 @@ class AppErrorState extends StatelessWidget {
               width: 220,
               child: PrimaryButton(
                 label: 'Coba lagi',
-                icon: Icons.refresh_rounded,
+                icon: Ik.refresh,
                 onPressed: onRetry,
               ),
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import 'app_card.dart';
+import 'app_icon.dart';
 
 /// Kartu statistik: ikon dalam lingkaran tint + nilai besar + label.
 class StatTile extends StatelessWidget {
@@ -13,7 +14,7 @@ class StatTile extends StatelessWidget {
     required this.tint,
   });
 
-  final IconData icon;
+  final Ik icon;
   final String value;
   final String label;
   final Color tint;
@@ -32,7 +33,7 @@ class StatTile extends StatelessWidget {
               color: tint.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: tint, size: 22),
+            child: AppIcon(icon, color: tint, size: 22),
           ),
           const SizedBox(height: 14),
           Text(value, style: context.text.headlineSmall),

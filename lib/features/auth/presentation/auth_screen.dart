@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/primary_button.dart';
 import 'otp_screen.dart';
+import '../../../shared/widgets/app_icon.dart';
 
 enum AuthMode { masuk, daftar }
 
@@ -85,7 +86,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   alignment: Alignment.centerLeft,
                   child: TextButton.icon(
                     onPressed: () => context.go('/home'),
-                    icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                    icon: const AppIcon(Ik.arrowBack, size: 18),
                     label: const Text('Lewati dulu'),
                   ),
                 ),
@@ -143,7 +144,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     validator: _validNama,
                     decoration: const InputDecoration(
                       hintText: 'Contoh: Ahmad Fauzi',
-                      prefixIcon: Icon(Icons.person_outline_rounded),
+                      prefixIcon: AppIcon(Ik.person),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -159,7 +160,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   validator: _validTelepon,
                   decoration: const InputDecoration(
                     hintText: '6281234567890',
-                    prefixIcon: Icon(Icons.phone_android_rounded),
+                    prefixIcon: AppIcon(Ik.phone),
                     helperText: 'Tanpa tanda +, contoh: 6281234567890',
                   ),
                 ),
@@ -213,7 +214,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 const SizedBox(height: 24),
                 PrimaryButton(
                   label: daftar ? 'Daftar & kirim OTP' : 'Kirim OTP',
-                  icon: Icons.sms_outlined,
+                  icon: Ik.chat,
                   onPressed: _submit,
                 ),
                 const SizedBox(height: 10),

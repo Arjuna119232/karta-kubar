@@ -1,11 +1,11 @@
 # KUNBAR Connect — Cara Membuka di Acode
 
-Versi: **0.5.5**
+Versi: **0.6.1**
 Kelurahan Kuningan Barat, Jakarta Selatan
 
 ## Cara buka di Acode
 
-1. **Ekstrak** file `KUNBAR-Connect-v0.5.5-source.zip` ke folder mana saja di HP
+1. **Ekstrak** file `KUNBAR-Connect-v0.6.1-source.zip` ke folder mana saja di HP
    (misal `/storage/emulated/0/Acode/karta-kubar/`).
 2. Buka Acode → **Open Folder** → pilih folder `karta-kubar` (folder yang
    berisi `pubspec.yaml`).
