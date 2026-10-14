@@ -6,9 +6,9 @@ import '../features/absen/presentation/absen_screen.dart';
 import '../features/auth/presentation/auth_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/shell/presentation/app_shell.dart';
-import '../features/splash/presentation/splash_screen.dart';
 import 'auth/session.dart';
 import 'auth/user_role.dart';
+import 'boot.dart';
 import '../shared/widgets/app_icon.dart';
 
 /// Halaman "kamu belum punya akses" — muncul kalau guard menolak rute.
@@ -113,40 +113,30 @@ CustomTransitionPage<void> _halaman(GoRouterState state, Widget child) {
   );
 }
 
-/// Menentukan halaman tujuan setelah splash, lalu pindah ke sana.
+/// Membangun router dengan halaman pertama yang sudah diketahui.
 ///
-/// Sengaja dipisah dari widget splash: logika "sudah masuk atau belum" tinggal
-/// di satu tempat dan bisa dipakai tanpa mem-build widget.
-Future<void> _dariSplash() async {
-  final SplashTujuan tujuan = await bacaTujuanSplash();
-  switch (tujuan) {
-    case SplashTujuan.onboarding:
-      appRouter.go('/onboarding');
-    case SplashTujuan.beranda:
-      appRouter.go('/home');
-    case SplashTujuan.auth:
-      appRouter.go('/auth');
-  }
-}
-
-/// Ditentukan oleh [SplashScreen] lewat `onFinished` setelah splash selesai.
-/// Routing ada di sini, bukan di dalam widget splash, supaya splash tetap
-/// bisa dipakai tanpa router (misalnya untuk pratinjau).
-final GoRouter appRouter = GoRouter(
-  initialLocation: '/',
+/// Sengaja TIDAK ada rute `/` lagi. Dulu `/` memuat widget splash Flutter
+/// buatan sendiri (1,8 detik) yang baru menentukan tujuan setelah selesai -
+/// artinya aplikasi sempat menggambar satu halaman penuh sebelum halaman
+/// yang benar. Sekarang splash ditangani sistem operasi
+/// (`Theme.SplashScreen` di Android, `UILaunchScreen` di iOS) dan
+/// [tentukanLokasiAwal] sudah dipanggil sebelum `runApp`, jadi router bisa
+/// langsung dibuka di halaman yang benar tanpa frame perantara.
+///
+/// Dipanggil SATU KALI di main() dan hasilnya disimpan, bukan dibangun ulang
+/// di `build()`: GoRouter yang dibuat ulang akan membuang seluruh riwayat
+/// navigasi setiap kali state provider berubah.
+GoRouter buatRouter(LokasiAwal awal) => GoRouter(
+  initialLocation: pathUntuk(awal),
   routes: <RouteBase>[
-    GoRoute(
-      path: '/',
-      builder: (_, __) => SplashScreen(onFinished: _dariSplash),
-    ),
     GoRoute(
       path: '/onboarding',
       pageBuilder: (_, GoRouterState s) =>
           _halaman(s, const OnboardingScreen()),
     ),
-    // Wajib ada: splash, tombol "Mulai" di onboarding, dan tombol "Masuk"
-    // di profil semuanya menuju '/auth'. Tanpa rute ini GoRouter melempar
-    // `GoException: no routes for location: /auth` = aplikasi crash.
+    // Wajib ada: tombol "Lewati" di onboarding, tombol "Masuk" di profil, dan
+    // tujuan setelah splash semuanya menuju '/auth'. Tanpa rute ini GoRouter
+    // melempar `GoException: no routes for location: /auth` = aplikasi crash.
     GoRoute(
       path: '/auth',
       pageBuilder: (_, GoRouterState s) => _halaman(s, const AuthScreen()),

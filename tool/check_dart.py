@@ -136,6 +136,21 @@ TOPFUNC_RE = re.compile(
     r"^([A-Za-z_$][\w$]*)\s*(?:<[^>]*>)?\s*\([^;{]*\)\s*(?:async\s*)?[{=]",
     re.MULTILINE,
 )
+# Fungsi top-level yang ADA tipe return-nya, mis.
+#     GoRouter buatRouter(LokasiAwal awal) => GoRouter(
+#     Future<LokasiAwal> tentukanLokasiAwal() async {
+# Tanpa pola ini semua fungsi bertipe TIDAK TERDAFTAR sebagai simbol, sehingga
+# cek UNUSED-IMPORT salah Trophy (router.dart dilaporkan tidak dipakai) dan
+# cek MISSING-IMPORT buta huruf.
+#
+# Syarat penting: (1) baris harus mulai dari kolom 0 -> method di dalam class
+# selalu berindentasi, jadi tidak ikut tertangkap; (2) nama fungsi WAJIB mulai
+# huruf kecil supaya `Widget Build(...)` tidak dianggap fungsi.
+TOPFUNC_TYPED_RE = re.compile(
+    r"^(?:[A-Za-z_$][\w$]*(?:<[^>]*>)?\??\s+)([a-z_$][\w$]*)\s*"
+    r"\([^;{]*\)\s*(?:async\s*)?[{=>]",
+    re.MULTILINE,
+)
 TOPVAR_RE = re.compile(
     r"^(?:const|final)\s+(?:[\w<>,?\s.]+\s+)?([a-z_$][\w$]*)\s*=",
     re.MULTILINE,
@@ -160,6 +175,7 @@ def resolve(spec, origin):
 def declared_names(body):
     names = set(TOPLEVEL_RE.findall(body))
     names |= set(TOPFUNC_RE.findall(body))
+    names |= set(TOPFUNC_TYPED_RE.findall(body))
     names |= set(TOPVAR_RE.findall(body))
     return names
 

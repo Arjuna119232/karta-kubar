@@ -20,7 +20,7 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 | # | Tahap | Status | Commit |
 |---|---|---|---|
 | 0 | Fondasi: tema M3, ikon, router, build CI | ✅ | `c3d6bb3`, `1440406` |
-| 1 | `SplashScreen` + `onFinished`, navigasi di router | ✅ | `f512dca` |
+| 1 | ~~`SplashScreen` + `onFinished`~~ (diganti splash native 15 Okt) | ✅ | `f512dca` |
 | 2 | `OnbArt` (aspirasi, komunitas, terhubung) untuk 3 sampul | ✅ | `f512dca` |
 | 3 | `.env` → `--dart-define` → `AppEnv`, tanpa API key di kode | ✅ | `8a4a2eb` |
 | 4 | Lapisan repository + klien Supabase + role warga/admin | ✅ | `8a4a2eb` |
@@ -31,7 +31,8 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 
 ### Fitur yang sudah ada dan jalan
 
-- Splash (1,8 dtk) → onboarding / beranda / login
+- Splash **native** (Android `Theme.SplashScreen` + iOS `UILaunchScreen`) →
+  onboarding / beranda / login, maks 1,2 dtk, tanpa frame putih
 - Onboarding 3 slide beranimasi, bisa digeser
 - Masuk / daftar (mode demo, OTP `123456`)
 - Beranda: greeting, pengumuman, berita, agenda, aksi cepat
@@ -59,6 +60,8 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 ### Melihat perubahan tampilan (TANPA build APK)
 
 Pratinjau splash + 3 sampul dengan animasi CSS, angka salinan Dart:
+- `design/browser/splash-native.html` — splash native 2026 + handoff + cek aturan
+- `design/browser/index.html` — 3 sampul onboarding
 
 ```bash
 cd ~/karta-kubar

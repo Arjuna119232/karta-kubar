@@ -22,12 +22,12 @@ Kelurahan Kuningan Barat, Jakarta Selatan
 lib/
   main.dart                      entry point
   core/
-    router.dart                  rute: splash -> onboarding -> auth -> home
+    boot.dart                    menentukan halaman pertama SEBELUM runApp
+    router.dart                  rute: onboarding | auth | home (tanpa rute '/')
     providers.dart               Riverpod state (tab, tema, sesi login)
     theme/                       warna, tipografi, tema terang/gelap
     utils/date_id.dart           format tanggal Bahasa Indonesia
   features/
-    splash/                      layar pembuka
     onboarding/                  3 slide perkenalan
     auth/                        masuk/daftar + OTP
     shell/                       kerangka 5 tab
@@ -45,7 +45,8 @@ assets/
 
 ## Yang sudah jadi (FASE 1–3)
 
-- **Splash** → **Onboarding** (3 slide, hanya muncul sekali) → **Auth** → **5 tab**
+- **Splash native** (logo + hijau solid, maks 1,2 dtk, oleh OS) → **Onboarding**
+  (3 slide, hanya muncul sekali) → **Auth** → **5 tab**
 - **Auth**: layar Masuk / Daftar (validasi nama + nomor WhatsApp, wajib centang
   Syarat & Ketentuan), lalu **OTP 6 digit** dengan kotak kode, timer kirim
   ulang, dan tombol "Jelajahi tanpa masuk". Kode demo: **123456**

@@ -55,6 +55,21 @@ jobs:
       - name: Apply Android patches (branding, permissions)
         run: bash tool/patch_android.sh
 
+      # WAJIB setelah `flutter create`: android/ baru saja dibuat ulang, jadi
+      # theme + ikon splash native Android 12+ harus dipasang ulang di sini.
+      # Script ini memblokir build kalau gagal (warna != AppColors.primary,
+      # installSplashScreen() salah urutan, ikon tidak muat circle 192dp, dll).
+      - name: Apply native splash (Android 12+ Theme.SplashScreen)
+        run: python3 tool/patch_splash_android.py
+
+      # Aset splash harus SUDAH ada di repo dan terbukti fitting. Script ini
+      # sekaligus memverifikasi ikon benar-benar muat di mask circle 192dp.
+      # Pillow tidak ada di runner, jadi dipasang di sini (butuh beberapa detik).
+      - name: Verify splash assets fit Android 12 circle mask
+        run: |
+          python3 -m pip install --quiet --disable-pip-version-check pillow
+          python3 tool/gen_splash_icons.py
+
       - name: Apply release signing
         run: python3 tool/patch_signing.py
 

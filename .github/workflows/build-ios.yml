@@ -64,6 +64,18 @@ jobs:
       - name: Apply iOS patches (bundle id, nama, permission, deep link)
         run: python3 tool/patch_ios.py
 
+      # WAJIB setelah `flutter create`: ios/ baru dibuat ulang, jadi
+      # UILaunchScreen + aset warna/gambar harus dipasang ulang di sini.
+      # Memblokir build kalau warna != AppColors.primary atau UILaunchScreen
+      # punya key selain UIColorName + UIImageName.
+      - name: Apply native splash (UILaunchScreen)
+        run: python3 tool/patch_splash_ios.py
+
+      - name: Verify splash assets (iOS 160pt + mask check)
+        run: |
+          python3 -m pip install --quiet --disable-pip-version-check pillow
+          python3 tool/gen_splash_icons.py
+
       # WAJIB setelah `flutter create`. Folder ios/ baru dibuat ulang,
       # jadi AppIcon harus digenerate ulang juga.
       - name: Generate app icon (iOS)

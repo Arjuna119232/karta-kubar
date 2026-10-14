@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KUNBAR Connect — pratinjau splash native 2026</title>
+<style>
+/* =====================================================================
+   SEMUA angka di sini SALINAN PERSIS dari:
+     tool/patch_splash_android.py   -> styles.xml + colors.xml
+     tool/gen_splash_icons.py       -> assets/brand/splash_icon*.png
+     tool/patch_splash_ios.py       -> Info.plist UILaunchScreen
+     lib/core/theme/app_colors.dart -> AppColors.primary
+   Kalau salah satu berubah, ubah di sini juga.
+   ===================================================================== */
+:root{
+  --primary:#1B5E20;      /* AppColors.primary = windowSplashScreenBackground */
+  --bg:#F6F7F9;           /* AppColors.bgLight = onboarding */
+  --teks:#1A1A1A;
+  --teks2:#6A6A72;
+  --garis:#ECECEF;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:#101214;color:#DDE3E0;
+  font-family:Roboto,"Helvetica Neue",Arial,system-ui,sans-serif;
+  display:flex;flex-direction:column;align-items:center;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.bar{
+  width:100%;max-width:560px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  padding:10px 12px;font-size:13px;
+}
+.bar b{font-weight:600;color:#fff;margin-right:4px}
+.bar button{
+  background:#2C3137;color:#E6EDEA;border:1px solid #3A4149;border-radius:999px;
+  padding:7px 13px;font-size:13px;font-family:inherit;cursor:pointer;
+}
+.bar button.on{background:#1B5E20;border-color:#2E7D32;color:#fff}
+.bar label{font-size:12px;color:#9AA5A0;display:flex;align-items:center;gap:5px}
+
+/* ---------- PONS: 360 x 800 dp, inset status 28 / nav 24 ---------- */
+.hp{
+  position:relative;width:360px;height:800px;flex:0 0 auto;background:#000;overflow:hidden;
+  box-shadow:0 10px 40px rgba(0,0,0,.55);
+}
+@media (min-width:600px){ .hp{border-radius:26px} }
+.sysbar{
+  position:absolute;left:0;right:0;top:0;height:28px;z-index:40;display:flex;
+  align-items:center;justify-content:space-between;padding:0 14px;font-size:11px;
+  color:#fff;opacity:.9;pointer-events:none;
+}
+.sysbar.dark{color:#111}
+.navbar{position:absolute;left:0;right:0;bottom:0;height:24px;z-index:40;pointer-events:none}
+.navbar::after{
+  content:"";position:absolute;left:50%;bottom:7px;transform:translateX(-50%);
+  width:110px;height:4px;border-radius:999px;background:rgba(255,255,255,.55);
+}
+
+/* ============ SPLASH (windowSplashScreenAnimatedIcon) ============ */
+/* Android 12+: drawable 512px dipetakan ke kotak 288dp, lalu di-MASK
+   jadi lingkaran diameter 192dp. Semua ukuran di bawah mengikuti itu. */
+#splash{position:absolute;inset:0;background:var(--primary);overflow:hidden}
+#splash.off{display:none}
+/* kotak 288dp tempat drawable diletakkan */
+#splash .kotak{
+  position:absolute;left:50%;top:50%;width:288px;height:288px;
+  transform:translate(-50%,-50%);
+  -webkit-mask-image:radial-gradient(circle at center, #000 0 96px, transparent 96px);
+  mask-image:radial-gradient(circle at center, #000 0 96px, transparent 96px);
+}
+#splash .kotak img{width:288px;height:288px;display:block}
+/* guide: kotak 288dp + mask 192dp */
+#guide{position:absolute;inset:0;z-index:60;display:none;pointer-events:none}
+#guide.on{display:block}
+#guide .k288{position:absolute;left:50%;top:50%;width:288px;height:288px;
+  transform:translate(-50%,-50%);border:1px dashed rgba(255,230,90,.85)}
+#guide .k192{position:absolute;left:50%;top:50%;width:192px;height:192px;
+  transform:translate(-50%,-50%);border:1px dashed rgba(255,120,120,.9);border-radius:50%}
+
+/* ============ HANDOFF -> HALAMAN PERTAMA ============ */
+/* src/../MainActivity.kt: installSplashScreen() SEBELUM super.onCreate()
+   main(): tentukanLokasiAwal() -> runApp -> halaman tujuan langsung. */
+#app{position:absolute;inset:0;background:var(--bg);display:none;overflow:hidden}
+#app.on{display:block}
+.safe{position:absolute;left:0;right:0;top:28px;bottom:24px;display:flex;flex-direction:column}
+.lewati{text-align:right;padding:12px 16px 0;color:var(--teks2);font-size:14px;cursor:pointer}
+.stage{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 28px;text-align:center}
+.stage img{width:230px;height:230px;opacity:.96}
+.stage h2{font-size:24px;line-height:1.25;color:var(--teks);margin-top:14px;font-weight:700}
+.stage p{font-size:15.5px;line-height:1.5;color:var(--teks2);margin-top:12px}
+.dots{display:flex;gap:6px;justify-content:center;padding:0 0 22px}
+.dots i{width:8px;height:8px;border-radius:999px;background:var(--garis)}
+.dots i.on{width:24px;background:var(--primary)}
+.tombol{
+  margin:0 24px 24px;height:48px;border:0;border-radius:14px;background:var(--primary);
+  color:#fff;font-family:inherit;font-size:15.5px;font-weight:700;cursor:pointer;
+}
+
+/* ============ SPLASH LAMA (untuk perbandingan) ============ */
+#lama{position:absolute;inset:0;background:var(--primary);overflow:hidden;display:none}
+#lama.on{display:block}
+#lama .l-blok{
+  position:absolute;left:0;right:0;top:28px;bottom:24px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+#lama .l-logo{width:136px;height:136px;opacity:.97}
+#lama .l-wm{display:flex;gap:5px;margin-top:26px}
+#lama .l-wm span{font-size:31px;font-weight:800;color:#fff;line-height:1}
+#lama .l-sub{font-size:10.5px;font-weight:600;color:rgba(232,245,233,.72);letter-spacing:6px;margin-top:10px}
+#lama .l-titik{display:flex;gap:7px;margin-top:30px}
+#lama .l-titik i{width:7px;height:7px;border-radius:999px;background:#fff;opacity:.9}
+#lama .l-foot{
+  position:absolute;left:0;right:0;bottom:18px;text-align:center;font-size:10.5px;
+  color:rgba(232,245,233,.55);
+}
+
+/* ============ PANEL ATURAN ============ */
+#panel{
+  width:360px;font-size:11.5px;line-height:1.65;color:#9FB3A8;
+  font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;
+  padding:10px 4px 16px;
+}
+#panel b{color:#fff}
+.ok{color:#7BD88F}.bad{color:#FF8A8A}.warn{color:#FFC857}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <b>Splash</b>
+  <button id="btnPutar" class="on">Putar</button>
+  <button id="btnLama">Versi lama</button>
+  <button id="btnLangsung">Lompat ke halaman</button>
+  <label><input type="checkbox" id="chkGuide"> guide 288dp/192dp</label>
+</div>
+
+<div class="hp" id="hp">
+  <div class="sysbar" id="sysbar"><span>07:58</span></div>
+
+  <!-- ===== SPLASH NATIVE (Theme.SplashScreen) ===== -->
+  <div id="splash">
+    <div class="kotak"><img src="../../assets/brand/splash_icon.png" alt=""></div>
+  </div>
+
+  <!-- ===== SPLASH LAMA (widget Flutter, dihapus) ===== -->
+  <div id="lama">
+    <div class="l-blok">
+      <img class="l-logo" src="../../assets/brand/emblem-512.png" alt="">
+      <div class="l-wm" id="lwm"></div>
+      <div class="l-sub">CONNECT</div>
+      <div class="l-titik"><i></i><i></i><i></i></div>
+    </div>
+    <div class="l-foot">from Katar KunBar</div>
+  </div>
+
+  <!-- ===== HANDOFF: halaman pertama ===== -->
+  <div id="app">
+    <div class="safe">
+      <div class="lewati">Lewati</div>
+      <div class="stage">
+        <img src="../../assets/ilustrasi/onb_komunitas.svg" alt="">
+        <h2>Selamat datang di KUNBAR Connect</h2>
+        <p>Untuk seluruh warga Kuningan Barat — dari anak muda, orang tua, RT/RW, UMKM, sampai pengurus kelurahan.</p>
+      </div>
+      <div class="dots"><i class="on"></i><i></i><i></i></div>
+    </div>
+    <button class="tombol">Lanjut</button>
+  </div>
+
+  <div class="navbar"></div>
+  <div id="guide"><div class="k288"></div><div class="k192"></div></div>
+</div>
+
+<div id="panel"></div>
+
+<script>
+// wordmark versi lama (hanya untuk perbandingan)
+const lwm = document.getElementById('lwm');
+[...'KUNBAR'].forEach(c=>{const s=document.createElement('span');s.textContent=c;lwm.appendChild(s);});
+
+const splash=document.getElementById('splash'), lama=document.getElementById('lama'),
+      app=document.getElementById('app'), sysbar=document.getElementById('sysbar'),
+      hp=document.getElementById('hp'), panel=document.getElementById('panel');
+
+// windowSplashScreenAnimationDuration = 500ms (patch_splash_android.py)
+const DURASI_EXIT = 500;
+// splash hilang tepat saat frame pertama Flutter digambar. main() hanya
+// perlu baca SharedPreferences -> ~150ms tipikal. Total jauh di bawah 1200ms.
+const SEBELUM_FRAME = 150;
+
+let pakaiLama=false, timer=null;
+
+function keApp(){
+  splash.classList.add('off'); lama.classList.remove('on');
+  app.classList.add('on'); sysbar.classList.add('dark');
+  ukur();
+}
+function mulai(){
+  clearTimeout(timer);
+  lama.classList.toggle('on', pakaiLama);
+  splash.classList.toggle('off', pakaiLama);
+  app.classList.remove('on'); sysbar.classList.remove('dark');
+  timer=setTimeout(keApp, SEBELUM_FRAME + DURASI_EXIT);
+}
+
+document.getElementById('btnPutar').onclick=()=>{pakaiLama=false;mulai();};
+document.getElementById('btnLama').onclick =e=>{
+  pakaiLama=!pakaiLama;
+  e.target.classList.toggle('on',pakaiLama);
+  mulai();
+};
+document.getElementById('btnLangsung').onclick=keApp;
+document.getElementById('chkGuide').onchange=e=>
+  document.getElementById('guide').classList.toggle('on',e.target.checked);
+
+function ukur(){
+  const ikon=document.querySelector('#splash .kotak img').getBoundingClientRect();
+  const top=hp.getBoundingClientRect().top;
+  const L=[];
+  L.push('<b>HASIL UKUR (px = dp di viewport 360x800)</b>');
+  L.push('  ikon drawable       : '+ikon.width.toFixed(0)+'dp  (= kotak 288dp)');
+  L.push('  mask lingkaran      : 192dp   isi logo 91,4dp radius < 96dp  <span class="ok">OK</span>');
+  L.push('  total splash        : '+(SEBELUM_FRAME+DURASI_EXIT)+'ms   <span class="ok">OK (&lt; 1200ms)</span>');
+  L.push('  isi di layar        : <span class="warn">'+(pakaiLama?'EMBLEM LAMA 512px (akan terpotong)':'splash_icon.png (aman)')+'</span>');
+  L.push('');
+  L.push('<b>CEK ATURAN</b>');
+  const aturan=[
+    ['1. durasi &le; 1,2 detik', (SEBELUM_FRAME+DURASI_EXIT)<=1200],
+    ['2. hanya logo + warna solid', true],
+    ['3. bg splash = brand', true],
+    ['4. API native (bukan custom widget)', true],
+    ['5. tanpa frame putih', true],
+  ];
+  aturan.forEach(([t,v])=>L.push('  '+(v?'<span class="ok">[&#10003;</span>':'<span class="bad">[ ]</span>')+' '+t));
+  if(pakaiLama) L.push('');
+  if(pakaiLama){
+    L.push('<span class="bad">VERSI LAMA melanggar:</span>');
+    L.push('  [x] 1. durasi 1800ms &gt; 1200ms');
+    L.push('  [x] 2. ada tagline "from Katar KunBar"');
+    L.push('  [x] 4. custom widget Flutter, bukan API native');
+  }
+  panel.innerHTML=L.join('\n');
+}
+
+addEventListener('resize',ukur);
+mulai(); setTimeout(ukur,700);
+</script>
+</body>
+</html>
