@@ -39,8 +39,11 @@ Widget splash buatan sendiri sudah **dihapus** dari `lib/features/splash/`.
       `windowSplashScreenAnimatedIcon` (1 drawable, di-mask **lingkaran
       192dp**) dan `windowSplashScreenBrandingImage` (1 gambar di bawah).
       Tidak ada slot untuk wordmark di samping logo.
-- [x] **Solusinya** — nama aplikasi ikut_DIGAMBAR di dalam drawable ikon:
-      emblem di atas + `KUNBAR` di bawah, semuanya muat di circle 192dp.
+- [x] **Solusinya** — nama aplikasi ikut DIGAMBAR di dalam drawable ikon:
+      emblem di atas + `KUNBAR` + `CONNECT` (lockup dua baris, `CONNECT` lebih
+      kecil dengan letter-spacing lebar), semuanya muat di circle 192dp.
+      ⚠️ Ini MEMAKAI seluruh ruang yang ada: emblem harus dikecilkan dan
+      `CONNECT` cuma ~79 dp. Menambah baris ketiga tidak akan muat lagi.
 - [x] **Kredit "From KATAR KUNBAR"** memakai
       `android:windowSplashScreenBrandingImage` (200×80 dp, slot paling bawah).
 - [x] **`windowSplashScreenBrandingImage` adalah ATRIBUT PLATFORM** (prefix
@@ -59,8 +62,8 @@ Widget splash buatan sendiri sudah **dihapus** dari `lib/features/splash/`.
 - [x] `UILaunchScreen` (Apple docs, iOS 14+) hanya menerima `UIColorName`,
       `UIImageName`, `UIImageRespectsSafeAreaInsets`, dan elemen border.
       **Tidak ada teks, tidak ada kontrol posisi** — gambar SELALU dipusatkan.
-- [x] Karena itu emblem + `KUNBAR` + `From KATAR KUNBAR` **digabung jadi satu
-      gambar** 260 pt, dipusatkan.
+- [x] Karena itu emblem + `KUNBAR` + `CONNECT` + `From KATAR KUNBAR`
+      **digabung jadi satu gambar** 260 pt, dipusatkan.
 - [ ] **Kredit iOS TIDAK bisa berada di paling bawah layar** seperti di
       Android. Itu konsekuensi langsung dari API Apple, bukan pilihan desain.
 

@@ -136,32 +136,69 @@ def tinggi_visual(kanvas: Image.Image, y_min: int, y_max: int) -> int:
 
 
 # --------------------------------------------------------------- ikon Android
-def buat_ikon_android(fs_wordmark: int, r_emblem: int, gap: int) -> Image.Image:
-    """Lockup di dalam circle 192dp: emblem di atas, WORDMARK di bawah.
+def _tinggi_teks(teks: str, fs: int, tracking: float) -> int:
+    """Tinggi VISUAL (piksel alpha terisi) - bukan tinggi font."""
+    probe = Image.new("RGBA", (900, fs * 3 + 20), (0, 0, 0, 0))
+    teks_tracking(probe, teks, 450, (fs * 3 + 20) / 2, fs, PUTIH, tracking=tracking)
+    bb = probe.split()[3].getbbox()
+    return 0 if bb is None else bb[3] - bb[1]
 
-    Blok DIPUSATKAN dari tinggi visual yang benar-benar terisi, bukan dari
-    angka tetap seperti `y = canvas * 0.68`. Kalau posisi dipatok, begitu
-    ukuran font atau emblem diganti, bloknya meleset dan bisa keluar dari
-    mask - dan build tetap hijau.
+
+def susun_blok(baris: list[tuple[str, int, float]], r_emblem: int, gap: int) -> tuple[float, list[tuple]]:
+    """Hitung (cy_emblem, posisi_baris) untuk seluruh isi, dengan blok DIPUSATKAN.
+
+    `baris` = [(teks, ukuran_font, tracking), ...] dari atas ke bawah.
+    Semua tinggi diambil dari piksel yang benar-benar terisi, lalu blok
+    dipusatkan terhadap titik tengah kanvas.
+
+    Posisi tidak pernah dipatok ke angka tetap. Kalau dipatok, begitu font
+    atau emblem diganti bloknya meleset keluar mask circle - dan build tetap
+    hijau.
+
+    JARAK SETIAP ELEMEN dihitung bergantian, termasuk jarak emblem ke baris
+    pertama. Versi pertama fw lupa menambahkan jarak itu, hasilnya emblem
+    menimpa teks (terlihat di render iOS).
+    """
+    # urutan elemen: emblem, gap, baris0, gap, baris1, ...
+    tinggi = [2 * r_emblem]
+    for teks, fs, tr in baris:
+        tinggi.append(gap)
+        tinggi.append(_tinggi_teks(teks, fs, tr))
+    total = sum(tinggi)
+
+    y = (CANVAS - total) / 2.0
+    cy_emblem = y + r_emblem
+    y += 2 * r_emblem
+
+    posisi = []
+    for teks, fs, tr in baris:
+        y += gap
+        h = _tinggi_teks(teks, fs, tr)
+        posisi.append((teks, fs, tr, y + h / 2))
+        y += h
+    return cy_emblem, posisi
+
+
+def buat_ikon_android() -> Image.Image:
+    """Lockup di dalam circle 192dp: emblem + KUNBAR + CONNECT.
+
+    "KUNBAR" besar, "CONNECT" lebih kecil dengan letter-spacing lebar -
+    lockup klasik dua baris. Parameter hasil SEARCH, bukan tebakan:
+    maximize ukuran teks dengan syarat emblem >= 88 px dan sisa radius
+    cukup dari batas mask 96 dp.
     """
     kanvas = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
     emblem = Image.open(SUMBER).convert("RGBA")
-
-    # 1) ukur tinggi VISUAL wordmark (piksel yang terisi, bukan tinggi font)
-    probe = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
-    teks_tracking(probe, WORDMARK, CANVAS / 2, CANVAS / 2, fs_wordmark, PUTIH,
-                  tracking=fs_wordmark * 0.10)
-    h_word = tinggi_visual(probe, 0, CANVAS)
-
-    # 2) tinggi blok = 2*r_emblem + gap + h_word, lalu dipusatkan
-    tinggi_blok = 2 * r_emblem + gap + h_word
-    atas = (CANVAS - tinggi_blok) / 2.0
-    y_embl = atas + r_emblem
-    y_word = atas + 2 * r_emblem + gap + h_word / 2
-
-    tempel(kanvas, muat(emblem, r_emblem), CANVAS / 2, y_embl)
-    teks_tracking(kanvas, WORDMARK, CANVAS / 2, y_word, fs_wordmark, PUTIH,
-                  tracking=fs_wordmark * 0.10)
+    r_emblem = 92
+    fs_kunbar, fs_connect = 48, 22
+    baris = [
+        (WORDMARK, fs_kunbar, fs_kunbar * 0.12),
+        ("CONNECT", fs_connect, fs_connect * 0.28),
+    ]
+    cy_emblem, posisi = susun_blok(baris, r_emblem, gap=18)
+    tempel(kanvas, muat(emblem, r_emblem), CANVAS / 2, cy_emblem)
+    for teks, fs, tr, cy in posisi:
+        teks_tracking(kanvas, teks, CANVAS / 2, cy, fs, PUTIH, tracking=tr)
     return kanvas
 
 
@@ -188,34 +225,37 @@ def buat_branding() -> dict[str, Image.Image]:
 
 # --------------------------------------------------------------- iOS
 def buat_ios(px: int) -> Image.Image:
-    """Lockup untuk UILaunchScreen: emblem + KUNBAR + From KATAR KUNBAR.
+    """Lockup untuk UILaunchScreen: emblem + KUNBAR + CONNECT + From KATAR KUNBAR.
 
     iOS tidak punya slot terpisah: UILaunchScreen hanya boleh UIColorName +
     UIImageName, dan gambar SELALU dipusatkan - tidak ada cara menaruh
-    teks di paling bawah layar. Jadi ketiganya jadi satu gambar.
+    kredit di paling bawah layar. Jadi semuanya jadi satu gambar.
     """
     emblem = Image.open(SUMBER).convert("RGBA")
-    r_embl = round(px * 0.20)
-    fs_w = round(px * 0.115)
-    fs_k = round(px * 0.045)
-    gap1 = round(px * 0.055)
-    gap2 = round(px * 0.075)
+    sisi = px * 3                      # kanvas besar lalu di-crop ke tengah
+    r_embl = round(px * 0.19)
+    fs1 = round(px * 0.105)
+    fs2 = round(px * 0.050)
+    fs3 = round(px * 0.044)
+    gap = round(px * 0.055)
 
-    kanvas = Image.new("RGBA", (px, px), (0, 0, 0, 0))
-    y_word = int(px * 0.58)
-    teks_tracking(kanvas, WORDMARK, px / 2, y_word, fs_w, PUTIH,
-                  tracking=fs_w * 0.14)
-    h_word = tinggi_visual(kanvas, y_word - fs_w, y_word + fs_w)
-
-    teks_tracking(kanvas, "From", px / 2, y_word + h_word / 2 + gap2 + fs_k * 0.5,
-                  fs_k, PUTIH, tracking=fs_k * 0.20)
-    teks_tracking(kanvas, "KATAR KUNBAR", px / 2,
-                  y_word + h_word / 2 + gap2 + fs_k * 2.1, fs_k, PUTIH,
-                  tracking=fs_k * 0.14)
-
-    y_embl = y_word - h_word / 2 - gap1 - r_embl
-    tempel(kanvas, muat(emblem, r_embl), px / 2, y_embl)
-    return kanvas
+    kanvas = Image.new("RGBA", (sisi, sisi), (0, 0, 0, 0))
+    rows = [
+        (WORDMARK, fs1, fs1 * 0.12),
+        ("CONNECT", fs2, fs2 * 0.28),
+        ("From KATAR KUNBAR", fs3, fs3 * 0.06),
+    ]
+    hs = [_tinggi_teks(t, f, k) for t, f, k in rows]
+    tinggi = 2 * r_embl + sum(hs) + gap * (len(rows) + 1)
+    y = (sisi - tinggi) / 2.0
+    cy = y + r_embl
+    tempel(kanvas, muat(emblem, r_embl), sisi / 2, cy)
+    y += 2 * r_embl
+    for i, (teks, fs, tr) in enumerate(rows):
+        y += gap + hs[i] / 2
+        teks_tracking(kanvas, teks, sisi / 2, y, fs, PUTIH, tracking=tr)
+        y += hs[i] / 2
+    return kanvas.crop((px, px, px * 2, px * 2))
 
 
 # --------------------------------------------------------------- cek
@@ -253,7 +293,7 @@ def main() -> int:
     print(f"    jari aman   : {JARI_PX:.1f}px")
 
     # --- ikon: emblem + KUNBAR dalam satu circle ---
-    ikon = buat_ikon_android(fs_wordmark=50, r_emblem=90, gap=24)
+    ikon = buat_ikon_android()
     ikon.save(KELUAR / "splash_icon.png", "PNG", optimize=True)
     print(f"    + splash_icon.png  ({KELUAR.joinpath('splash_icon.png').stat().st_size // 1024} KB)")
 
