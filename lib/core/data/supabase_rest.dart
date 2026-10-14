@@ -111,7 +111,8 @@ class SupabaseRest {
     try {
       final HttpClient client = _klien();
       final HttpClientRequest req = await client.openUrl(method, url);
-      req.headers.setAll(header ?? _header());
+      final Map<String, String> h = header ?? _header();
+      h.forEach(req.headers.add);
       if (body != null) req.write(jsonEncode(body));
       final HttpClientResponse res = await req.close().timeout(
             const Duration(seconds: 20),
@@ -253,7 +254,7 @@ class SupabaseRest {
   ) async {
     final Map<String, String> q = <String, String>{};
     filter.forEach((String kolom, String nilai) {
-      q[kolum] = 'eq.$nilai';
+      q[kolom] = 'eq.$nilai';
     });
     // ignore: unnecessary_statements
     final Hasil<Map<String, dynamic>> r = await _kirim(
@@ -288,12 +289,12 @@ class SupabaseRest {
         '/storage/v1/object/$bucket/$jalur',
       );
       final HttpClientRequest req = await client.putUrl(url);
-      req.headers.setAll(<String, String>{
+      <String, String>{
         'apikey': _env.supabaseAnonKey,
         'Authorization': 'Bearer ${_accessToken ?? ''}',
         'Content-Type': tipeKonten,
         'x-upsert': 'true',
-      });
+      }.forEach(req.headers.add);
       req.add(bytes);
       final HttpClientResponse res = await req.close().timeout(
             const Duration(seconds: 40),

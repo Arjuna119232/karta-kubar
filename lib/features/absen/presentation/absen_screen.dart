@@ -113,7 +113,8 @@ class _AbsenScreenState extends ConsumerState<AbsenScreen> {
                         padding: const EdgeInsets.only(bottom: AppSpacing.gap),
                         child: _SelesaiTile(
                           kegiatan: a,
-                          sudah: ctrl.sudahAbsen(a.judul, a.tanggal),
+                          sudah: ctrl.sudahAbsen(
+                              a.judul, a.tanggal ?? DateTime.now()),
                           onIsi: () => _catat(context, ctrl, a),
                         ),
                       ),

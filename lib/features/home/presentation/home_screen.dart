@@ -449,12 +449,16 @@ class _AgendaTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Text(
-                  '${activity.tanggal.day}',
+                  activity.tanggal != null
+                      ? '${activity.tanggal!.day}'
+                      : '?',
                   style: context.text.titleLarge
                       ?.copyWith(color: context.colors.primary, height: 1),
                 ),
                 Text(
-                  DateId.bulanSingkat(activity.tanggal),
+                  activity.tanggal != null
+                      ? DateId.bulanSingkat(activity.tanggal!)
+                      : '?',
                   style: context.text.labelSmall
                       ?.copyWith(color: context.colors.primary),
                 ),
@@ -480,7 +484,9 @@ class _AgendaTile extends StatelessWidget {
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(
-                        '${activity.lokasi} · ${DateId.tanggal(activity.tanggal)}',
+                        activity.tanggal != null
+                            ? '${activity.lokasi} · ${DateId.tanggal(activity.tanggal!)}'
+                            : activity.lokasi,
                         style: context.text.bodySmall
                             ?.copyWith(color: context.semantic.textSecondary),
                         overflow: TextOverflow.ellipsis,
