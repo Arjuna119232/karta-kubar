@@ -10,6 +10,11 @@ on:
         type: choice
         options: ['true', 'false']
         default: 'true'
+      abi:
+        description: 'Arsitektur CPU untuk APK. arm64 saja = APK paling kecil (~18 MB).'
+        type: choice
+        options: ['arm64', 'universal']
+        default: 'arm64'
 
 permissions:
   contents: write
@@ -68,15 +73,38 @@ jobs:
       - name: Dart static check (blocking)
         run: python3 tool/check_dart.py
 
+      # Karakter non-Latin (CJK/Kana/Hangul) pernah nyasar ke komentar dari IME.
+      - name: Non-Latin check (blocking)
+        run: python3 tool/check_nonlatin.py
+
       - name: Analyze (non-blocking)
         run: flutter analyze || true
 
-      - name: Build release APK
-        run: flutter build apk --release --dart-define=KUNBAR_DEMO=${{ github.event.inputs.demo || 'true' }}
+      # APK hanya untuk arm64 (semua HP Android modern). ABI lain (x86_64,
+      # armeabi-v7a) menambah ~35 MB tanpa perlu - emulator x86 dan HP
+      # sangat lama bisa pakai AAB / build manual dengan --target-platform.
+      - name: Build release APK (arm64 only)
+        if: github.event.inputs.abi != 'universal'
+        run: |
+          flutter build apk --release \
+            --target-platform android-arm64 \
+            --dart-define=KUNBAR_DEMO=${{ github.event.inputs.demo || 'true' }}
 
-      # Play Store mewajibkan AAB (bukan APK) untuk aplikasi baru.
+      - name: Build release APK (universal)
+        if: github.event.inputs.abi == 'universal'
+        run: |
+          flutter build apk --release \
+            --dart-define=KUNBAR_DEMO=${{ github.event.inputs.demo || 'true' }}
+
+      # Play Store mewajibkan AAB (bukan APK) untuk aplikasi baru. AAB selalu
+      # dipisah per ABI oleh Play, jadi ukurannya kecil tanpa perlu flag apa pun.
       - name: Build release AAB (Play Store)
         run: flutter build appbundle --release --dart-define=KUNBAR_DEMO=${{ github.event.inputs.demo || 'true' }}
+
+      - name: Report artifact sizes
+        run: |
+          ls -lh build/app/outputs/flutter-apk/app-release.apk
+          ls -lh build/app/outputs/bundle/release/app-release.aab
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
