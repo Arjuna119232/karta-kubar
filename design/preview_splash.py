@@ -14,10 +14,11 @@ angka dan algoritma yang PERSIS SAMA dengan kode Dart-nya, lalu mengukur
 posisi blok konten terhadap titik tengah layar secara angka.
 """
 
+import math
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 OUT = Path(__file__).resolve().parent
 
@@ -34,11 +35,13 @@ THEMES = {
     "terang": dict(green=(27, 94, 32), mid=(46, 125, 50), surface=(246, 248, 245),
                    ink=(17, 24, 19), soft=(110, 124, 114),
                    rule=(232, 237, 232), track=(222, 230, 223),
-                   gold=(245, 185, 20), mark_text=(255, 255, 255)),
+                   gold=(245, 185, 20), mark_text=(255, 255, 255), glow=(27, 94, 32),
+                   tint=(233, 242, 234)),
     "gelap": dict(green=(127, 201, 138), mid=(168, 224, 176), surface=(16, 26, 19),
                   ink=(238, 245, 239), soft=(150, 168, 155),
                   rule=(38, 52, 43), track=(38, 52, 43),
-                  gold=(255, 193, 7), mark_text=(14, 28, 18)),
+                  gold=(255, 193, 7), mark_text=(14, 28, 18), glow=(127, 201, 138),
+                   tint=(23, 37, 27)),
 }
 
 FONTS = ["/system/fonts/RobotoFlex-Regular.ttf",
@@ -130,12 +133,51 @@ def layout(w_dp, h_dp, inset_top, inset_bottom, C, S=1.0):
                                   f_tag2=f_tag2)
 
 
+
+def glow_mask(size, inner_frac=0.0, strength=255):
+    """Topeng cahaya radial: pusat terang, tepi transparan.
+
+    Dibangun di kanvas kecil (72x72) lalu di-upscale - jauh lebih cepat dan
+    bebas dari aliasing. Urutan benar: nilai dihitung dari jarak ternormalisasi
+    (t = d/maks), jadi PUSAT selalu paling terang.
+    """
+    k = 72
+    c = (k - 1) / 2
+    maks = math.hypot(c, c)
+    m = Image.new("L", (k, k), 0)
+    px = m.load()
+    for yy in range(k):
+        for xx in range(k):
+            t = min(1.0, math.hypot(xx - c, yy - c) / maks)
+            v = max(0.0, 1.0 - t)
+            px[xx, yy] = int(strength * (v ** 2.2))
+    return m.resize((size, size), Image.Resampling.BILINEAR)
+
+
+def soft_shadow(img, box, radius, blur, color, offset_y):
+    """Bayangan lembut di bawah mark."""
+    lay = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(lay).rounded_rectangle(box, radius=radius, fill=color)
+    lay = lay.filter(ImageFilter.GaussianBlur(blur))
+    img.alpha_composite(lay, (0, offset_y))
+
+
 def render(dev, mode, with_guides=True):
     """Gambar persis seperti Stack+Center di Flutter, lalu UKUR hasilnya."""
     nama, w_dp, h_dp, it, ib = dev
     C = THEMES[mode]
     W, H = w_dp * SCALE, h_dp * SCALE
-    img = Image.new("RGB", (W, H), C["surface"])
+    img = Image.new("RGBA", (W, H), C["surface"] + (255,))
+    # --- gradasian aksen halus: permukaan -> sedikit lebihFRESH ke arah
+    #     tengah atas. Cukup tipis untuk tetap terbaca sebagai warna APPLE,
+    #     tapi cukup terasa untuk tidak terlihat "datar".
+    grad = Image.new("RGB", (1, H))
+    gd = ImageDraw.Draw(grad)
+    a, b = C["surface"], C["tint"]
+    for yy in range(H):
+        t = (yy / (H - 1)) ** 0.85
+        gd.point((0, yy), fill=tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(3)))
+    img.paste(grad.resize((W, H), Image.Resampling.BILINEAR), (0, 0))
     d = ImageDraw.Draw(img)
     cx = W / 2
 
@@ -211,6 +253,21 @@ def render(dev, mode, with_guides=True):
             y += h
             continue
         if kind == "mark":
+            # --- kedalaman: cahaya radial lembut + bayangan (Material 3 Expressive) ---
+            gr = int(a * 2.5)
+            gx0, gy0 = int(cx - gr / 2), int(y + h / 2 - gr / 2)
+            gl = Image.new("RGBA", (gr, gr), C["glow"] + (0,))
+            gr = int(a * 2.9)
+            gm = glow_mask(gr, strength=(62 if mode == "terang" else 105))
+            gl.putalpha(ImageChops.multiply(gm, gl.split()[3]))
+            img.alpha_composite(gl, (gx0, gy0))
+            base = Image.new("RGBA", img.size, (0, 0, 0, 0))
+            soft_shadow(base,
+                        [cx - a / 2, y + h * 0.10, cx + a / 2, y + h * 0.97],
+                        int(a * 0.265), a * 0.14,
+                        (10, 40, 16, (62 if mode == "terang" else 120)), int(a * 0.09))
+            img.alpha_composite(base)
+            d = ImageDraw.Draw(img)
             d.rounded_rectangle([cx - a / 2, y, cx + a / 2, y + h],
                                 radius=int(a * 0.265), fill=C["green"])
             b = d.textbbox((0, 0), "K", font=font_mark)

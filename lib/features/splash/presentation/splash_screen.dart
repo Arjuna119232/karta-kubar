@@ -42,34 +42,49 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool gelap = Theme.of(context).brightness == Brightness.dark;
+    // Semua warna diambil dari token tema, BUKAN angka karangan.
+    // Versi sebelumnya memakai hex hijau-tinted sendiri padahal theme app
+    // abu netral -> layar melompat warna begitu splash selesai.
+    final ThemeData tema = Theme.of(context);
+    final bool gelap = tema.brightness == Brightness.dark;
 
-    // Ukuran TIDAK dikunci dalam dp. Versi sebelumnya memakai angka tetap
-    // (mark 104dp, wordmark 40sp) yang hanya cocok di satu lebar layar, dan
-    // memakai Spacer(flex:) untuk "centering" - padahal footer ikut terhitung
-    // di dalam Column sehingga blok konten tidak pernah benar-benar di tengah.
-    // Sekarang semua diturunkan dari lebar layar, dan centering memakai
-    // Stack + Center (= titik tengah area aman, bukan titik tengah semu).
+    final Color permukaan = tema.scaffoldBackgroundColor;
+    final Color hijau =
+        gelap ? const Color(0xFF7FC98A) : AppColors.primary;
+    final Color hijauMuda =
+        gelap ? const Color(0xFFA8E0B0) : AppColors.success;
+    final Color ink = gelap ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final Color inkLembut =
+        gelap ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final Color garis = gelap ? AppColors.lineDark : AppColors.lineLight;
+    final Color track = gelap ? AppColors.cardDark : AppColors.lineLight;
+
+    // Gradasian aksen: permukaan dicampur sedikit warna brand.
+    // Tipis, tapi cukup supaya tidak terlihat datar (gaya Material 3 Expressive).
+    final Color tint = Color.alphaBlend(
+      hijau.withValues(alpha: gelap ? 0.05 : 0.07),
+      permukaan,
+    );
+
+    // Ukuran TIDAK dikunci dalam dp: semua diturunkan dari lebar layar.
+    // Centering memakai Stack + Center (titik tengah area aman), footer
+    // dipin dengan Positioned - bukan Spacer(flex:) yang pernah bikin isi
+    // bergeser ke atas.
     final Size layar = MediaQuery.sizeOf(context);
     final double u = (layar.shortestSide / 360).clamp(1.0, 1.22);
 
-    final Color hijau = gelap ? const Color(0xFF7FC98A) : AppColors.primary;
-    final Color hijauMuda =
-        gelap ? const Color(0xFFA8E0B0) : AppColors.primary;
-    final Color ink = gelap ? const Color(0xFFEEF5EF) : const Color(0xFF111813);
-    final Color inkLembut =
-        gelap ? const Color(0xFF96A89B) : const Color(0xFF6E7C72);
-    final Color garis =
-        gelap ? const Color(0xFF26342B) : const Color(0xFFE8EDE8);
-    final Color track =
-        gelap ? const Color(0xFF26342B) : const Color(0xFFDDE6DF);
-
-    // Setting font besar dari sistem tidak boleh merusak tata letak splash.
+    // Setting font besar dari sistem tidak boleh merusak tata letak.
     return MediaQuery.withClampedTextScaling(
       minScaleFactor: 0.9,
       maxScaleFactor: 1.15,
       child: Container(
-        color: Theme.of(context).scaffoldBackgroundColor,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: <Color>[permukaan, tint],
+          ),
+        ),
         child: SafeArea(
           child: Stack(
             children: <Widget>[
@@ -80,25 +95,14 @@ class _SplashScreenState extends State<SplashScreen> {
                   children: <Widget>[
                     _Masuk(
                       delay: 0,
-                      child: Container(
-                        width: 88 * u,
-                        height: 88 * u,
-                        decoration: BoxDecoration(
-                          color: hijau,
-                          borderRadius: BorderRadius.circular(24 * u),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'K',
-                          style: TextStyle(
-                            color: gelap
-                                ? const Color(0xFF0E1C12)
-                                : Colors.white,
-                            fontSize: 40 * u,
-                            fontWeight: FontWeight.w800,
-                            height: 1,
-                          ),
-                        ),
+                      scale: true,
+                      child: _Mark(
+                        ukuran: 88 * u,
+                        hijau: hijau,
+                        gelap: gelap,
+                        bayangan: gelap
+                            ? (Color.fromRGBO(0, 0, 0, 0.55))
+                            : (Color.fromRGBO(16, 48, 24, 0.26)),
                       ),
                     ),
                     SizedBox(height: 22 * u),
@@ -195,7 +199,8 @@ class _SplashScreenState extends State<SplashScreen> {
                           child: LinearProgressIndicator(
                             minHeight: 3 * u,
                             backgroundColor: track,
-                            valueColor: AlwaysStoppedAnimation<Color>(hijauMuda),
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(hijauMuda),
                           ),
                         ),
                       ),
@@ -212,12 +217,86 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-/// Masuk halus berjenjang: opacity 0 -> 1 plus geser naik 14 dp.
+/// Mark: cahaya radial halus di belakangnya, kotak hijau, bayangan lembut.
+class _Mark extends StatelessWidget {
+  const _Mark({
+    required this.ukuran,
+    required this.hijau,
+    required this.gelap,
+    required this.bayangan,
+  });
+
+  final double ukuran;
+  final Color hijau;
+  final bool gelap;
+  final Color bayangan;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: ukuran,
+      height: ukuran,
+      child: Stack(
+        alignment: Alignment.center,
+        children: <Widget>[
+          // cahaya radial (2,9x ukuran mark)
+          Container(
+            width: ukuran * 2.9,
+            height: ukuran * 2.9,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: <Color>[
+                  hijau.withValues(alpha: gelap ? 0.16 : 0.13),
+                  hijau.withValues(alpha: 0),
+                ],
+              ),
+            ),
+          ),
+          Container(
+            width: ukuran,
+            height: ukuran,
+            decoration: BoxDecoration(
+              color: hijau,
+              borderRadius: BorderRadius.circular(ukuran * 0.265),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: bayangan,
+                  blurRadius: ukuran * 0.38,
+                  offset: Offset(0, ukuran * 0.09),
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              'K',
+              style: TextStyle(
+                color: gelap ? const Color(0xFF0E1C12) : Colors.white,
+                fontSize: ukuran * 0.46,
+                fontWeight: FontWeight.w800,
+                height: 1,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Masuk halus berjenjang.
+///
+/// [scale] memakai lengkung pegas (ada sedikit lewat lalu kembali) - itulah
+/// yang bikin terasa "hidup" di Material 3 Expressive. Teks cukup pakai
+/// kurva emphasized Material 3.
 class _Masuk extends StatefulWidget {
-  const _Masuk({required this.child, this.delay = 0});
+  const _Masuk({required this.child, this.delay = 0, this.scale = false});
 
   final Widget child;
   final int delay;
+
+  /// true = pakai skala pegas, false = geser naik + fade.
+  final bool scale;
 
   @override
   State<_Masuk> createState() => _MasukState();
@@ -226,7 +305,7 @@ class _Masuk extends StatefulWidget {
 class _MasukState extends State<_Masuk> with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 420),
+    duration: const Duration(milliseconds: 520),
   );
 
   @override
@@ -251,17 +330,24 @@ class _MasukState extends State<_Masuk> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     final CurvedAnimation anim = CurvedAnimation(
       parent: _c,
-      curve: Curves.easeOutCubic,
+      // easeOutBack = pegas: nilai sedikit melewati 1 lalu settle.
+      curve: widget.scale ? Curves.easeOutBack : Curves.easeInOutCubicEmphasized,
     );
     return AnimatedBuilder(
       animation: anim,
-      builder: (_, Widget? kid) => Opacity(
-        opacity: anim.value,
-        child: Transform.translate(
-          offset: Offset(0, 14 * (1 - anim.value)),
-          child: kid,
-        ),
-      ),
+      builder: (_, Widget? kid) {
+        final double v = anim.value.clamp(0.0, 1.2);
+        if (widget.scale) {
+          return Opacity(
+            opacity: v.clamp(0.0, 1.0),
+            child: Transform.scale(scale: 0.86 + 0.14 * v, child: kid),
+          );
+        }
+        return Opacity(
+          opacity: v.clamp(0.0, 1.0),
+          child: Transform.translate(offset: Offset(0, 14 * (1 - v)), child: kid),
+        );
+      },
       child: widget.child,
     );
   }
