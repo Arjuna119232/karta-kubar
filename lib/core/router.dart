@@ -113,13 +113,31 @@ CustomTransitionPage<void> _halaman(GoRouterState state, Widget child) {
   );
 }
 
-/// Rute aplikasi.
+/// Menentukan halaman tujuan setelah splash, lalu pindah ke sana.
+///
+/// Sengaja dipisah dari widget splash: logika "sudah masuk atau belum" tinggal
+/// di satu tempat dan bisa dipakai tanpa mem-build widget.
+Future<void> _dariSplash() async {
+  final SplashTujuan tujuan = await bacaTujuanSplash();
+  switch (tujuan) {
+    case SplashTujuan.onboarding:
+      appRouter.go('/onboarding');
+    case SplashTujuan.beranda:
+      appRouter.go('/home');
+    case SplashTujuan.auth:
+      appRouter.go('/auth');
+  }
+}
+
+/// Ditentukan oleh [SplashScreen] lewat `onFinished` setelah splash selesai.
+/// Routing ada di sini, bukan di dalam widget splash, supaya splash tetap
+/// bisa dipakai tanpa router (misalnya untuk pratinjau).
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
   routes: <RouteBase>[
     GoRoute(
       path: '/',
-      builder: (_, __) => const SplashScreen(),
+      builder: (_, __) => SplashScreen(onFinished: _dariSplash),
     ),
     GoRoute(
       path: '/onboarding',

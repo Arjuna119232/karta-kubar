@@ -7,7 +7,42 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/auth/session.dart';
 import '../../../core/theme/app_colors.dart';
 
+/// Berapa lama splash tampil sebelum lanjut.
+const Duration kDurasiSplash = Duration(milliseconds: 1800);
+
+/// Tujuan setelah splash selesai.
+enum SplashTujuan {
+  /// Belum pernah lewat onboarding.
+  onboarding,
+
+  /// Sudah masuk dan sesi masih hidup -> beranda.
+  beranda,
+
+  /// Belum masuk -> halaman login.
+  auth,
+}
+
+/// Membaca tujuan dari penyimpanan perangkat.
+///
+/// Dipakai dua pihak: splash (kalau tidak ada [SplashScreen.onFinished]) dan
+/// router (kalau callback-nya dipasang). JANGAN dipanggil dua kali untuk satu
+/// perpindahan supaya prefs tidak dibaca berulang.
+Future<SplashTujuan> bacaTujuanSplash() async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  final bool seen = prefs.getBool('onboarding_seen') ?? false;
+  // Kunci prefs di sini harus sama persis dengan yang ditulis SessionNotifier.
+  final bool sudahMasuk =
+      prefs.getString(SessionKeys.user)?.isNotEmpty ?? false;
+
+  if (!seen) return SplashTujuan.onboarding;
+  if (sudahMasuk) return SplashTujuan.beranda;
+  return SplashTujuan.auth;
+}
+
 /// Splash 1,8 detik lalu ke beranda / onboarding (sekali) / login.
+///
+/// Navigasi boleh dipasang dari luar lewat [onFinished]; kalau tidak diisi,
+/// splash memakai [bacaTujuanSplash] lalu navigasi sendiri seperti semula.
 ///
 /// Tata letak: blok konten (logo - wordmark - lokasi - loading) memakai
 /// `Center` di dalam `Stack`, sehingga benar-benar berada di tengah area
@@ -15,7 +50,11 @@ import '../../../core/theme/app_colors.dart';
 /// Jangan pakai `Column` + `Spacer(flex:)` untuk ini: Spacer bukan centering
 /// dan footer ikut merebut ruang, sehingga blok konten terlihat meleset ke atas.
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  const SplashScreen({super.key, this.onFinished});
+
+  /// Dipanggil setelah [kDurasiSplash] habis. Beri tahu navigasi ke mana
+  /// (login atau beranda) dari luar, supaya router yang memegang kendali.
+  final VoidCallback? onFinished;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -23,7 +62,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   /// Hijau muda netral untuk teks di atas hijau solid. Bukan warna karangan:
-  /// diturunkan dari `AppColors.primary` denganCampuran putih.
+  /// diturunkan dari `AppColors.primary` dengan campuran putih.
   static const Color hijauMuda = Color(0xFFE8F5E9);
 
   @override
@@ -33,22 +72,29 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _boot() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final bool seen = prefs.getBool('onboarding_seen') ?? false;
-    // Baca langsung dari prefs dengan kunci yang sama persis seperti yang
-    // ditulis SessionNotifier. SEBELUMNYA splash selalu membawa user ke
-    // '/auth' walau sesi masih aktif, jadi warga harus masuk ulang tiap
-    // kali aplikasi dibuka.
-    final bool sudahMasuk = prefs.getString(SessionKeys.user)?.isNotEmpty ?? false;
+    // Callback dipasang: biarkan pemanggil yang menentukan tujuan, dan jangan
+    // baca prefs di sini supaya tidak jadi dua kali.
+    if (widget.onFinished != null) {
+      await Future<void>.delayed(kDurasiSplash);
+      if (!mounted) return;
+      widget.onFinished!.call();
+      return;
+    }
 
-    await Future<void>.delayed(const Duration(milliseconds: 1800));
+    final SplashTujuan tujuan = await bacaTujuanSplash();
+    await Future<void>.delayed(kDurasiSplash);
     if (!mounted) return;
-    if (!seen) {
-      context.go('/onboarding');
-    } else if (sudahMasuk) {
-      context.go('/home');
-    } else {
-      context.go('/auth');
+    _pergi(tujuan);
+  }
+
+  void _pergi(SplashTujuan tujuan) {
+    switch (tujuan) {
+      case SplashTujuan.onboarding:
+        context.go('/onboarding');
+      case SplashTujuan.beranda:
+        context.go('/home');
+      case SplashTujuan.auth:
+        context.go('/auth');
     }
   }
 

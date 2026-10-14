@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_icon.dart';
+import '../../../shared/widgets/onboarding_art.dart';
 import '../../../shared/widgets/primary_button.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -18,27 +18,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _controller = PageController();
   int _page = 0;
 
+  /// Urutan: aspirasi, komunitas, terhubung (sesuai [OnbArt]).
   static const List<_Slide> _slides = <_Slide>[
     _Slide(
-      art: 'onb_komunitas',
-      title: 'Selamat datang di KUNBAR Connect',
-      body:
-          'Untuk seluruh warga Kuningan Barat — dari anak muda, orang tua, RT/RW, UMKM, sampai pengurus kelurahan.',
-      tint: AppColors.primary,
-    ),
-    _Slide(
-      art: 'onb_aspirasi',
+      art: OnbArt.aspirasi,
       title: 'Sampaikan tanpa ribet',
       body:
           'Kirim aspirasi, laporan masalah, sampai kondisi darurat keamanan. Semua tercatat dan bisa dilacak statusnya.',
-      tint: AppColors.social,
     ),
     _Slide(
-      art: 'onb_terhubung',
+      art: OnbArt.komunitas,
+      title: 'Selamat datang di KUNBAR Connect',
+      body:
+          'Untuk seluruh warga Kuningan Barat — dari anak muda, orang tua, RT/RW, UMKM, sampai pengurus kelurahan.',
+    ),
+    _Slide(
+      art: OnbArt.terhubung,
       title: 'Terhubung & terbuka',
       body:
           'Baca pengumuman RT/RW, lihat agenda, dukung UMKM warga, dan pesan fasilitas balai tanpa datang langsung.',
-      tint: AppColors.accent,
     ),
   ];
 
@@ -140,12 +138,14 @@ class _Slide {
     required this.art,
     required this.title,
     required this.body,
-    required this.tint,
   });
-  final String art;
+
+  final OnbArt art;
   final String title;
   final String body;
-  final Color tint;
+
+  /// Warna cahaya lembut di belakang ilustrasi.
+  Color get tint => art.warna;
 }
 
 /// Satu sampul onboarding.
@@ -275,7 +275,7 @@ class _SlideViewState extends State<_SlideView>
                             .clamp(0.0, 1.05),
                         child: Opacity(
                           opacity: _fase(0.04, 0.60),
-                          child: AppIllustration(
+                          child: OnboardingArt(
                             widget.slide.art,
                             height: tinggiIlus,
                           ),
