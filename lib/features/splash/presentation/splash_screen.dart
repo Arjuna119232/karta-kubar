@@ -8,6 +8,10 @@ import '../../../core/theme/app_colors.dart';
 /// Berapa lama splash tampil sebelum lanjut.
 const Duration kDurasiSplash = Duration(milliseconds: 1800);
 
+/// Warna splash (file-level supaya semua state class bisa akses).
+const Color _sPutih = Colors.white;
+const Color _sPutihMuda = Color(0xFFE8F5E9);
+
 /// Tujuan setelah splash selesai.
 enum SplashTujuan {
   /// Belum pernah lewat onboarding.
@@ -52,8 +56,6 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  static const Color _putih = Colors.white;
-  static const Color _putihMuda = Color(0xFFE8F5E9);
 
   @override
   void initState() {
@@ -114,7 +116,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       child: Text(
                         'CONNECT',
                         style: TextStyle(
-                          color: _putihMuda.withValues(alpha: 0.72),
+                          color: _sPutihMuda.withValues(alpha: 0.72),
                           fontSize: 10.5 * u,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 6 * u,
@@ -139,7 +141,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     'from Katar KunBar',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: _putihMuda.withValues(alpha: 0.55),
+                      color: _sPutihMuda.withValues(alpha: 0.55),
                       fontSize: 10.5 * u,
                       height: 1.2,
                     ),
@@ -260,7 +262,7 @@ class _WordmarkState extends State<_Wordmark>
                 child: Text(
                   huruf[i],
                   style: TextStyle(
-                    color: _putih,
+                    color: _sPutih,
                     fontSize: fs,
                     fontWeight: FontWeight.w800,
                     height: 1,
@@ -331,7 +333,7 @@ class _MuatTitikTigaState extends State<_MuatTitikTiga>
             width: diameter * widget.u,
             height: diameter * widget.u,
             decoration: const BoxDecoration(
-              color: _putih,
+              color: _sPutih,
               shape: BoxShape.circle,
             ),
           ),
