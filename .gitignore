@@ -29,3 +29,4 @@ design/pratinjau-*.png
 design/.cache-*.png
 # Render perbandingan splash (artefak, dibuat ulang dari tool/gen_splash_icons.py)
 design/splash-*.png
+design/ios-check.png
