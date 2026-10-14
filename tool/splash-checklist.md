@@ -27,7 +27,45 @@ Widget splash buatan sendiri sudah **dihapus** dari `lib/features/splash/`.
 
 > Bukti: `grep -rn "kDurasiSplash\|setKeepOnScreenCondition" lib/ android/` → kosong.
 
-## 2. Hanya logo + warna solid
+## 2. Logo + nama aplikasi + warna solid (15 Okt 2026)
+
+> **Diperbarui 15 Okt 2026.** Versi pertama splash native sengaja tidak
+> menampilkan teks sama sekali. User minta nama aplikasi terlihat supaya jelas
+> APK apa yang sedang dibuka, dan kredit "From KATAR KUNBAR" di paling bawah.
+
+### Batas keras API yang discovered (dari developer.android.com + Apple docs)
+
+- [ ] **Android 12+ TIDAK punya API teks sama sekali.** Hanya ada
+      `windowSplashScreenAnimatedIcon` (1 drawable, di-mask **lingkaran
+      192dp**) dan `windowSplashScreenBrandingImage` (1 gambar di bawah).
+      Tidak ada slot untuk wordmark di samping logo.
+- [x] **Solusinya** — nama aplikasi ikut_DIGAMBAR di dalam drawable ikon:
+      emblem di atas + `KUNBAR` di bawah, semuanya muat di circle 192dp.
+- [x] **Kredit "From KATAR KUNBAR"** memakai
+      `android:windowSplashScreenBrandingImage` (200×80 dp, slot paling bawah).
+- [x] **`windowSplashScreenBrandingImage` adalah ATRIBUT PLATFORM** (prefix
+      `android:`), bukan milik `core-splashscreen`.
+      ⚠️ **Konsekuensi: hanya muncul di Android 12+ (API 31+).** Di Android 11
+      ke bawah atribut ini diabaikan diam-diam — kompatibilitasnya tidak
+      di-backport oleh library.
+- [x] **Branding image wajib di SEMUA density** (`hdpi` 1,5× / `xhdpi` 2× /
+      `xxhdpi` 3× / `xxxhdpi` 4×). Kalau hanya ada satu density, Android
+      memakai yang paling kecil dan teksnya pecah.
+- [ ] **Harus pakai folder density, BUKAN `drawable-nodpi`.** Di `nodpi`,
+      600 px = 600 dp = **delapan kali** lebih besar dari slot 200 dp.
+
+### iOS: tidak ada slot terpisah sama sekali
+
+- [x] `UILaunchScreen` (Apple docs, iOS 14+) hanya menerima `UIColorName`,
+      `UIImageName`, `UIImageRespectsSafeAreaInsets`, dan elemen border.
+      **Tidak ada teks, tidak ada kontrol posisi** — gambar SELALU dipusatkan.
+- [x] Karena itu emblem + `KUNBAR` + `From KATAR KUNBAR` **digabung jadi satu
+      gambar** 260 pt, dipusatkan.
+- [ ] **Kredit iOS TIDAK bisa berada di paling bawah layar** seperti di
+      Android. Itu konsekuensi langsung dari API Apple, bukan pilihan desain.
+
+### Dulu (tetap berlaku sebagai riwayat)
+
 
 - [x] **Android** — `styles.xml` hanya punya `windowSplashScreenBackground` dan
       `windowSplashScreenAnimatedIcon`. Tidak ada `<item>` teks/progress.
@@ -35,12 +73,13 @@ Widget splash buatan sendiri sudah **dihapus** dari `lib/features/splash/`.
       `UIColorName` + `UIImageName`. `tool/patch_splash_ios.py` menolak apa pun
       selain itu dan menggandakan ulang seluruh dict, jadi key sisa dari
       percobaan sebelumnya ikut terhapus.
-- [x] **Dihapus** — tagline `from Katar KunBar`, wordmark `KUNBAR CONNECT`,
-      dan 3 titik loading yang ada di versi lama.
+- [x] **Dihapus** — 3 titik loading dan animasi wordmark per-huruf dari versi
+      lama. Teks yang tersisa hanya nama aplikasi + kredit.
 - [x] **Tidak ada** animasi bounce/fade berlapis/partikel, tidak ada progress
       bar palsu. Satu-satunya animasi adalah `windowSplashScreenAnimationDuration`
       milik sistem (icon+fade keluar).
 - [x] **Tidak ada** `UILabel` di `LaunchScreen.storyboard`.
+- [x] **Tidak ada** animasi: teks statis di dalam PNG, tanpa bounce/fade.
 
 > Bukti: `grep -c UILabel ios/Runner/Base.lproj/LaunchScreen.storyboard` → 0.
 
@@ -114,7 +153,9 @@ Semuanya ditemukan dengan **fault injection**, bukan dengan membaca kode:
 | Verifikasi bandingkan konstanta dengan dirinya sendiri | Ganti `BRAND_HEX` → yang ditulis DAN yang diharapkan ikut berubah → selalu lolos | Bandingkan ke `app_colors.dart` |
 | Batas durasi dicek dari file XML | `styles.xml` ditulis ulang tiap jalan → nilainya selalu sama, cek sia-sia | Cek dari konstanta `DURASI_MS` |
 | Bbox half-diagonal untuk mengukur logo | Sudut kotak kosong untuk logo figuratif → logo hanya jadi 58 dp dari 96 dp | Hitung radius true dari alpha |
-| `putalpha` saat mem-preview | Mengganti alpha ikon (harusnya dikalikan) → lingkaran hitam muncul | `ImageChops.multiply` |
+| `putalpha` saat mem-preview | Mengganti alpha ikon (harusnya dikalkan) → lingkaran hitam muncul | `ImageChops.multiply` |
+| `drawable-nodpi` untuk branding image | nodpi = 1 px = 1 dp, jadi 600 px jadi **600 dp** (slotnya 200 dp) | folder density: hdpi/xhdpi/xxhdpi/xxxhdpi |
+| Posisi lockup dipatok `y = canvas * 0.68` | Begitu font/emblem diganti, blok meleset dan bisa keluar mask — build tetap hijau | Pusatkan blok dari tinggi visual terukur |
 
 ## Cara memverifikasi sendiri
 

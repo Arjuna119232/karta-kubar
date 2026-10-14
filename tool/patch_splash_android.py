@@ -52,6 +52,11 @@ STYLES = f"""<?xml version="1.0" encoding="utf-8"?>
     <style name="LaunchTheme" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/{BRAND_NAME}</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+        <!-- Kredit "From KATAR KUNBAR" - slot satu-satunya di paling bawah.
+             ATRIBUT PLATFORM (prefix android:), bukan milik core-splashscreen,
+             jadi HANYA muncul di Android 12+ (API 31+). Di Android 11 ke bawah
+             attribut ini diabaikan diam-diam oleh sistem. -->
+        <item name="android:windowSplashScreenBrandingImage">@drawable/splash_branding</item>
         <item name="windowSplashScreenAnimationDuration">{DURASI_MS}</item>
         <item name="postSplashScreenTheme">@style/NormalTheme</item>
     </style>
@@ -115,6 +120,19 @@ else:
         tujuan.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(sumber, tujuan)
         notes.append(f"{tujuan} disalin dari {sumber}")
+
+    # Branding image: 200x80 dp, jadi harus_dictionary density (bukan nodpi -
+    # nodpi membuat 600px jadi 600dp, DELAPAN KALI lebih besar dari slotnya).
+    for dens, kali in (("hdpi", 1.5), ("xhdpi", 2), ("xxhdpi", 3), ("xxxhdpi", 4)):
+        src = pathlib.Path(f"assets/brand/splash_branding_{dens}.png")
+        if not src.is_file():
+            errors.append(f"aset branding hilang: {src} (jalankan tool/gen_splash_icons.py)")
+            continue
+        dst = RES / f"drawable-{dens}" / "splash_branding.png"
+        if not VERIFY_ONLY:
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(src, dst)
+        notes.append(f"{dst} <- {src.name}")
 
 # --------------------------------------------------------------- 3. dependency
 if not BUILD_GRADLE.exists():
@@ -222,7 +240,8 @@ st = RES / "values" / "styles.xml"
 # Warna HEX hanya ada di colors.xml; styles.xml harus merujuk @color/<nama>.
 # Dicari sebagai ATRIBUT lengkap, bukan kata "Theme.SplashScreen" telanjang.
 cek(st, ['parent="Theme.SplashScreen"', f"@color/{BRAND_NAME}", "@drawable/splash_icon",
-         "windowSplashScreenAnimationDuration", "postSplashScreenTheme"])
+         "windowSplashScreenAnimationDuration", "postSplashScreenTheme",
+         "android:windowSplashScreenBrandingImage", "@drawable/splash_branding"])
 cek(RES / "values" / "colors.xml", [BRAND_NAME, BRAND_HEX])
 cek(RES / "values-night" / "styles.xml", ['parent="Theme.SplashScreen"'])
 
@@ -231,6 +250,13 @@ cek(RES / "values-night" / "styles.xml", ['parent="Theme.SplashScreen"'])
 ikon_res = RES / "drawable-nodpi" / "splash_icon.png"
 if not ikon_res.exists():
     errors.append(f"{ikon_res} tidak ada - styles.xml menunjuk @drawable/splash_icon")
+
+# Branding image wajib ada di SETIAP density: ketiadaan di satu density
+# membuat Android memakai density yang paling kecil -> teks jadi pecah/blur.
+for dens in ("hdpi", "xhdpi", "xxhdpi", "xxxhdpi"):
+    b = RES / f"drawable-{dens}" / "splash_branding.png"
+    if not b.exists():
+        errors.append(f"{b} tidak ada - branding image wajib di semua density")
 
 # Guard paling penting: warna splash HARUS sama dengan AppColors.primary.
 # Kalau hanya membandingkan BRAND_HEX dengan dirinya sendiri, checks-nya

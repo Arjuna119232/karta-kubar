@@ -3,113 +3,74 @@
 
 MASALAH YANG DISELESAIKAN
 --------------------------
-`assets/brand/emblem-512.png` (file lama, dipakai splash Flutter) punya isi
-434 x 458 px di dalam canvas 512 x 512. Android 12+ `Theme.SplashScreen`
-menempatkan drawable di kotak 288dp lalu MEMASKINGNYA jadi lingkaran diameter
-192dp (= 288 * 2/3). Jadi isi logo harus punya half-diagonal <= 96dp.
+`assets/brand/emblem-512.png` punya isi 434 x 458 px di canvas 512 x 512.
+Android 12+ `Theme.SplashScreen` menaruh drawable di kotak 288dp lalu
+MEMASKINGNYA jadi lingkaran diameter 192dp (= 288 * 2/3). Isi logo harus
+punya radius <= 96dp dari titik tengah.
 
   1 px pada canvas 512px  =  288 / 512  =  0.5625 dp
   jari-jari circle        =  96 / 0.5625  =  170.67 px
-  half-diagonal isi sekarang = sqrt(217^2 + 229^2) = 315.5 px   <-- 1.85x Terlalu besar
 
-Kalau emblem lama dipakai apa adanya, Android akan memotong hampir separuh
-logo. Script ini membuat dua aset yang sudah dihitung ulang:
+Emblem lama: radius 176,2 px = 99,1 dp -> TERPOTONG.
 
-  A. splash_icon.png        - emblem putih langsung di atas hijau (tanpa badge)
-  B. splash_icon_badge.png  - badge lingkaran putih + emblem hijau (gaya 2026)
-  C. splash_icon_ios.png    - ukuran intrinsic untuk UILaunchScreen iOS
-
-Semua angka di sini disalin dari `lib/core/theme/app_colors.dart`.
-Jalankan ulang setiap kali file emblem sumber berubah.
+SANDARAN UKURAN (dari developer.android.com "Splash screen dimensions")
+  * App icon tanpa icon background : 288x288 dp, muat lingkaran 192 dp
+  * App icon dengan icon background: 240x240 dp, muat lingkaran 160 dp
+  * Branding image                 : 200x80 dp  (tidak direkomendasikan
+                                     Google's, tapi itu satu-satunya slot
+                                     "di paling bawah")
 """
 from __future__ import annotations
 
 import math
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
 SUMBER = ROOT / "assets/brand/emblem-512.png"
 KELUAR = ROOT / "assets/brand"
 
-# --- dari app_colors.dart ---
-PRIMARY = (0x1B, 0x5E, 0x20)   # AppColors.primary
+# --- dari lib/core/theme/app_colors.dart ---
+PRIMARY = (0x1B, 0x5E, 0x20)
 PUTIH = (255, 255, 255)
 
-# --- geometri Android 12+ Theme.SplashScreen ---
-KOTAK_DP = 288.0        # kotak tempat drawable diletakkan
-CIRCLE_DP = 192.0       # diameter mask lingkaran (= KOTAK_DP * 2/3)
-CANVAS = 512            # sisi file PNG yang kita hasilkan
+# --- teks yang diminta ---
+WORDMARK = "KUNBAR"
+KREDIT = "From KATAR KUNBAR"
+
+FONT = "/system/fonts/RobotoFlex-Regular.ttf"
+
+# --- geometri Android 12+ ---
+KOTAK_DP = 288.0
+CIRCLE_DP = 192.0
+CANVAS = 512
 AMAN = 0.95             # margin 5% supaya tepi tidak ikut terpotong
+BRANDING_DP = (200, 80)  # slot "paling bawah"
 
 DP_PER_PX = KOTAK_DP / CANVAS
-JARI_PX = (CIRCLE_DP / 2.0) * AMAN / DP_PER_PX     # 153.6 px
+JARI_PX = (CIRCLE_DP / 2.0) * AMAN / DP_PER_PX
 
 
-def half_diagonal(w: int, h: int) -> float:
-    return math.hypot(w / 2.0, h / 2.0)
-
-
-def muat(src: Image.Image, jari_px: float) -> Image.Image:
-    """Skala `src` (RGBA) supaya radius true-nya persis <= jari_px, center.
-
-    Pakai `radius_maks`, BUKAN half-diagonal bounding box: logo figuratif
-    (pohon + warga + pin) punya sudut kotak yang KOSONG. Kalau pakai
-    half-diagonal, logo hanya jadi 58dp dari 96dp yang tersedia - kelihatan
-    kecil dan messaging brand-nya hilang.
-    """
-    s = jari_px / radius_maks(src)
-    w, h = src.size
-    baru = src.resize(
-        (max(1, round(w * s)), max(1, round(h * s))),
-        Image.LANCZOS,
-    )
-    return baru
-
-
-def tempel(kanvas: Image.Image, img: Image.Image) -> Image.Image:
-    x = (kanvas.size[0] - img.size[0]) // 2
-    y = (kanvas.size[1] - img.size[1]) // 2
-    kanvas.alpha_composite(img, (x, y))
-    return kanvas
-
-
-def warnai(src: Image.Image, rgb: tuple[int, int, int]) -> Image.Image:
-    """Pertahankan alpha, ganti semua piksel warna jadi `rgb`."""
-    a = src.split()[3]
-    solid = Image.new("RGBA", src.size, rgb + (0,))
-    solid.putalpha(a)
-    return solid
-
-
-def simpan(img: Image.Image, nama: str) -> None:
-    p = KELUAR / nama
-    img.save(p, "PNG", optimize=True)
-    a = img.split()[3]
-    bbox = a.getbbox()
-    isi = (bbox[2] - bbox[0], bbox[3] - bbox[1]) if bbox else (0, 0)
-    print(
-        f"    + {nama:24s} {img.size[0]}x{img.size[1]}px  "
-        f"isi {isi[0]}x{isi[1]}px "
-        f"({isi[1] / CANVAS * 100:.1f}% tinggi)  {p.stat().st_size // 1024} KB"
-    )
+def font_tebal(px: int) -> ImageFont.FreeTypeFont:
+    f = ImageFont.truetype(FONT, px)
+    f.set_variation_by_name("Bold")
+    return f
 
 
 def radius_maks(img: Image.Image) -> float:
-    """Jaraktrue terbesar dari titik tengah ke piksel yang tidak transparan.
+    """Jarak true terbesar dari titik tengah ke piksel yang tidak transparan.
 
-    WAJIB begini, bukan half-diagonal bounding box: untuk aset BERBENTUK
-    LINGKARAN, sudut-sudut kotak pembatasnya justru bagian yang transparan,
-    jadi half-diagonal akan Orts overstated (memories: badge 338px ->
-    134dp "terpotong" padahal bulatannya cuma 93dp).
+    WAJIB begini, bukan half-diagonal bounding box: untuk bentuk LINGKARAN
+    sudut kotak justru yang transparan, dan untuk logo figuratif (pohon,
+    warga, pin) sudut kotak juga kosong. Dua-duanya bikin half-diagonal
+    meleset jauh.
     """
     a = img.split()[3]
     w, h = img.size
     cx, cy = (w - 1) / 2.0, (h - 1) / 2.0
     px = a.load()
     best = 0.0
-    # sample step 2 -> cukup presisi untuk aset 512px, 4x lebih cepat
     for y in range(0, h, 2):
         dy = y - cy
         for x in range(0, w, 2):
@@ -120,103 +81,205 @@ def radius_maks(img: Image.Image) -> float:
     return best
 
 
+def muat(src: Image.Image, jari_px: float) -> Image.Image:
+    """Skala `src` supaya radius true-nya <= jari_px."""
+    s = jari_px / radius_maks(src)
+    w, h = src.size
+    return src.resize((max(1, round(w * s)), max(1, round(h * s))), Image.LANCZOS)
+
+
+def tempel(kanvas: Image.Image, img: Image.Image, cx: float, cy: float) -> Image.Image:
+    kanvas.alpha_composite(img, (round(cx - img.size[0] / 2), round(cy - img.size[1] / 2)))
+    return kanvas
+
+
+def warnai(src: Image.Image, rgb: tuple[int, int, int]) -> Image.Image:
+    """Pertahankan alpha, ganti semua piksel warna jadi `rgb`."""
+    solid = Image.new("RGBA", src.size, rgb + (0,))
+    solid.putalpha(src.split()[3])
+    return solid
+
+
+# --------------------------------------------------------------- teks
+def teks_tracking(
+    kanvas: Image.Image,
+    teks: str,
+    cx: float,
+    cy: float,
+    fs: int,
+    rgb: tuple[int, int, int],
+    tracking: float = 0.0,
+    bobot: str = "Bold",
+) -> tuple[float, float]:
+    """Gambar teks satu per huruf supaya letter-spacing bisa diatur.
+
+    Returns (lebar, tinggi) - diukur dari bbox AKTUAL, bukan dari ukuran font.
+    Meng pakai tinggi font bikin baris meleset: Roboto punya ruang ascender
+    yang jauh lebih besar dari tinggi huruf yang terlihat.
+    """
+    f = font_tebal(fs)
+    d = ImageDraw.Draw(kanvas)
+    lebar = sum(d.textlength(c, font=f) for c in teks) + tracking * (len(teks) - 1)
+    x = cx - lebar / 2
+    for c in teks:
+        d.text((x, cy), c, font=f, fill=rgb + (255,), anchor="lm")
+        x += d.textlength(c, font=f) + tracking
+    bb = d.textbbox((0, 0), teks, font=f)
+    return lebar, bb[3] - bb[1]
+
+
+def tinggi_visual(kanvas: Image.Image, y_min: int, y_max: int) -> int:
+    """Tinggi piksel yang benar-benar terisi di rentang y tertentu."""
+    a = kanvas.crop((0, y_min, kanvas.size[0], y_max)).split()[3]
+    bb = a.getbbox()
+    return 0 if bb is None else bb[3] - bb[1]
+
+
+# --------------------------------------------------------------- ikon Android
+def buat_ikon_android(fs_wordmark: int, r_emblem: int, gap: int) -> Image.Image:
+    """Lockup di dalam circle 192dp: emblem di atas, WORDMARK di bawah.
+
+    Blok DIPUSATKAN dari tinggi visual yang benar-benar terisi, bukan dari
+    angka tetap seperti `y = canvas * 0.68`. Kalau posisi dipatok, begitu
+    ukuran font atau emblem diganti, bloknya meleset dan bisa keluar dari
+    mask - dan build tetap hijau.
+    """
+    kanvas = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
+    emblem = Image.open(SUMBER).convert("RGBA")
+
+    # 1) ukur tinggi VISUAL wordmark (piksel yang terisi, bukan tinggi font)
+    probe = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
+    teks_tracking(probe, WORDMARK, CANVAS / 2, CANVAS / 2, fs_wordmark, PUTIH,
+                  tracking=fs_wordmark * 0.10)
+    h_word = tinggi_visual(probe, 0, CANVAS)
+
+    # 2) tinggi blok = 2*r_emblem + gap + h_word, lalu dipusatkan
+    tinggi_blok = 2 * r_emblem + gap + h_word
+    atas = (CANVAS - tinggi_blok) / 2.0
+    y_embl = atas + r_emblem
+    y_word = atas + 2 * r_emblem + gap + h_word / 2
+
+    tempel(kanvas, muat(emblem, r_emblem), CANVAS / 2, y_embl)
+    teks_tracking(kanvas, WORDMARK, CANVAS / 2, y_word, fs_wordmark, PUTIH,
+                  tracking=fs_wordmark * 0.10)
+    return kanvas
+
+
+def buat_branding() -> dict[str, Image.Image]:
+    """Gambar 'From KATAR KUNBAR' untuk slot 200x80dp di paling bawah.
+
+    Android hanya menyediakan SATU slot branding, jadi nama "From KATAR
+    KUNBAR" harus muat di sana. Lebar 200dp dipakai penuh; teks dibungkus ke
+    dua baris supaya proporsinya terbaca di layar 360dp.
+    """
+    hasil: dict[str, Image.Image] = {}
+    for dens, px in (("hdpi", 1.5), ("xhdpi", 2.0), ("xxhdpi", 3.0), ("xxxhdpi", 4.0)):
+        W = round(BRANDING_DP[0] * px)
+        H = round(BRANDING_DP[1] * px)
+        c = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        fs = round(H * 0.26)
+        # "From KATAR KUNBAR" -> dua baris supaya proporsinya pas di 200dp
+        teks_tracking(c, "From", W / 2, H * 0.36, fs, PUTIH, tracking=fs * 0.14)
+        teks_tracking(c, "KATAR KUNBAR", W / 2, H * 0.70, fs, PUTIH,
+                      tracking=fs * 0.10)
+        hasil[f"splash_branding_{dens}.png"] = c
+    return hasil
+
+
+# --------------------------------------------------------------- iOS
+def buat_ios(px: int) -> Image.Image:
+    """Lockup untuk UILaunchScreen: emblem + KUNBAR + From KATAR KUNBAR.
+
+    iOS tidak punya slot terpisah: UILaunchScreen hanya boleh UIColorName +
+    UIImageName, dan gambar SELALU dipusatkan - tidak ada cara menaruh
+    teks di paling bawah layar. Jadi ketiganya jadi satu gambar.
+    """
+    emblem = Image.open(SUMBER).convert("RGBA")
+    r_embl = round(px * 0.20)
+    fs_w = round(px * 0.115)
+    fs_k = round(px * 0.045)
+    gap1 = round(px * 0.055)
+    gap2 = round(px * 0.075)
+
+    kanvas = Image.new("RGBA", (px, px), (0, 0, 0, 0))
+    y_word = int(px * 0.58)
+    teks_tracking(kanvas, WORDMARK, px / 2, y_word, fs_w, PUTIH,
+                  tracking=fs_w * 0.14)
+    h_word = tinggi_visual(kanvas, y_word - fs_w, y_word + fs_w)
+
+    teks_tracking(kanvas, "From", px / 2, y_word + h_word / 2 + gap2 + fs_k * 0.5,
+                  fs_k, PUTIH, tracking=fs_k * 0.20)
+    teks_tracking(kanvas, "KATAR KUNBAR", px / 2,
+                  y_word + h_word / 2 + gap2 + fs_k * 2.1, fs_k, PUTIH,
+                  tracking=fs_k * 0.14)
+
+    y_embl = y_word - h_word / 2 - gap1 - r_embl
+    tempel(kanvas, muat(emblem, r_embl), px / 2, y_embl)
+    return kanvas
+
+
+# --------------------------------------------------------------- cek
 def cek_muat_android(nama: str) -> None:
-    """Pastikan isi aset MUAT di circle 192dp setelah diskalakan ke 288dp."""
     im = Image.open(KELUAR / nama).convert("RGBA")
     if im.split()[3].getbbox() is None:
         raise SystemExit(f"FAIL: {nama} kosong")
     r_dp = radius_maks(im) * DP_PER_PX
     batas = CIRCLE_DP / 2.0
-    status = "OK " if r_dp <= batas else "FAIL"
-    print(
-        f"      {status} radius {r_dp:6.1f}dp  "
-        f"(batas {batas:.0f}dp, sisa {batas - r_dp:5.1f}dp)"
-    )
+    print(f"      {'OK ' if r_dp <= batas else 'FAIL'} radius {r_dp:6.1f}dp "
+          f"(batas {batas:.0f}dp, sisa {batas - r_dp:5.1f}dp)")
     if r_dp > batas:
         raise SystemExit(f"FAIL: {nama} akan TERPOTONG oleh mask Android 12")
+
+
+def cek_branding(nama: str, dens: float) -> None:
+    im = Image.open(KELUAR / nama)
+    mau = (round(BRANDING_DP[0] * dens), round(BRANDING_DP[1] * dens))
+    if im.size != mau:
+        raise SystemExit(f"FAIL: {nama} {im.size}, harusnya {mau}")
+    if im.convert("RGBA").split()[3].getbbox() is None:
+        raise SystemExit(f"FAIL: {nama} kosong")
+    print(f"      OK  {nama:32s} {im.size[0]}x{im.size[1]}px = "
+          f"{im.size[0] / dens:.0f}x{im.size[1] / dens:.0f}dp")
 
 
 def main() -> int:
     if not SUMBER.is_file():
         raise SystemExit(f"FAIL: emblem sumber tidak ada: {SUMBER}")
+    if not Path(FONT).is_file():
+        raise SystemExit(f"FAIL: font tidak ada: {FONT}")
 
-    emblem = Image.open(SUMBER).convert("RGBA")
-    print(f"==> gen_splash_icons: emblem {emblem.size[0]}x{emblem.size[1]}px")
-    print(f"    mask circle  : {CIRCLE_DP:.0f}dp di kotak {KOTAK_DP:.0f}dp")
-    print(f"    jari aman    : {JARI_PX:.1f}px (={AMAN:.0%} dari {CIRCLE_DP / 2 / DP_PER_PX:.1f}px)")
+    print("==> gen_splash_icons")
+    print(f"    mask circle : {CIRCLE_DP:.0f}dp di kotak {KOTAK_DP:.0f}dp")
+    print(f"    jari aman   : {JARI_PX:.1f}px")
 
-    # ---- A: emblem putih langsung (gaya paling minimal) ----
-    a = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
-    tempel(a, muat(emblem, JARI_PX))
-    simpan(a, "splash_icon.png")
+    # --- ikon: emblem + KUNBAR dalam satu circle ---
+    ikon = buat_ikon_android(fs_wordmark=50, r_emblem=90, gap=24)
+    ikon.save(KELUAR / "splash_icon.png", "PNG", optimize=True)
+    print(f"    + splash_icon.png  ({KELUAR.joinpath('splash_icon.png').stat().st_size // 1024} KB)")
 
-    # ---- B: badge lingkaran putih + emblem hijau ----
-    b = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
-    jari_badge = round((CIRCLE_DP / 2.0) * 0.97 / DP_PER_PX)   # 97% dari mask
-    kelipatan = 4                                      # anti-alias saat resize
-    mask = Image.new("L", (CANVAS * kelipatan, CANVAS * kelipatan), 0)
-    ImageDraw.Draw(mask).ellipse(
-        (
-            CANVAS * kelipatan // 2 - jari_badge * kelipatan,
-            CANVAS * kelipatan // 2 - jari_badge * kelipatan,
-            CANVAS * kelipatan // 2 + jari_badge * kelipatan,
-            CANVAS * kelipatan // 2 + jari_badge * kelipatan,
-        ),
-        fill=255,
-    )
-    badge = Image.new("RGBA", mask.size, PUTIH + (0,))
-    badge.putalpha(mask)
-    b.alpha_composite(badge.resize((CANVAS, CANVAS), Image.LANCZOS))
-    # emblem putih tidak terlihat di badge putih -> recolor ke hijau brand
-    hi = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
-    tempel(hi, muat(emblem, jari_badge * 0.62))
-    b.alpha_composite(warnai(hi, PRIMARY))
-    simpan(b, "splash_icon_badge.png")
+    # --- branding image (slot paling bawah) ---
+    for nama, img in buat_branding().items():
+        img.save(KELUAR / nama, "PNG", optimize=True)
+    print(f"    + splash_branding_*.png ({len(buat_branding())} density)")
 
-    # ---- C: iOS UILaunchScreen (tanpa mask lingkaran) ----
-    # UILaunchScreen memakai UKURAN INTRINSIC gambar dalam POINT, jadi aset
-    # iOS dibuat terpisah - memakai splash_icon.png yang 512px akan tampil
-    # 512pt dan memenuhi layar.
-    #
-    # 160pt adalah ukuran logo splash yang wajar di layar 393pt (iPhone 16
-    # Pro) -> isi logo jadi sekitar 24% lebar layar.
-    IOS_PT = 160
-    for skala, px in (("1x", IOS_PT), ("2x", IOS_PT * 2), ("3x", IOS_PT * 3)):
-        c = Image.new("RGBA", (px, px), (0, 0, 0, 0))
-        tempel(c, muat(emblem, px * 0.36))
+    # --- iOS: satu gambar, semua elemen digabung ---
+    for skala, px in (("1x", 260), ("2x", 520), ("3x", 780)):
+        im = buat_ios(px)
         nama = "splash_icon_ios.png" if skala == "1x" else f"splash_icon_ios@{skala}.png"
-        simpan(c, nama)
+        im.save(KELUAR / nama, "PNG", optimize=True)
 
-    print("    -- verifikasi mask Android 12 (hanya aset Android) --")
+    print("    -- verifikasi --")
     cek_muat_android("splash_icon.png")
-    cek_muat_android("splash_icon_badge.png")
-
-    # Aset iOS TIDAK lewat mask Android: UILaunchScreen memakai ukuran
-    # intrinsik dalam point, tidak ada lingkaran 192dp. Yang diverifikasi di
-    # sini hanya konsistensi skala 1x/2x/@3x dan isi tidak kosong.
-    print("    -- verifikasi aset iOS (skala 1x/2x/3x) --")
-    cek_skala_ios()
+    for dens in (1.5, 2.0, 3.0, 4.0):
+        cek_branding(f"splash_branding_{'hdpi' if dens==1.5 else 'xhdpi' if dens==2 else 'xxhdpi' if dens==3 else 'xxxhdpi'}.png", dens)
+    for skala, px in (("1x", 260), ("2x", 520), ("3x", 780)):
+        nama = "splash_icon_ios.png" if skala == "1x" else f"splash_icon_ios@{skala}.png"
+        im = Image.open(KELUAR / nama)
+        if im.size != (px, px):
+            raise SystemExit(f"FAIL: {nama} {im.size}, harusnya ({px},{px})")
+        print(f"      OK  {nama:26s} {im.size[0]}x{im.size[1]}px = {px}pt")
     print("==> gen_splash_icons: OK")
     return 0
-
-
-def cek_skala_ios() -> None:
-    from PIL import Image as _I
-
-    base = 160
-    for skala, px in (("1x", base), ("2x", base * 2), ("3x", base * 3)):
-        nama = "splash_icon_ios.png" if skala == "1x" else f"splash_icon_ios@{skala}.png"
-        p = KELUAR / nama
-        if not p.is_file():
-            raise SystemExit(f"FAIL: {nama} tidak ada")
-        im = _I.open(p)
-        if im.size != (px, px):
-            raise SystemExit(f"FAIL: {nama} berukuran {im.size}, harusnya ({px}, {px})")
-        bbox = im.convert("RGBA").split()[3].getbbox()
-        if bbox is None:
-            raise SystemExit(f"FAIL: {nama} kosong (tidak ada piksel opaque)")
-        isi = bbox[3] - bbox[1]
-        print(f"      OK  {nama:26s} {px}x{px}px  isi {isi}px = {isi / px * base:.0f}pt")
 
 
 if __name__ == "__main__":
