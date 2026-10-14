@@ -122,7 +122,10 @@ def splash(dev_w, dev_h, inset_top, inset_bottom, nama):
     lebar_huruf = [d.textlength(ch, font=f_kun) for ch in "KUNBAR"]
     jarak = px(5.5 * u)
     lebar_wordmark = sum(lebar_huruf) + jarak * (len(lebar_huruf) - 1)
-    tinggi_wordmark = fs_kunbar * SCALE  # height: 1
+    # PENTING: semua angka di bawah dalam SATUAN dp. Dulu tinggi_wordmark
+    # dikali SCALE (jadi px) lalu dipakai sebagai dp -> semua teks di bawah
+    # wordmark tergeser 62dp dan pratinjau berbohong.
+    tinggi_wordmark = fs_kunbar  # height: 1
 
     f_connect = font(10.5 * u)
     lebar_connect = sum(d.textlength(ch, font=f_connect) for ch in "CONNECT") + px(6 * u) * 6
@@ -166,7 +169,7 @@ def splash(dev_w, dev_h, inset_top, inset_bottom, nama):
     # (4) KUNBAR - satu huruf per satu, jarak 5.5dp
     y += 30 * u
     xk = (W - lebar_wordmark) / 2
-    y_teks = px(y) + (tinggi_wordmark * SCALE - fs_kunbar * SCALE) / 2
+    y_teks = px(y)
     for i, ch in enumerate("KUNBAR"):
         d.text((xk, y_teks), ch, font=f_kun, fill=(255, 255, 255, 255))
         xk += lebar_huruf[i] + jarak

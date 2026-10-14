@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KUNBAR Connect - pratinjau splash &amp; 3 sampul</title>
+<style>
+/* =====================================================================
+   SEMUA angka di sini SALINAN PERSIS dari kode Dart:
+     lib/features/splash/presentation/splash_screen.dart
+     lib/features/onboarding/presentation/onboarding_screen.dart
+     lib/core/theme/app_colors.dart
+   Kalau salah satu berubah, ubah di sini juga.
+   ===================================================================== */
+:root{
+  --primary:#1B5E20;      /* AppColors.primary  */
+  --success:#2E7D32;      /* AppColors.success  */
+  --bg:#F6F7F9;           /* AppColors.bgLight  */
+  --teks:#1A1A1A;         /* textPrimaryLight   */
+  --teks2:#6A6A72;        /* textSecondaryLight */
+  --garis:#ECECEF;        /* lineLight          */
+  --hijauMuda:#E8F5E9;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:#15171A;color:#DDE3E0;
+  font-family:Roboto,"Helvetica Neue",Arial,system-ui,sans-serif;
+  display:flex;flex-direction:column;align-items:center;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.bar{
+  width:100%;max-width:520px;display:flex;gap:8px;align-items:center;
+  padding:10px 12px;flex-wrap:wrap;font-size:13px;
+}
+.bar b{font-weight:600;color:#fff;margin-right:4px}
+.bar button{
+  background:#2C3137;color:#E6EDEA;border:1px solid #3A4149;border-radius:999px;
+  padding:7px 13px;font-size:13px;font-family:inherit;cursor:pointer;
+}
+.bar button.on{background:#1B5E20;border-color:#2E7D32;color:#fff}
+.bar label{font-size:12px;color:#9AA5A0;display:flex;align-items:center;gap:5px}
+
+/* ---------- PONS HP: 360 x 800 dp, inset status 28 / nav 24 ---------- */
+.hp{
+  position:relative;width:360px;height:800px;flex:0 0 auto;
+  background:#000;overflow:hidden;border-radius:0;
+  box-shadow:0 10px 40px rgba(0,0,0,.55);
+}
+@media (min-width:600px){ .hp{border-radius:26px} }
+
+/* status bar + navigation bar tiruan */
+.sysbar{
+  position:absolute;left:0;right:0;top:0;height:28px;z-index:40;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;font-size:11px;color:#fff;opacity:.9;pointer-events:none;
+}
+.navbar{
+  position:absolute;left:0;right:0;bottom:0;height:24px;z-index:40;
+  pointer-events:none;
+}
+.navbar::after{
+  content:"";position:absolute;left:50%;bottom:7px;transform:translateX(-50%);
+  width:110px;height:4px;border-radius:999px;background:rgba(255,255,255,.55);
+}
+.sysbar.dark{color:#111}
+
+/* ======================= SPLASH ======================= */
+#splash{position:absolute;inset:0;background:var(--primary);overflow:hidden}
+#splash.off{display:none}
+
+/* (1) grid bergerak 0,0 -> 100,100 -> 0,0 dalam 12 detik */
+.grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(to right, rgba(46,125,50,.20) 0 1px, transparent 1px 100px),
+    linear-gradient(to bottom, rgba(46,125,50,.20) 0 1px, transparent 1px 100px);
+  animation:drift 12s ease-in-out infinite;
+}
+@keyframes drift{0%,100%{background-position:0 0}50%{background-position:100px 100px}}
+
+/* (2) cahaya radial di belakang logo: 250dp, berdenyut 4 detik */
+.glow{
+  position:absolute;left:50%;top:50%;width:250px;height:250px;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(circle, rgba(255,255,255,.13) 0%, rgba(255,255,255,0) 70%);
+  animation:pulse 4s ease-in-out infinite;
+}
+@keyframes pulse{
+  0%{transform:translate(-50%,-50%) scale(.95);opacity:.70}
+  50%{transform:translate(-50%,-50%) scale(1);opacity:1}
+  100%{transform:translate(-50%,-50%) scale(.95);opacity:.70}
+}
+
+/* (3) blok konten: Center di seluruh area aman (28..776) */
+.blok{
+  position:absolute;left:0;right:0;top:28px;bottom:24px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.logoWrap{animation:logoIn .52s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes logoIn{from{opacity:0;transform:scale(.90)}to{opacity:1;transform:scale(1)}}
+.logo{width:136px;height:136px;animation:breathe 3s ease-in-out infinite alternate}
+@keyframes breathe{from{transform:scale(1)}to{transform:scale(1.03)}}
+
+.sp30{height:30px}
+.wm{display:flex;align-items:center;height:31px}
+.wm span{
+  display:inline-block;font-size:31px;font-weight:800;color:#fff;line-height:1;
+  margin-right:5.5px;opacity:0;transform:translateY(14px);
+  animation:letterIn .9s cubic-bezier(.22,.61,.36,1) both;
+  animation-delay:calc(.12s + var(--i) * .081s);
+}
+.wm span:last-child{margin-right:0}
+@keyframes letterIn{
+  from{opacity:0;transform:translateY(14px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.sp11{height:11px}
+.connect{
+  font-size:10.5px;font-weight:600;color:rgba(232,245,233,.72);line-height:1;
+  letter-spacing:6px;height:10.5px;
+  opacity:0;transform:translateY(16px);
+  animation:up .52s cubic-bezier(.33,0,.15,1) .56s both;
+}
+.sp26{height:26px}
+.lokasi{
+  font-size:12.5px;line-height:1.2;color:rgba(232,245,233,.80);height:15px;
+  display:flex;align-items:center;
+  opacity:0;transform:translateY(16px);
+  animation:up .52s cubic-bezier(.33,0,.15,1) .24s both;
+}
+.sp30b{height:30px}
+@keyframes up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* (4) loading: 3 pil 7 -> 26dp, fase 0.00 / 0.18 / 0.36, siklus 1.5s */
+.pills{display:flex;align-items:center;gap:9px;height:7px;
+  opacity:0;transform:translateY(16px);animation:up .52s cubic-bezier(.33,0,.15,1) .34s both}
+.pill{width:7px;height:7px;border-radius:999px;background:var(--hijauMuda);
+  animation:morph 1.5s ease-in-out infinite}
+.pill:nth-child(2){animation-delay:.18s}
+.pill:nth-child(3){animation-delay:.36s}
+@keyframes morph{
+  0%{width:7px;opacity:.55}
+  50%{width:26px;opacity:1}
+  100%{width:7px;opacity:.55}
+}
+
+/* (5) footer: Positioned bottom 18dp - PALING BAWAH, di bawah loading */
+.footer{
+  position:absolute;left:0;right:0;bottom:18px;text-align:center;
+  font-size:10.5px;line-height:1.2;color:rgba(232,245,233,.55);height:12.6px;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transform:translateY(16px);
+  animation:up .52s cubic-bezier(.33,0,.15,1) .52s both;
+}
+
+/* ======================= 3 SAMPUL ======================= */
+#onb{position:absolute;inset:0;background:var(--bg);display:none}
+#onb.on{display:block}
+
+.lewati{
+  position:absolute;right:8px;top:12px;z-index:20;height:48px;
+  display:flex;align-items:center;padding:0 8px;font-size:14px;
+  color:var(--teks2);cursor:pointer;user-select:none;
+}
+.lewati.off{opacity:.35;pointer-events:none}
+
+.stage{position:absolute;left:0;right:0;top:76px;bottom:126px;overflow:hidden}
+.slide{
+  position:absolute;inset:0;padding:0 28px;
+  display:flex;flex-direction:column;
+}
+/* posisi ilustrasi dikunci - lihat _SlideViewState._isi() */
+.atas{height:69px;flex:0 0 auto}
+.ilus{position:relative;height:228px;flex:0 0 auto;display:flex;
+  align-items:center;justify-content:center}
+.halo{
+  position:absolute;left:50%;top:50%;width:296px;height:296px;transform:translate(-50%,-50%);
+  border-radius:50%;opacity:0;animation:haloIn .78s ease-out both;
+}
+.halo.g{background:radial-gradient(circle,rgba(27,94,32,.16) 0%,rgba(27,94,32,0) 70%)}
+.halo.p{background:radial-gradient(circle,rgba(233,30,99,.16) 0%,rgba(233,30,99,0) 70%)}
+.halo.b{background:radial-gradient(circle,rgba(13,71,161,.16) 0%,rgba(13,71,161,0) 70%)}
+@keyframes haloIn{from{opacity:0}to{opacity:1}}
+.floaty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  animation:melayang 3.8s ease-in-out infinite alternate}
+@keyframes melayang{
+  from{transform:translateY(0) scale(1)}
+  to{transform:translateY(-5px) scale(1.035)}
+}
+.zoom{opacity:0;transform:scale(.88);animation:zoomIn .86s cubic-bezier(.34,1.56,.64,1) .03s both}
+@keyframes zoomIn{
+  from{opacity:0;transform:scale(.88)}
+  to{opacity:1;transform:scale(1)}
+}
+.ilus svg{width:304px;height:228px;display:block}
+.spasi{height:26px;flex:0 0 auto}
+.teks{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;
+  padding-bottom:0;min-height:0}
+.judul{
+  font-size:24px;font-weight:700;line-height:1.25;color:var(--teks);text-align:center;
+  opacity:0;transform:translateY(22px);
+  animation:naik .86s cubic-bezier(.2,.8,.3,1) .21s both;
+}
+.isi{
+  font-size:15.5px;line-height:1.5;color:var(--teks2);text-align:center;margin-top:12px;
+  opacity:0;transform:translateY(22px);
+  animation:naik .86s cubic-bezier(.2,.8,.3,1) .38s both;
+}
+@keyframes naik{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+
+.dots{position:absolute;left:0;right:0;bottom:98px;display:flex;justify-content:center;gap:6px}
+.dots i{width:8px;height:8px;border-radius:999px;background:var(--garis);
+  transition:width .3s cubic-bezier(.34,1.56,.64,1),background .3s}
+.dots i.on{width:24px;background:var(--primary)}
+
+.tombol{
+  position:absolute;left:24px;right:24px;bottom:24px;height:48px;border:0;
+  background:var(--primary);color:#fff;border-radius:14px;font-family:inherit;
+  font-size:15.5px;font-weight:700;cursor:pointer;
+}
+
+/* garis bantu pengukuran */
+.panduan{position:absolute;inset:0;z-index:50;display:none;pointer-events:none}
+.panduan.on{display:block}
+.panduan div{position:absolute;left:0;right:0;height:1px}
+.panduan .tengah{top:400px;background:rgba(255,90,90,.55)}
+.panduan .atas{top:28px;background:rgba(255,255,255,.22)}
+.panduan .bawah{top:776px;background:rgba(255,255,255,.22)}
+.panduan .kotak{left:24px;right:24px;top:auto;bottom:auto;height:auto;
+  border:1px dashed rgba(120,170,255,.55);background:none}
+
+#ukur{
+  width:360px;font-size:11px;line-height:1.5;color:#8FBFA0;
+  font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;
+  padding:0 4px 14px;
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <b>Pratinjau</b>
+  <button id="btnMulai">Putar ulang splash</button>
+  <button id="btnSampul">Lompat ke 3 sampul</button>
+  <label><input type="checkbox" id="chkPanduan"> garis bantu</label>
+</div>
+
+<div class="hp" id="hp">
+  <div class="sysbar" id="sysbar"><span>07:58</span><span>▮▮▮ 100%</span></div>
+
+  <!-- ============ SPLASH ============ -->
+  <div id="splash">
+    <div class="grid"></div>
+    <div class="glow"></div>
+    <div class="blok">
+      <div class="logoWrap">
+        <img class="logo" src="../../assets/brand/emblem-512.png" alt="">
+      </div>
+      <div class="sp30"></div>
+      <div class="wm" id="wm"></div>
+      <div class="sp11"></div>
+      <div class="connect">CONNECT</div>
+      <div class="sp26"></div>
+      <div class="lokasi">Kuningan Barat &nbsp;·&nbsp; Jakarta Selatan</div>
+      <div class="sp30b"></div>
+      <div class="pills"><i class="pill"></i><i class="pill"></i><i class="pill"></i></div>
+    </div>
+    <div class="footer">from Katar KunBar</div>
+  </div>
+
+  <!-- ============ 3 SAMPUL ============ -->
+  <div id="onb">
+    <div class="lewati" id="lewati">Lewati</div>
+    <div class="stage" id="stage">
+
+      <div class="slide" data-i="0">
+        <div class="atas"></div>
+        <div class="ilus">
+          <div class="halo g"></div>
+          <div class="floaty"><div class="zoom"><img src="../../assets/ilustrasi/onb_komunitas.svg" style="width:304px;height:228px"></div></div>
+        </div>
+        <div class="spasi"></div>
+        <div class="teks">
+          <div class="judul">Selamat datang di KUNBAR Connect</div>
+          <div class="isi">Untuk seluruh warga Kuningan Barat &mdash; dari anak muda, orang tua, RT/RW, UMKM, sampai pengurus kelurahan.</div>
+        </div>
+      </div>
+
+      <div class="slide" data-i="1" style="display:none">
+        <div class="atas"></div>
+        <div class="ilus">
+          <div class="halo p"></div>
+          <div class="floaty"><div class="zoom"><img src="../../assets/ilustrasi/onb_aspirasi.svg" style="width:304px;height:228px"></div></div>
+        </div>
+        <div class="spasi"></div>
+        <div class="teks">
+          <div class="judul">Sampaikan tanpa ribet</div>
+          <div class="isi">Kirim aspirasi, laporan masalah, sampai kondisi darurat keamanan. Semua tercatat dan bisa dilacak statusnya.</div>
+        </div>
+      </div>
+
+      <div class="slide" data-i="2" style="display:none">
+        <div class="atas"></div>
+        <div class="ilus">
+          <div class="halo b"></div>
+          <div class="floaty"><div class="zoom"><img src="../../assets/ilustrasi/onb_terhubung.svg" style="width:304px;height:228px"></div></div>
+        </div>
+        <div class="spasi"></div>
+        <div class="teks">
+          <div class="judul">Terhubung &amp; terbuka</div>
+          <div class="isi">Baca pengumuman RT/RW, lihat agenda, dukung UMKM warga, dan pesan fasilitas balai tanpa datang langsung.</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="dots" id="dots"><i class="on"></i><i></i><i></i></div>
+    <button class="tombol" id="tombol">Lanjut</button>
+  </div>
+
+  <div class="navbar"></div>
+  <div class="panduan" id="panduan">
+    <div class="tengah"></div><div class="atas"></div><div class="bawah"></div>
+  </div>
+</div>
+
+<div id="ukur">memuat...</div>
+
+<script>
+// ---- wordmark: satu span per huruf, jeda 0.081s ----
+const wm = document.getElementById('wm');
+[...'KUNBAR'].forEach((c,i)=>{
+  const s = document.createElement('span');
+  s.textContent = c; s.style.setProperty('--i', i);
+  wm.appendChild(s);
+});
+
+// ---- slide ----
+const slides = [...document.querySelectorAll('.slide')];
+const dots = [...document.querySelectorAll('#dots i')];
+const tombol = document.getElementById('tombol');
+const lewati = document.getElementById('lewati');
+let page = 0;
+
+function tampil(i){
+  page = i;
+  slides.forEach((s,k)=>{
+    s.style.display = (k===i) ? 'flex' : 'none';
+    if(k===i){
+      // ulangi animasi dari awal setiap kali slide ini tampil
+      s.classList.remove('in'); void s.offsetWidth; s.classList.add('in');
+    }
+  });
+  dots.forEach((d,k)=>d.classList.toggle('on', k===i));
+  tombol.textContent = (i===2) ? 'Masuk KUNBAR Connect' : 'Lanjut';
+  lewati.classList.toggle('off', i===2);
+}
+tombol.onclick = ()=>{ if(page<2) tampil(page+1); else tampil(0); };
+lewati.onclick  = ()=> tampil(0);
+
+// swipe
+let x0=null;
+document.getElementById('stage').addEventListener('touchstart',e=>x0=e.touches[0].clientX,{passive:true});
+document.getElementById('stage').addEventListener('touchend',e=>{
+  if(x0===null) return;
+  const dx=e.changedTouches[0].clientX-x0; x0=null;
+  if(dx<-40 && page<2) tampil(page+1);
+  if(dx> 40 && page>0) tampil(page-1);
+},{passive:true});
+
+// ---- splash ----
+const splash = document.getElementById('splash');
+const onb = document.getElementById('onb');
+const sysbar = document.getElementById('sysbar');
+function putarSplash(){
+  splash.classList.remove('off'); onb.classList.remove('on');
+  sysbar.classList.remove('dark');
+  // restart semua animasi splash
+  splash.querySelectorAll('*').forEach(e=>{e.style.animation='none';void e.offsetWidth;e.style.animation='';});
+  clearTimeout(window._t);
+  window._t = setTimeout(()=>{ splash.classList.add('off'); onb.classList.add('on');
+    sysbar.classList.add('dark'); tampil(0); }, 2600);
+}
+document.getElementById('btnMulai').onclick = putarSplash;
+document.getElementById('btnSampul').onclick = ()=>{
+  splash.classList.add('off'); onb.classList.add('on'); sysbar.classList.add('dark'); tampil(0);
+};
+document.getElementById('chkPanduan').onchange = e =>
+  document.getElementById('panduan').classList.toggle('on', e.target.checked);
+
+// ---- pengukuran (angka yang harus SAMA dengan Dart) ----
+function ukur(){
+  const blok = document.querySelector('.blok');
+  const kids = [...blok.children];
+  const top = kids[0].getBoundingClientRect().top;
+  const bot = kids[kids.length-1].getBoundingClientRect().bottom;
+  const f = document.querySelector('.footer').getBoundingClientRect();
+  const hal = document.querySelector('.slide[data-i="0"] .ilus').getBoundingClientRect();
+  const out = [
+    'HASIL UKUR (px = dp di viewport 360x800)',
+    '  tinggi blok konten   : ' + (bot-top).toFixed(0) + 'dp',
+    '  tengah blok           : ' + ((top+bot)/2 - hpTop()).toFixed(0) + 'dp   (tengah layar 400dp)',
+    '  footer y              : ' + (f.top - hpTop()).toFixed(0) + 'dp   (dasar area aman 776dp)',
+    '  ilustrasi y           : ' + (hal.top - hpTop()).toFixed(0) + 'dp  (kunci, sama di 3 sampul)',
+  ];
+  document.getElementById('ukur').textContent = out.join('\n');
+}
+function hpTop(){
+  return document.getElementById('hp').getBoundingClientRect().top +
+         (window.innerWidth>600 ? 0 : 0);
+}
+addEventListener('resize', ukur);
+putarSplash();
+setTimeout(ukur, 700);
+</script>
+</body>
+</html>

@@ -201,6 +201,19 @@ class _SlideViewState extends State<_SlideView>
 
   @override
   Widget build(BuildContext context) {
+    // WAJIB didengarkan, bukan hanya dibaca `.value` di dalam build.
+    // Kalau tidak ada listener, controller beranimasi tapi widget tidak pernah
+    // dibangun ulang -> opacity tetap 0 -> sampul tampil KOSONG.
+    return AnimatedBuilder(
+      animation: _masuk,
+      builder: (_, __) => AnimatedBuilder(
+        animation: _ngambang,
+        builder: (_, __) => _isi(context),
+      ),
+    );
+  }
+
+  Widget _isi(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints b) {
         final double u = (MediaQuery.sizeOf(context).shortestSide / 360)
@@ -272,10 +285,11 @@ class _SlideViewState extends State<_SlideView>
                   ],
                 ),
                 SizedBox(height: jarakTeks),
-                // Slot teks: tingginya tetap, isinya centering di dalamnya.
+                // Slot teks: tingginya TEPAT sisa ruang di bawah ilustrasi.
+                // Kalau(minHeight) memakai `tinggiTeks` saja, blok jadi lebih
+                // tinggi dari area slide dan teks terdorong keluar layar.
                 ConstrainedBox(
-                  constraints:
-                      BoxConstraints(minHeight: b.maxHeight - tinggiTeks),
+                  constraints: BoxConstraints(minHeight: tinggiTeks),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
