@@ -11,7 +11,7 @@ class Kegiatan {
   const Kegiatan({
     required this.judul,
     required this.kategori,
-    required DateTime? tanggal,
+    required this.tanggal,
     required this.lokasi,
     required this.mendatang,
   });
