@@ -53,8 +53,8 @@ class SettingsScreen extends StatelessWidget {
           style: TextStyle(fontSize: 13),
         ),
         const SizedBox(height: 8),
-        ..._DaftarNotif(jenis: JenisNotif.daftarPersisten, label: 'PERSISTEN (tidak bisa di-swipe)'),
-        ..._DaftarNotif(
+        _DaftarNotif(jenis: JenisNotif.daftarPersisten, label: 'PERSISTEN (tidak bisa di-swipe)'),
+        _DaftarNotif(
           jenis: JenisNotif.values.where((j) => !j.persisten).toList(),
           label: 'BIASA (bisa di-swipe)',
         ),

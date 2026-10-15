@@ -196,7 +196,8 @@ class Notifikasi {
     try {
       final list = await _plugin.getActiveNotifications();
       final idPersisten = JenisNotif.daftarPersisten.map((j) => j.id).toSet();
-      return list.map((n) => n.id).where(idPersisten.contains).toList();
+      // .id dari ActiveNotification bertipe int? -> harus.whereType<int>()
+      return list.map((n) => n.id).whereType<int>().where(idPersisten.contains).toList();
     } catch (_) {
       return [];
     }
