@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../state/app_state.dart';
+import 'izin_screen.dart';
 import 'settings_screens.dart';
 import 'widgets.dart';
 
@@ -31,6 +32,7 @@ class AccountScreen extends StatelessWidget {
             onTap: () => go(const RatingsScreen()),
           ),
           ListTile(leading: const Icon(Icons.settings), title: const Text('Pengaturan'), onTap: () => go(const SettingsScreen())),
+          ListTile(leading: const Icon(Icons.lock_outline), title: const Text('Izin Aplikasi'), subtitle: const Text('Kamera, lokasi, notifikasi, dll'), onTap: () => go(const IzinScreen(saatMasuk: false))),
           ListTile(
             leading: const Icon(Icons.warning_amber_rounded, color: Colors.red),
             title: const Text('SOS Darurat', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),

@@ -1,10 +1,10 @@
 name: kunbar_mitra
 description: KUNBAR Mitra - aplikasi driver/kurir jastip & ojek
 publish_to: none
-version: 1.0.1+2
+version: 1.1.0+3
 
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: '>=3.6.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -17,6 +17,7 @@ dependencies:
   url_launcher: ^6.3.0
   shared_preferences: ^2.2.3
   provider: ^6.1.2
+  permission_handler: ^13.0.2
   intl: ^0.19.0
 
 dev_dependencies:

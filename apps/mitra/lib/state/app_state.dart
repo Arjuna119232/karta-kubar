@@ -18,6 +18,9 @@ class AppState extends ChangeNotifier {
   SharedPreferences? _p;
 
   bool loggedIn = false, online = false, loading = false, offlineMode = false;
+
+  /// true = halaman izin belum pernah dibuka (tampil sekali setelah login).
+  bool izinBelumDitinjau = false;
   String name = 'Mitra';
   String? error;
   List<Order> incoming = [], history = [];
@@ -40,6 +43,7 @@ class AppState extends ChangeNotifier {
     radiusKm = _p!.getDouble('radius') ?? 5;
     openHour = _p!.getInt('open') ?? 6;
     closeHour = _p!.getInt('close') ?? 22;
+    izinBelumDitinjau = _p!.getBool('izin_sheet_v1') != true;
     vehicleType = _p!.getString('vtype') ?? 'Motor';
     vehicleModel = _p!.getString('vmodel') ?? '';
     plate = _p!.getString('plate') ?? '';
@@ -96,6 +100,12 @@ class AppState extends ChangeNotifier {
       } catch (_) {}
     }
     await loadAll();
+  }
+
+  Future<void> tandaiIzinDitinjau() async {
+    izinBelumDitinjau = false;
+    await _p?.setBool('izin_sheet_v1', true);
+    notifyListeners();
   }
 
   Future<void> logout() async {
