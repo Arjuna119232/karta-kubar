@@ -383,9 +383,9 @@ class _DialogLayanan extends StatelessWidget {
               const SizedBox(height: 10),
               const Row(
                 children: [
-                  const Icon(Icons.info_rounded, size: 16, color: Colors.orange),
-                  const SizedBox(width: 6),
-                  const Expanded(
+                  Icon(Icons.info_rounded, size: 16, color: Colors.orange),
+                  SizedBox(width: 6),
+                  Expanded(
                     child: Text('Ada order aktif. Selesaikan dulu sebelum mematikan layanan.',
                         style: TextStyle(fontSize: 12, color: Colors.orange)),
                   ),
