@@ -786,6 +786,31 @@ for f in files:
             "di-import - method itu EXTENSION dari go_router, bukan method "
             "bawaan BuildContext" % daftar)
 
+# ------------------------------------- 11e. paket `package:` harus ada di pubspec
+# KELAS BUG NYATA (16 Okt 2026, ketahuan dari CI): ZIP baru menimpa
+# `pubspec.yaml` dan FOUR dependensi hilang (share_plus, cross_file,
+# image_picker, path_provider) -> CI compiling dengan
+# "Undefined name 'Share'" dan "Method not found: 'XFile'".
+# Cek IMPORT-RESOLVE tidak menangkapnya karena yang hilang itu paket, bukan
+# file di dalam lib/ - dan `flutter analyze` di workflow memang `|| true`.
+PKG_IMPORT = re.compile(r"""import\s+'package:([a-z0-9_]+)/""")
+pubspec = (ROOT / "pubspec.yaml").read_text(encoding="utf-8") \
+    if (ROOT / "pubspec.yaml").exists() else ""
+paket_dipakai = {}
+for f in files:
+    for m in PKG_IMPORT.finditer(raw[f]):
+        paket_dipakai.setdefault(m.group(1), set()).add(f)
+SDK_BUILTIN = {"flutter", "flutter_test", "flutter_localizations"}
+for paket,astic in sorted(paket_dipakai.items()):
+    if paket == PKG or paket in SDK_BUILTIN:
+        continue
+    if re.search(r"^\s{2}%s\s*:" % re.escape(paket), pubspec, re.M):
+        continue
+    bad("PAKET-HILANG", sorted(astic)[0],
+        "`package:%s/...` di-import tapi tidak terdaftar di pubspec.yaml - "
+        "build gagal dengan 'Undefined name'. %d file memakainya, contoh: %s"
+        % (paket, len(astic), ", ".join(sorted(p.name for p in list(astic)[:3]))))
+
 # ---------------------------------------------------------------- report
 print("=" * 62)
 print("  KUNBAR Connect - Dart static check")
@@ -805,7 +830,7 @@ if problems:
              "IMPORT-RESOLVE": 5, "UNUSED-IMPORT": 6, "UNUSED-PRIVATE": 7,
              "UNUSED-PROVIDER": 8, "BRACE": 9, "NON-LATIN": 10, "ASSET": 11,
              "FIELD-HILANG": 2, "EXT-HILANG": 2, "REF-FIELD-AWAL": 2,
-             "GALAT-TIPE": 2, "IMPORT-GO-ROUTER": 6}
+             "GALAT-TIPE": 2, "IMPORT-GO-ROUTER": 6, "PAKET-HILANG": 5}
     for kind, path, msg in sorted(problems, key=lambda p: (order.get(p[0], 9), p[1])):
         print(f"  [{kind}] {path}\n      {msg}")
     sys.exit(1)
