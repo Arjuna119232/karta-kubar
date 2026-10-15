@@ -9,6 +9,7 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/status_views.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../domain/kegiatan.dart';
+import 'kalender_kegiatan.dart';
 import '../../../shared/widgets/cover_pilih.dart';
 import '../../../shared/widgets/haptics.dart';
 import '../../../shared/widgets/app_sheet.dart';
@@ -48,9 +49,18 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen> {
                 Text('Kegiatan', style: context.text.headlineMedium),
                 const Spacer(),
                 IconButton(
-                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Kalender kegiatan segera hadir')),
-                  ),
+                  onPressed: () {
+                    Haptics.ringan();
+                    AppSheet.tampilkan<void>(
+                      context,
+                      judul: 'Kalender kegiatan',
+                      subjudul: 'Pilih tanggal untuk lihat kegiatan',
+                      isi: KalenderKegiatan(
+                        kegiatan: semua,
+                        accent: context.colors.primary,
+                      ),
+                    );
+                  },
                   icon: const AppIcon(Ik.calendar),
                   tooltip: 'Kalender',
                 ),

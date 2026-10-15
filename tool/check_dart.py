@@ -527,29 +527,38 @@ for f in files:
 # tipe yang diketahui:
 #   `final X v = ...`   `for (final X v in ...)`   `late final X v`
 #   `final X v;`  (field kelas)   `const X v = ...`
+# `_?` WAJIB: tanpa itu kelas privat (`_MediaContoh`) tidak pernah dikenali,
+# sehingga `final _MediaContoh media;` hilang dari peta dan `media.cover`
+# salah disimpulkan memakai tipe kelas lain yang kebetulan bernama sama.
+# Gejalanya: FALSE POSITIVE UNDEF-MEMBER pada kode yang benar.
 VAR_TIPE = re.compile(
-    r"\b(?:final|const|late\s+final|var)\s+([A-Z]\w+)(?:<[^>]*>)?\s+(\w+)\s*"
+    r"\b(?:final|const|late\s+final|var)\s+(_?[A-Z]\w+)(?:<[^>]*>)?\s+(\w+)\s*"
     r"(?:;|=|\bin\b)"
 )
 # Parameter closure `(Kegiatan a) => ...` jugashitipe dikenal.
-VAR_CLOSURE = re.compile(r"\(\s*([A-Z]\w+)(?:<[^>]*>)?\s+(\w+)\s*\)\s*(?:async\s*)?=>")
+VAR_CLOSURE = re.compile(r"\(\s*(_?[A-Z]\w+)(?:<[^>]*>)?\s+(\w+)\s*\)\s*(?:async\s*)?=>")
 for f in files:
     body = code[f]          # string sudah diganti spasi -> import tidak ikut
+    # nama -> himpunan TIPE kandidat.
+    #
+    # BUKAN nama -> satu tipe. Kalau `media` dipakai 2 kelas berbeda di satu
+    # file (`final MediaGaleri media;` di satu widget, `final _MediaContoh
+    # media;` di widget lain), versi lama hanya memakai salah satu tipe:
+    # (a) FALSE POSITIVE pada kode yang benar, dan (b) begitu nama ambigu
+    # dibuang, TYPO sungguhan (`media.sampulTypo`) ikut lolos tanpa terdeteksi.
+    # Sekarang: dilaporkan HANYA kalau member tidak ada di SATU pun kandidat.
     vars_diketahui = {}
-    ambigu = set()
     for m in list(VAR_TIPE.finditer(body)) + list(VAR_CLOSURE.finditer(body)):
         tipe, nama = m.group(1), m.group(2)
         if tipe not in PROJECT_TYPES:
             continue
-        if nama in vars_diketahui and vars_diketahui[nama] != tipe:
-            ambigu.add(nama)      # nama dipakai 2 tipe -> tidak bisa disimpulkan
-        vars_diketahui[nama] = tipe
-    for nama in ambigu:
-        vars_diketahui.pop(nama, None)
-    for nama, tipe in vars_diketahui.items():
-        member_boleh = PROJECT_TYPES[tipe] | {
-            x for o in files for x in extension_members(raw[o])
-        }
+        vars_diketahui.setdefault(nama, set()).add(tipe)
+    ext_member = {x for o in files for x in extension_members(raw[o])}
+    for nama, tipes in vars_diketahui.items():
+        member_boleh = set()
+        for tipe in tipes:
+            member_boleh |= PROJECT_TYPES[tipe]
+        member_boleh |= ext_member
         for m in re.finditer(r"(?<![\w.])" + re.escape(nama) + r"\.(\w+)", body):
             attr = m.group(1)
             if attr in member_boleh:
@@ -561,10 +570,11 @@ for f in files:
                         "addAll", "removeAt", "sort", "join", "containsKey"}:
                 continue
             baris = body[:m.start()].count("\n") + 1
+            semua = sorted(tipes)
+            ada = sorted(x for x in member_boleh if not x.startswith("_"))[:12]
             bad("UNDEF-MEMBER", f,
-                f"`{nama}.{attr}` tapi `{tipe}` tidak punya member '{attr}' "
-                f"(ada: {', '.join(sorted(x for x in PROJECT_TYPES[tipe] if not x.startswith('_'))[:12])}) "
-                f"-> compile error")
+                f"`{nama}.{attr}` tapi {' / '.join(semua)} tidak punya "
+                f"member '{attr}' (ada: {', '.join(ada)}) -> compile error")
 
 # ------------------------------------------------- 12. CONSTRUCTOR TIDAK ADA
 # `Hasil.galat(...)` padahal named constructor-nya `Hasil.gagal`. Compiler
