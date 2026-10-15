@@ -56,7 +56,7 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
                 const Positioned(
                   right: 0,
                   bottom: 0,
-                  child: const CircleAvatar(
+                  child: CircleAvatar(
                     radius: 14,
                     backgroundColor: Color(0xFF1B5E20),
                     child: Icon(Icons.camera_alt_rounded, size: 15, color: Colors.white),
