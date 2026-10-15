@@ -113,7 +113,10 @@ class KegiatanSupabaseRepository implements KegiatanRepository {
 
   @override
   Future<Hasil<int>> totalAnggota() async =>
-      _hitung('anggota', kolomHitung: 'id');
+      // Tabel warga ada SATU: `profiles`. Semula kode ini membaca tabel
+      // `anggota` yang tidak pernah dibuat di skema, jadi begitu backend
+      // nyala, kartu "anggota terdaftar" selalu 0 tanpa error.
+      _hitung('profiles', kolomHitung: 'id');
 
   @override
   Future<Hasil<int>> kegiatanBulanIni() async =>
