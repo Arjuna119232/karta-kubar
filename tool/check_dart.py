@@ -766,6 +766,26 @@ for f in files:
             "Hasil.%s() diberi String di baris %d - parameter bertipe "
             "`GalatData?`. Bungkus: GalatData('...')" % (m.group(0).split(".")[1].split("(")[0], baris))
 
+# --------------------------------------- 11d. context.push/pop tanpa import go_router
+# KELAS BUG NYATA (15 Okt 2026, ketahuan dari CI): `context.push/pop/canPop`
+# adalah EXTENSION dari package `go_router`, BUKANG method bawaan BuildContext.
+# File yang sebelumnya tidak pernah memanggil navigasi sama sekali (galeri)
+# jadi tidak punya import itu -> "The method 'push' isn't defined for the
+# type 'BuildContext'". Checker tidak menangkapnya karena `pop`/`canPop` bukan
+# simbol project.
+GO_ROUTER_EXT = re.compile(r"(?<![\w.])context\s*\.\s*(go|push|pop|canPop|replace|goNamed|pushNamed)\s*\(")
+for f in files:
+    body = raw[f]
+    nama = sorted({m.group(1) for m in GO_ROUTER_EXT.finditer(body)})
+    if not nama:
+        continue
+    if not re.search(r"import\s+'package:go_router/go_router\.dart'", body):
+        daftar = " dan ".join("context.%s()" % x for x in nama)
+        bad("IMPORT-GO-ROUTER", f,
+            "memakai %s tapi `package:go_router/go_router.dart` tidak "
+            "di-import - method itu EXTENSION dari go_router, bukan method "
+            "bawaan BuildContext" % daftar)
+
 # ---------------------------------------------------------------- report
 print("=" * 62)
 print("  KUNBAR Connect - Dart static check")
@@ -785,7 +805,7 @@ if problems:
              "IMPORT-RESOLVE": 5, "UNUSED-IMPORT": 6, "UNUSED-PRIVATE": 7,
              "UNUSED-PROVIDER": 8, "BRACE": 9, "NON-LATIN": 10, "ASSET": 11,
              "FIELD-HILANG": 2, "EXT-HILANG": 2, "REF-FIELD-AWAL": 2,
-             "GALAT-TIPE": 2}
+             "GALAT-TIPE": 2, "IMPORT-GO-ROUTER": 6}
     for kind, path, msg in sorted(problems, key=lambda p: (order.get(p[0], 9), p[1])):
         print(f"  [{kind}] {path}\n      {msg}")
     sys.exit(1)
