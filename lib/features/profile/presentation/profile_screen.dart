@@ -590,28 +590,22 @@ class _MenuUmum extends ConsumerWidget {
           _Baris(
             icon: Ik.edit,
             label: 'Edit profil',
-            onTap: () => _segera(context, 'Edit profil'),
+            onTap: () => context.go('/edit-profil'),
           ),
           Divider(height: 1, color: context.semantic.line),
           _Baris(
             icon: Ik.bell,
             label: 'Notifikasi',
-            onTap: () => _segera(context, 'Notifikasi'),
+            onTap: () => context.go('/notifikasi'),
           ),
           Divider(height: 1, color: context.semantic.line),
           _Baris(
             icon: Ik.help,
             label: 'Bantuan',
-            onTap: () => _segera(context, 'Bantuan'),
+            onTap: () => context.go('/bantuan'),
           ),
         ],
       ),
-    );
-  }
-
-  void _segera(BuildContext context, String label) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label segera hadir')),
     );
   }
 }

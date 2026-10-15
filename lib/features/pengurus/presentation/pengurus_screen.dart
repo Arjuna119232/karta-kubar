@@ -18,6 +18,7 @@ import '../../../shared/widgets/status_views.dart';
 import '../../aspirasi/data/aspirasi_state.dart';
 import '../../aspirasi/domain/aspirasi.dart';
 import '../../aspirasi/presentation/aspirasi_screen.dart';
+import '../../shell/data/app_tabs.dart';
 
 /// Panel kendali untuk pengurus / RT / RW / kelurahan.
 ///
@@ -348,7 +349,12 @@ class _Pintasan extends ConsumerWidget {
             judul: 'Agenda',
             ket: 'Kelola kegiatan',
             onTap: () {
-              ref.read(navigationIndexProvider.notifier).state = 1;
+              // Angka 1 salah: untuk role pengurus urutan tabnya
+              // (Beranda / Absen / Kegiatan / Kas / Profil), jadi indeks 1
+              // membuka tab "Absen", bukan Agenda.
+              final UserRole role = ref.read(sessionProvider).efektif;
+              ref.read(navigationIndexProvider.notifier).state =
+                  indeksTab(role, 'Agenda');
               context.go('/home');
             },
           ),

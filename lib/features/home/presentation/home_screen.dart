@@ -421,15 +421,21 @@ class _QuickActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final UserRole role = ref.watch(sessionProvider).efektif;
+    // Aksi cepat WAJIB ikut role. Dulu daftar ini tetap sama untuk semua
+    // role lalu mencari tab via label - hasilnya: tombol "Iuran" tidak
+    // melakukan apa-apa untuk tamu (tab "Kas" tidak ada di sana).
+    // "Galeri" untuk anggota mendarat di tab "Kas".
     final List<_QuickItem> items = <_QuickItem>[
-      _QuickItem(Ik.qrScan, 'Absen', AppColors.primary,
-          () => context.go('/absen')),
-      _QuickItem(Ik.wallet, 'Iuran', AppColors.accent, () => _keTab(ref, 'Kas')),
+      if (role.bisa(UserRole.anggota))
+        _QuickItem(Ik.qrScan, 'Absen', AppColors.primary, () => context.go('/absen')),
       _QuickItem(Ik.chat, 'Aspirasi', AppColors.warning, () => context.go('/aspirasi')),
       _QuickItem(Ik.handHeart, 'UMKM', AppColors.social, () => context.go('/umkm')),
-      _QuickItem(Ik.gallery, 'Galeri', AppColors.success,
-          () => _keTab(ref, role.bisa(UserRole.anggota) ? 'Kas' : 'Galeri')),
+      if (role.bisa(UserRole.anggota))
+        _QuickItem(Ik.wallet, 'Iuran', AppColors.accent, () => _keTab(ref, 'Kas'))
+      else
+        _QuickItem(Ik.gallery, 'Galeri', AppColors.success, () => context.go('/galeri')),
     ];
+;
 
     // BUKAN `Row` dengan 5 `Expanded`: di layar 360 dp tiap kolom tinggal
     // ~66 dp, sehingga nama tombol seperti "Aspirasi" terpotong atau meluber.

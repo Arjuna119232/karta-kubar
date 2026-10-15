@@ -3,7 +3,7 @@
 Berkas ini supaya sesi baru bisa melanjutkan tanpa membaca ulang semua riwayat.
 
 **Terakhir diperbarui:** 15 Okt 2026
-**Versi aplikasi:** 0.11.0+21 (build 20 = 0.7.0 sudah DIRUSAK, jangan dipakai sebagai acuan)
+**Versi aplikasi:** 0.12.0+22 (build 20 = 0.7.0 sudah DIRUSAK, jangan dipakai sebagai acuan)
 
 ---
 
@@ -19,7 +19,8 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 
 | # | Tahap | Status | Commit |
 |---|---|---|---|
-| 11 | UMKM warga + Lapor darurat | ✅ | (commit ini) |
+| 11 | UMKM warga + Lapor darurat | ✅ | `04e81e6` |
+| 12 | Edit profil + Notifikasi + Bantuan, perbaikan 3 bug navigasi | ✅ | (commit ini) |
 | 0 | Fondasi: tema M3, ikon, router, build CI | ✅ | `c3d6bb3`, `1440406` |
 | 1 | ~~`SplashScreen` + `onFinished`~~ (diganti splash native 15 Okt) | ✅ | `f512dca` |
 | 2 | `OnbArt` (aspirasi, komunitas, terhubung) untuk 3 sampul | ✅ | `f512dca` |
@@ -51,9 +52,9 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 | 12 | Kartu anggota digital | ⚠️ | Kartu sudah ada, **QR-nya masih gambar tiruan** (belum bisa discan) |
 | 13 | Chat | ❌ | Skema `pesan` ada. Butuh login Supabase Auth + Realtime |
 | 14 | Profil | ✅ | Kartu anggota, hak akses, menu |
-| 15 | Pengaturan | ⚠️ | Tema, mode Lansia, status backend jalan. Edit profil / Notifikasi / Bantuan masih "segera hadir" |
+| 15 | Pengaturan | ✅ | Tema, mode Lansia, status backend, Edit profil, Notifikasi, Bantuan (v0.12.0) |
 
-**Angka: 10 jadi, 2 setengah, 3 belum.** Tidak ada fitur yang ditandai selesai
+**Angka: 11 jadi, 1 setengah, 3 belum.** Tidak ada fitur yang ditandai selesai
 padahal baru kerangka.
 
 ### 16 fitur Panel Pengurus (web)
@@ -187,6 +188,11 @@ grep -rn "Lokal\." lib/features/*/presentation/   # harus kosong
 11. **`required this.x` tanpa `final bool x;` = compile error.** Nimanya ketahuan
     hanya saat CI compile (v0.10.0 build pertama gagal 4 baris error).
     `tool/check_dart.py` punya cek `FIELD-HILANG` untuk itu.
+12. **Import `app_colors.dart` tidak boleh dihapus** hanya karena "tidak ada
+    simbol yang dipakai": `context.colors/text/semantic` milik extension
+    `AppSemanticX` di file itu. Cek `EXT-HILANG` menjaga ini.
+13. **Aksi cepat harus ikut role.** Tab berbeda per role; tombol yang
+    menunjuk tab milik role lain diam-diam tidak melakukan apa-apa.
 
 ---
 

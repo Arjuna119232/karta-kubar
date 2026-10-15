@@ -1,22 +1,18 @@
-### KUNBAR Connect v0.11.0
+### KUNBAR Connect v0.12.0
 
-Dua fitur warga baru.
+Tombol yang tadinya kosong sekarang benar-benar bekerja.
 
-**UMKM warga**
-- Katalog usaha warga dengan filter kategori
-- Ajukan usaha baru lewat tombol di layar katalog
-- Tombol hubungi langsung ke WhatsApp penjual
-- Tandai centang hanya untuk usaha yang sudah diverifikasi pengurus
+**Layar baru**
+- Edit profil: nama, WhatsApp, NIK, alamat, RT/RW, tersimpan di perangkat
+- Notifikasi: riwayat status FISH dan laporan darurat milikmu sendiri
+- Bantuan: pertanyaan yang sering muncul dan cara menghubungi pengurus
 
-**Lapor darurat**
-- Satu tombol merah besar di paling atas beranda
-- Nomor darurat resmi: 112, 119, 110, 115 - bisa langsung ditelepon
-- Pilih jenis kejadian, isi lokasi, dan keterangan
-- Riwayat laporan beserta status penanganannya
+**Bug navigasi yang diperbaiki**
+- Tombol Iuran di beranda tidak melakukan apa-apa untuk tamu
+- Anggota dan pengurus tidak punya cara membuka Galeri sama sekali
+- Tile Agenda di Panel Pengurus membuka tab "Absen", bukan Agenda
+- Tab Galeri untuk anggota sebelumnya mendarat di tab "Kas"
 
-**Yang diperbaiki**
-- Aksi cepat beranda jadi 4 kolom yang membungkus, tidak meluber di layar sempit
-
-**Belum ada**
-- Peta wilayah, forum warga, booking fasilitas, donasi, dan chat
-- Verifikasi NIK otomatis tidak mungkin tanpa API publik
+**Pemeriksa kode**
+- Layar "segera hadir" yang tersisa dihapus beserta method yang tak terpakai
+- Cek import dan kode mati diperkuat; sudah diuji dengan sengaja rusak

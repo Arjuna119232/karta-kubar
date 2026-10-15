@@ -151,8 +151,12 @@ TOPFUNC_TYPED_RE = re.compile(
     r"\([^;{]*\)\s*(?:async\s*)?[{=>]",
     re.MULTILINE,
 )
+# Tipe diakhiri `>>` atau `[]` TANPA spasi sebelum nama variabel:
+#   final AsyncNotifierProvider<Notifier, List<Baris>>namaProvider =
+# Pola lama mewajibkan spasi setelah tipe, jadi deklarasi ini tidak pernah
+# tertangkap dan import-nya dilaporkan "tak terpakai" (false positive).
 TOPVAR_RE = re.compile(
-    r"^(?:const|final)\s+(?:[\w<>,?\s.]+\s+)?([a-z_$][\w$]*)\s*=",
+    r"^(?:const|final)\s+([\w<>,?\s.\[\]]*?)([a-z_$][\w$]*)\s*=",
     re.MULTILINE,
 )
 
@@ -176,7 +180,7 @@ def declared_names(body):
     names = set(TOPLEVEL_RE.findall(body))
     names |= set(TOPFUNC_RE.findall(body))
     names |= set(TOPFUNC_TYPED_RE.findall(body))
-    names |= set(TOPVAR_RE.findall(body))
+    names |= set(m.group(2) for m in TOPVAR_RE.finditer(body))
     return names
 
 
@@ -315,11 +319,20 @@ for f in files:
     # "_QrPainter" (karena `_` adalah karakter kata) -> semua State/painter
     #private dilaporkan mati padahal jelas dipakai.
     priv = set(re.findall(r"^\s*(?:class|enum|mixin|extension)\s+(_[A-Za-z_$][\w$]*)", body, re.MULTILINE))
-    priv |= set(re.findall(r"^[A-Za-z_$][\w$<>,?\s]*\s(_[a-z_$][\w$]*)\s*\(", body, re.MULTILINE))
+    # Method private di dalam kelas: baris `  void _segera(...) {`. Polanya
+    # harus Nullable dengan indentation >= 2 spasi, kalau tidak `^` ikut
+    # mencocokkan baris yang lebih dalam dan nama member kelas ikut dianggap
+    # "method private".
+    priv |= set(re.findall(r"^\s{2,}[A-Za-z_$][\w$<>,?\s]*\s(_[a-z_$][\w$]*)\s*\(",
+                           body, re.MULTILINE))
     if not priv:
         continue
     for name in sorted(priv):
-        uses = len(re.findall(r"\b" + re.escape(name) + r"\b", body))
+        # Dihitung dari teks ASLI, bukan `body` yang string-nya sudah diganti
+        # spasi: pemanggilan di dalam interpolasi string ('Rp ${_format(x)}')
+        # akan hilang kalau dihitung dari body, lalu method yang sebenarnya
+        # dipakai dilaporkan mati (false positive).
+        uses = len(re.findall(r"\b" + re.escape(name) + r"\b", raw[f]))
         if uses <= 1:
             bad("UNUSED-PRIVATE", f, f"'{name}' dideklarasi tapi tidak pernah dipakai")
 

@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/absen/presentation/absen_screen.dart';
 import '../features/aspirasi/presentation/aspirasi_screen.dart';
 import '../features/darurat/presentation/darurat_screen.dart';
+import '../features/galeri/presentation/galeri_screen.dart';
+import '../features/profile/presentation/edit_profil_screen.dart';
 import '../features/auth/presentation/auth_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/pengurus/presentation/pengurus_screen.dart';
@@ -186,6 +188,27 @@ GoRouter buatRouter(LokasiAwal awal) => GoRouter(
     GoRoute(
       path: '/darurat',
       pageBuilder: (_, GoRouterState s) => _halaman(s, const DaruratScreen()),
+    ),
+    // Galeri sebagai rute sendiri, bukan hanya tab._tab Galeri hanya ada
+    // untuk tamu; anggota dan pengurus tidak punya tab itu, jadi tanpa rute
+    // ini mereka tidak punya cara sama sekali membuka galeri.
+    GoRoute(
+      path: '/galeri',
+      pageBuilder: (_, GoRouterState s) => _halaman(s, const GaleriScreen()),
+    ),
+    // Tiga layar yang tadinya cuma SnackBar "segera hadir".
+    GoRoute(
+      path: '/edit-profil',
+      pageBuilder: (_, GoRouterState s) =>
+          _halaman(s, const RoleGate(minimal: UserRole.warga, child: EditProfilScreen())),
+    ),
+    GoRoute(
+      path: '/notifikasi',
+      pageBuilder: (_, GoRouterState s) => _halaman(s, const NotifikasiScreen()),
+    ),
+    GoRoute(
+      path: '/bantuan',
+      pageBuilder: (_, GoRouterState s) => _halaman(s, const BantuanScreen()),
     ),
     // Panel kendali pengurus: antrean FISH + sesi absensi.
     GoRoute(
