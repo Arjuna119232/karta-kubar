@@ -40,8 +40,10 @@ class TentangScreen extends StatelessWidget {
             ]),
             SizedBox(height: 24),
             Center(
-              child: Text('KUNBAR Mitra - From KATAR KUNBAR',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+              child: Text(
+                'KUNBAR Mitra - From KATAR KUNBAR',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
             ),
           ],
         ),

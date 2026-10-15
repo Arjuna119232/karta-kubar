@@ -545,10 +545,10 @@ class _ApaKataWarga extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CircleAvatar(
+                      const CircleAvatar(
                         radius: 16,
                         backgroundColor: AppColors.primarySoft,
-                        child: const Icon(Icons.person, size: 18, color: AppColors.primary),
+                        child: Icon(Icons.person, size: 18, color: AppColors.primary),
                       ),
                       const SizedBox(width: 10),
                       Expanded(

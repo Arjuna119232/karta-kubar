@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class Order {
   final String id, type, customerName, customerPhone, pickupAddress, dropAddress, note, status;
   final double distanceKm;
@@ -207,7 +209,7 @@ class Lencana {
 
   final String kode;
   final String judul;
-  final int ikon;
+  final IconData ikon;
   final bool terbuka;
   final int jumlah;
 
