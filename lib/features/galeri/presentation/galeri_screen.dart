@@ -53,6 +53,19 @@ class GaleriScreen extends ConsumerWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
+              // Galeri dipakai dua cara: sebagai TAB (tamu) dan sebagai rute
+              // yang di-push dari aksi cepat beranda. Saat di-push tidak ada
+              // AppBar, jadi tombol back harus dibuat sendiri - kalau tidak,
+              // satu-satunya cara keluar hanya tombol back perangkat.
+              if (context.canPop())
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: IconButton(
+                    onPressed: () => context.pop(),
+                    icon: AppIcon(Ik.arrowBack, size: 20),
+                    tooltip: 'Kembali',
+                  ),
+                ),
               Text('Galeri & Berita', style: context.text.headlineMedium),
               const Spacer(),
               IconButton(

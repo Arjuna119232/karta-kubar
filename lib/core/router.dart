@@ -50,8 +50,17 @@ class AksesDitolakScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               FilledButton(
-                onPressed: () => context.go('/home'),
-                child: const Text('Kembali ke beranda'),
+                onPressed: () {
+                  // Kalau halaman ini hasil `push`, tombol back harus
+                  // kembali ke halaman sebelumnya - bukan melompat ke beranda
+                  // dan membuang riwayat.
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/home');
+                  }
+                },
+                child: const Text('Kembali'),
               ),
             ],
           ),

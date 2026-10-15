@@ -126,7 +126,7 @@ class _KartuDarurat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      onTap: () => context.go('/darurat'),
+      onTap: () => context.push('/darurat'),
       color: AppColors.error,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       child: Row(
@@ -427,13 +427,13 @@ class _QuickActions extends ConsumerWidget {
     // "Galeri" untuk anggota mendarat di tab "Kas".
     final List<_QuickItem> items = <_QuickItem>[
       if (role.bisa(UserRole.anggota))
-        _QuickItem(Ik.qrScan, 'Absen', AppColors.primary, () => context.go('/absen')),
-      _QuickItem(Ik.chat, 'Aspirasi', AppColors.warning, () => context.go('/aspirasi')),
-      _QuickItem(Ik.handHeart, 'UMKM', AppColors.social, () => context.go('/umkm')),
+        _QuickItem(Ik.qrScan, 'Absen', AppColors.primary, () => context.push('/absen')),
+      _QuickItem(Ik.chat, 'Aspirasi', AppColors.warning, () => context.push('/aspirasi')),
+      _QuickItem(Ik.handHeart, 'UMKM', AppColors.social, () => context.push('/umkm')),
       if (role.bisa(UserRole.anggota))
         _QuickItem(Ik.wallet, 'Iuran', AppColors.accent, () => _keTab(ref, 'Kas'))
       else
-        _QuickItem(Ik.gallery, 'Galeri', AppColors.success, () => context.go('/galeri')),
+        _QuickItem(Ik.gallery, 'Galeri', AppColors.success, () => context.push('/galeri')),
     ];
 ;
 

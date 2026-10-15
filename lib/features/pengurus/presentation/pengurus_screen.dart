@@ -72,7 +72,7 @@ class PengurusScreen extends ConsumerWidget {
               SectionHeader(
                 title: 'Antrean FISH',
                 actionLabel: 'Papan warga',
-                onAction: () => context.go('/aspirasi'),
+                onAction: () => context.push('/aspirasi'),
               ),
               if (perluTindakan.isEmpty)
                 const AppEmptyState(
@@ -331,7 +331,7 @@ class _Pintasan extends ConsumerWidget {
             icon: Ik.qrScan,
             judul: 'Sesi absensi',
             ket: 'Tampilkan QR di layar',
-            onTap: () => context.go('/absen'),
+            onTap: () => context.push('/absen'),
           ),
         ),
         const SizedBox(width: AppSpacing.gap),

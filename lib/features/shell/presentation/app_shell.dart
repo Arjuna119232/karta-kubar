@@ -23,30 +23,44 @@ class AppShell extends ConsumerWidget {
     // supaya tidak keluar dari jangkauan tab yang sekarang tampil.
     final int aman = index.clamp(0, tabs.length - 1);
 
-    return Scaffold(
-      // IndexedStack menjaga scroll position tiap tab saat berpindah.
-      body: IndexedStack(
-        index: aman,
-        children: <Widget>[for (final AppTab t in tabs) t.screen],
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: aman,
-        destinations: <Widget>[
-          for (final AppTab t in tabs)
-            NavigationDestination(
-              icon: t.badge == null
-                  ? AppIcon(t.icon)
-                  : Badge.count(count: t.badge!, child: AppIcon(t.icon)),
-              selectedIcon: AppIcon(t.selectedIcon, aktif: true),
-              label: t.label,
-              tooltip: t.label,
-            ),
-        ],
-        onDestinationSelected: (int i) {
-          if (i >= tabs.length) return;
-          if (i != aman) Haptics.ringan();
-          ref.read(navigationIndexProvider.notifier).state = i;
-        },
+    return PopScope(
+      // Tab bukan rute: semuanya hidup di dalam satu halaman `/home`. Tanpa
+      // ini, tombol back perangkat langsung menutup aplikasi walau pengguna
+      // sedang di tab "Galeri" atau "Profil".
+      canPop: aman == 0,
+      onPopInvokedWithResult: (bool didPop, Object? _) {
+        if (didPop) return;
+        // Belum keluar aplikasi: kembalikan ke tab pertama, jangan tutup.
+        if (aman != 0) {
+          Haptics.ringan();
+          ref.read(navigationIndexProvider.notifier).state = 0;
+        }
+      },
+      child: Scaffold(
+        // IndexedStack menjaga scroll position tiap tab saat berpindah.
+        body: IndexedStack(
+          index: aman,
+          children: <Widget>[for (final AppTab t in tabs) t.screen],
+        ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: aman,
+          destinations: <Widget>[
+            for (final AppTab t in tabs)
+              NavigationDestination(
+                icon: t.badge == null
+                    ? AppIcon(t.icon)
+                    : Badge.count(count: t.badge!, child: AppIcon(t.icon)),
+                selectedIcon: AppIcon(t.selectedIcon, aktif: true),
+                label: t.label,
+                tooltip: t.label,
+              ),
+          ],
+          onDestinationSelected: (int i) {
+            if (i >= tabs.length) return;
+            if (i != aman) Haptics.ringan();
+            ref.read(navigationIndexProvider.notifier).state = i;
+          },
+        ),
       ),
     );
   }
