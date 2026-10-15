@@ -32,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(color: Colors.amber.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: Colors.amber.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
                 child: const Text('MODE DEMO: Supabase belum diatur. Isi email/password bebas.'),
               ),
             TextField(controller: _email, keyboardType: TextInputType.emailAddress, style: const TextStyle(fontSize: 18), decoration: const InputDecoration(labelText: 'Email')),

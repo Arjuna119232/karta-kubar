@@ -8,7 +8,6 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/models.dart';
-import '../services/location_service.dart';
 import '../services/rute.dart';
 import '../state/app_state.dart';
 import 'widgets.dart';

@@ -13,7 +13,7 @@ import 'state/app_state.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (!Config.demo) {
-    await Supabase.initialize(url: Config.supabaseUrl, anonKey: Config.supabaseAnonKey);
+    await Supabase.initialize(url: Config.supabaseUrl, publishableKey: Config.supabaseAnonKey);
   }
   await NotificationService.instance.initFcm();
   await NotificationService.instance.init();

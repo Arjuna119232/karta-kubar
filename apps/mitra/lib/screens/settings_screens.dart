@@ -108,7 +108,7 @@ class _VehicleScreenState extends State<VehicleScreen> {
       appBar: AppBar(title: const Text('Kendaraan')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         DropdownButtonFormField<String>(
-          value: _type,
+          initialValue: _type,
           decoration: const InputDecoration(labelText: 'Jenis'),
           items: const [
             DropdownMenuItem(value: 'Motor', child: Text('Motor')),
