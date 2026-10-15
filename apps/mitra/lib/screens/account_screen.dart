@@ -1,0 +1,45 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../state/app_state.dart';
+import 'settings_screens.dart';
+import 'widgets.dart';
+
+class AccountScreen extends StatelessWidget {
+  const AccountScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.watch<AppState>();
+    void go(Widget w) => Navigator.push(context, MaterialPageRoute(builder: (_) => w));
+    return Scaffold(
+      appBar: AppBar(title: const Text('Akun')),
+      body: ListView(
+        children: [
+          ListTile(
+            leading: const CircleAvatar(radius: 28, child: Icon(Icons.person, size: 32)),
+            title: Text(s.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+            subtitle: Text('${s.vehicleType} ${s.plate}'.trim()),
+          ),
+          const Divider(),
+          ListTile(leading: const Icon(Icons.two_wheeler), title: const Text('Kendaraan'), onTap: () => go(const VehicleScreen())),
+          ListTile(leading: const Icon(Icons.account_balance_wallet), title: const Text('Dompet'), onTap: () => go(const WalletScreen())),
+          ListTile(
+            leading: const Icon(Icons.star),
+            title: const Text('Rating & Ulasan'),
+            subtitle: Text(s.ratings.isEmpty ? 'Belum ada' : '${s.avgRating.toStringAsFixed(1)} dari ${s.ratings.length} ulasan'),
+            onTap: () => go(const RatingsScreen()),
+          ),
+          ListTile(leading: const Icon(Icons.settings), title: const Text('Pengaturan'), onTap: () => go(const SettingsScreen())),
+          ListTile(
+            leading: const Icon(Icons.warning_amber_rounded, color: Colors.red),
+            title: const Text('SOS Darurat', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
+            onTap: () => confirmSos(context),
+          ),
+          const Divider(),
+          ListTile(leading: const Icon(Icons.logout), title: const Text('Keluar'), onTap: s.logout),
+        ],
+      ),
+    );
+  }
+}

@@ -1,0 +1,167 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../core/config.dart';
+import '../core/format.dart';
+import '../models/models.dart';
+import '../state/app_state.dart';
+import 'widgets.dart';
+
+class SettingsScreen extends StatelessWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.watch<AppState>();
+    Widget hourPicker(String label, int value, ValueChanged<int> onChanged) => Row(children: [
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 17))),
+          DropdownButton<int>(
+            value: value,
+            items: [for (var h = 0; h < 24; h++) DropdownMenuItem(value: h, child: Text('${h.toString().padLeft(2, '0')}:00'))],
+            onChanged: (v) => onChanged(v!),
+          ),
+        ]);
+    return Scaffold(
+      appBar: AppBar(title: const Text('Pengaturan')),
+      body: ListView(padding: const EdgeInsets.all(16), children: [
+        Text('Radius order: ${s.radiusKm.toStringAsFixed(0)} km', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        Slider(value: s.radiusKm, min: 1, max: 15, divisions: 14, label: '${s.radiusKm.toStringAsFixed(0)} km', onChanged: s.setRadius),
+        const SizedBox(height: 12),
+        const Text('Jam operasional', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        hourPicker('Buka', s.openHour, (v) => s.setHours(v, s.closeHour)),
+        hourPicker('Tutup', s.closeHour, (v) => s.setHours(s.openHour, v)),
+        const SizedBox(height: 20),
+        const Text('Tampilan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        SegmentedButton<ThemeMode>(
+          style: SegmentedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+          segments: const [
+            ButtonSegment(value: ThemeMode.system, label: Text('Otomatis')),
+            ButtonSegment(value: ThemeMode.light, label: Text('Terang')),
+            ButtonSegment(value: ThemeMode.dark, label: Text('Gelap')),
+          ],
+          selected: {s.themeMode},
+          onSelectionChanged: (v) => s.setTheme(v.first),
+        ),
+        if (Config.demo) ...[
+          const SizedBox(height: 32),
+          OutlinedButton.icon(
+            onPressed: () {
+              s.addDummyOrder();
+              toast(context, 'Order dummy dikirim (aktifkan ONLINE di Beranda)');
+            },
+            icon: const Icon(Icons.add_circle_outline),
+            label: const Text('BUAT ORDER DUMMY'),
+          ),
+        ],
+      ]),
+    );
+  }
+}
+
+class VehicleScreen extends StatefulWidget {
+  const VehicleScreen({super.key});
+  @override
+  State<VehicleScreen> createState() => _VehicleScreenState();
+}
+
+class _VehicleScreenState extends State<VehicleScreen> {
+  late String _type;
+  late final TextEditingController _model, _plate;
+
+  @override
+  void initState() {
+    super.initState();
+    final s = context.read<AppState>();
+    _type = s.vehicleType;
+    _model = TextEditingController(text: s.vehicleModel);
+    _plate = TextEditingController(text: s.plate);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Kendaraan')),
+      body: ListView(padding: const EdgeInsets.all(16), children: [
+        DropdownButtonFormField<String>(
+          value: _type,
+          decoration: const InputDecoration(labelText: 'Jenis'),
+          items: const [
+            DropdownMenuItem(value: 'Motor', child: Text('Motor')),
+            DropdownMenuItem(value: 'Mobil', child: Text('Mobil')),
+            DropdownMenuItem(value: 'Sepeda', child: Text('Sepeda')),
+          ],
+          onChanged: (v) => setState(() => _type = v!),
+        ),
+        const SizedBox(height: 16),
+        TextField(controller: _model, decoration: const InputDecoration(labelText: 'Merek / tipe')),
+        const SizedBox(height: 16),
+        TextField(controller: _plate, textCapitalization: TextCapitalization.characters, decoration: const InputDecoration(labelText: 'Plat nomor')),
+        const SizedBox(height: 24),
+        FilledButton(
+          onPressed: () async {
+            await context.read<AppState>().saveVehicle(_type, _model.text.trim(), _plate.text.trim().toUpperCase());
+            if (context.mounted) Navigator.pop(context);
+          },
+          child: const Text('SIMPAN'),
+        ),
+      ]),
+    );
+  }
+}
+
+class WalletScreen extends StatelessWidget {
+  const WalletScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final repo = context.read<AppState>().repo;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Dompet')),
+      body: FutureBuilder<List<WalletTx>>(
+        future: repo.wallet(),
+        builder: (c, snap) {
+          if (snap.connectionState != ConnectionState.done) return const Center(child: CircularProgressIndicator());
+          final tx = snap.data ?? [];
+          final bal = tx.fold(0, (a, t) => a + t.amount);
+          return ListView(padding: const EdgeInsets.all(16), children: [
+            const Text('Saldo'),
+            Text(rp(bal), style: TextStyle(fontSize: 40, fontWeight: FontWeight.w800, color: Theme.of(c).colorScheme.primary)),
+            const SizedBox(height: 8),
+            const Text('Saldo bertambah otomatis setiap order selesai. Penarikan dikelola admin.'),
+            const Divider(height: 32),
+            for (final t in tx)
+              ListTile(
+                title: Text(t.note.isEmpty ? t.kind : t.note),
+                subtitle: Text(jam(t.createdAt)),
+                trailing: Text('${t.amount >= 0 ? '+' : ''}${rp(t.amount)}', style: const TextStyle(fontWeight: FontWeight.w700)),
+              ),
+          ]);
+        },
+      ),
+    );
+  }
+}
+
+class RatingsScreen extends StatelessWidget {
+  const RatingsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.watch<AppState>();
+    return Scaffold(
+      appBar: AppBar(title: const Text('Rating & Ulasan')),
+      body: ListView(padding: const EdgeInsets.all(16), children: [
+        Center(child: Text(s.ratings.isEmpty ? '-' : s.avgRating.toStringAsFixed(1), style: const TextStyle(fontSize: 56, fontWeight: FontWeight.w800))),
+        Center(child: Text('${s.ratings.length} ulasan')),
+        const Divider(height: 32),
+        for (final r in s.ratings)
+          ListTile(
+            title: Row(children: [for (var i = 0; i < 5; i++) Icon(i < r.stars ? Icons.star : Icons.star_border, color: Colors.amber)]),
+            subtitle: Text('${r.comment}\n${jam(r.createdAt)}'),
+            isThreeLine: true,
+          ),
+      ]),
+    );
+  }
+}
