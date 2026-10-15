@@ -37,13 +37,13 @@ class _ShellState extends State<Shell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _i,
         onDestinationSelected: (v) => setState(() => _i = v),
-        destinations: const [
-          NavigationDestination(
+        destinations: [
+          const NavigationDestination(
             icon: Icon(Icons.map_outlined),
             selectedIcon: Icon(Icons.map_rounded),
             label: 'Beranda',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.payments_outlined),
             selectedIcon: Icon(Icons.payments_rounded),
             label: 'Pendapatan',
@@ -61,12 +61,12 @@ class _ShellState extends State<Shell> {
             ),
             label: 'Chat',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.receipt_long_outlined),
             selectedIcon: Icon(Icons.receipt_long_rounded),
             label: 'Order',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.person_outline_rounded),
             selectedIcon: Icon(Icons.person_rounded),
             label: 'Profil',

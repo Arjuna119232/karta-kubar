@@ -100,7 +100,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       builder: (d) => _DialogLaporan(pesan: p),
     );
     if (alasan == null || alasan.isEmpty || !mounted) return;
-    final err = await s.lapor(widget.order, alasan);
+    final err = await s.laporkan(widget.order, alasan);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(err ?? 'Laporan terkirim ke admin KUNBAR',

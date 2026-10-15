@@ -109,7 +109,7 @@ class AppState extends ChangeNotifier {
   /// Nama warga yang diblokir mitra (tidak bisa diketuk lagi dari daftar).
   Set<String> get wargaDiblokir => _blokir;
 
-  bool terblokir(Order o) => _blokir.contains('${o.id}');
+  bool terblokir(Order o) => _blokir.contains(o.id);
 
   void blokirWarga(Order o, bool blokir) {
     _blokir = {..._blokir};
@@ -130,7 +130,7 @@ class AppState extends ChangeNotifier {
       }
       _p?.setStringList(
         'laporan_chat',
-        [...(_p?.getStringList('laporan_chat') ?? []), '${o.id}|${DateTime.now()}|${alasan}'],
+        [...(_p?.getStringList('laporan_chat') ?? []), '${o.id}|${DateTime.now().toIso8601String()}|$alasan'],
       );
       return null;
     } catch (_) {
