@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../core/theme.dart';
 import '../services/kotak_masuk.dart';
+import 'detail_notifikasi_screen.dart';
 import '../state/app_state.dart';
 
 /// Kotak Masuk: pengumuman, bonus, tips, event, peringatan, update dari admin.
