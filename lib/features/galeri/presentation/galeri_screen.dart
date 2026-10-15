@@ -7,17 +7,18 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_id.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../shared/widgets/app_card.dart';
-import '../../../shared/widgets/app_dialog.dart';
+import '../../../shared/widgets/app_dialogs.dart';
 import '../../../shared/widgets/app_icon.dart';
-import '../../../shared/widgets/app_sheet.dart';
-import '../../../shared/widgets/haptics.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/section_header.dart';
+import '../../../shared/widgets/shimmer_box.dart';
 import '../../../shared/widgets/status_views.dart';
 import '../../../core/data/data_providers.dart';
 import '../../kegiatan/domain/kegiatan.dart';
 import '../../../shared/widgets/cover_pilih.dart';
+import '../../../shared/widgets/animated_list_item.dart';
 import '../data/galeri_state.dart';
 import '../domain/media_galeri.dart';
 
@@ -40,12 +41,70 @@ class GaleriScreen extends ConsumerWidget {
     _MediaContoh('Bakti Sosial', 'cover_umum'),
   ];
 
+  /// Buka sheet isian, lalu jalankan pilih-foto setelah sheet ditutup.
+  ///
+  /// Sheet ditutup DULU supaya pemilih foto Android tidak tergambar di atas
+  /// sheet (dan supaya konteks sheet tidak dipakai setelah `pop`).
+  static Future<void> _bukaFormUnggah(
+      BuildContext context, WidgetRef ref) async {
+    Haptics.light();
+    final DataUnggah? data = await AppSheet.show<DataUnggah>(
+      context,
+      builder: (BuildContext ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text('Unggah foto kegiatan', style: ctx.text.titleLarge),
+          const SizedBox(height: AppSpacing.md),
+          const FormUnggah(),
+        ],
+      ),
+    );
+    if (data == null) return;
+
+    Haptics.medium();
+    final HasilUnggah hasil = await ref
+        .read(mediaGaleriProvider.notifier)
+        .unggah(judul: data.judul, keterangan: data.keterangan);
+    if (!context.mounted) return;
+
+    final bool ok = hasil.status == StatusUnggah.selesai;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok
+            ? 'Foto disimpan di perangkat.'
+            : hasil.pesan.isEmpty
+                ? 'Unggah dibatalkan.'
+                : hasil.pesan),
+      ),
+    );
+  }
+
+  static Future<void> _konfirmasiHapus(
+    BuildContext context,
+    WidgetRef ref,
+    MediaGaleri m,
+  ) async {
+    Haptics.light();
+    final bool ya = await AppDialog.konfirmasi(
+      context,
+      judul: 'Hapus foto?',
+      pesan: '"${m.judul}" akan dihapus dari perangkat ini, termasuk '
+          'berkasnya. Tindakan ini tidak bisa dibatalkan.',
+      labelYa: 'Hapus',
+      labelBatal: 'Batal',
+      ikon: Ik.broom,
+    );
+    if (!ya) return;
+    await ref.read(mediaGaleriProvider.notifier).hapus(m.id);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<MediaGaleri>> async = ref.watch(mediaGaleriProvider);
+    final AsyncValue<List<MediaGaleri>> asyncUnggah =
+        ref.watch(mediaGaleriProvider);
     final List<MediaGaleri> unggahan =
-        async.valueOrNull ?? const <MediaGaleri>[];
-
+        asyncUnggah.valueOrNull ?? const <MediaGaleri>[];
     return SafeArea(
       bottom: false,
       child: ListView(
@@ -54,16 +113,17 @@ class GaleriScreen extends ConsumerWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              // Galeri dipakai dua cara: sebagai TAB (tamu) dan sebagai rute
-              // yang di-push dari aksi cepat beranda. Saat di-push tidak ada
-              // AppBar, jadi tombol back harus dibuat sendiri - kalau tidak,
-              // satu-satunya cara keluar hanya tombol back perangkat.
+              // Galeri dipakai dua cara: sebagai TAB (tamu/warga) dan sebagai
+              // rute yang di-push dari aksi cepat beranda (anggota ke atas).
+              // Saat di-push tidak ada AppBar, jadi tombol back harus dibuat
+              // sendiri - kalau tidak, satu-satunya cara keluar hanya tombol
+              // back perangkat.
               if (context.canPop())
                 Padding(
                   padding: const EdgeInsets.only(right: 4),
                   child: IconButton(
                     onPressed: () => context.pop(),
-                    icon: AppIcon(Ik.arrowBack, size: 20),
+                    icon: const AppIcon(Ik.arrowBack, size: 20),
                     tooltip: 'Kembali',
                   ),
                 ),
@@ -78,8 +138,8 @@ class GaleriScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           const SectionHeader(title: 'Unggahan warga'),
-          if (async.isLoading && unggahan.isEmpty)
-            const SkeletonDaftar()
+          if (asyncUnggah.isLoading && unggahan.isEmpty)
+            const ShimmerListSkeleton(itemCount: 4)
           else if (unggahan.isEmpty)
             AppEmptyState(
               art: 'empty_galeri',
@@ -98,10 +158,13 @@ class GaleriScreen extends ConsumerWidget {
               mainAxisSpacing: AppSpacing.gap,
               childAspectRatio: 1.05,
               children: <Widget>[
-                for (final MediaGaleri m in unggahan)
-                  _MediaTile(
-                    media: m,
-                    onHapus: () => _konfirmasiHapus(context, ref, m),
+                for (final (int i, MediaGaleri m) in unggahan.indexed)
+                  AnimatedListItem(
+                    index: i,
+                    child: _MediaTile(
+                      media: m,
+                      onHapus: () => _konfirmasiHapus(context, ref, m),
+                    ),
                   ),
               ],
             ),
@@ -115,8 +178,8 @@ class GaleriScreen extends ConsumerWidget {
             mainAxisSpacing: AppSpacing.gap,
             childAspectRatio: 1.05,
             children: <Widget>[
-              for (final _MediaContoh m in _contoh)
-                _MediaTileContoh(media: m),
+              for (final (int i, _MediaContoh m) in _contoh.indexed)
+                AnimatedListItem(index: i, child: _MediaTileContoh(media: m)),
             ],
           ),
           const SizedBox(height: AppSpacing.section),
@@ -131,76 +194,30 @@ class GaleriScreen extends ConsumerWidget {
       ),
     );
   }
+}
 
-  /// Buka sheet isian, lalu jalankan pilih-foto setelah sheet ditutup.
-  ///
-  /// Sheet ditutup DULU supaya pemilih foto Android tidak tergambar di atas
-  /// sheet (dan supaya konteks sheet tidak dipakai setelah `pop`).
-  static Future<void> _bukaFormUnggah(BuildContext context, WidgetRef ref) async {
-    Haptics.ringan();
-    final _DataUnggah? data = await AppSheet.tampilkan<_DataUnggah>(
-      context,
-      judul: 'Unggah foto kegiatan',
-      isi: const _FormUnggah(),
-    );
-    if (data == null) return;
-
-    Haptics.sedang();
-    final HasilUnggah hasil = await ref
-        .read(mediaGaleriProvider.notifier)
-        .unggah(judul: data.judul, keterangan: data.keterangan);
-    if (!context.mounted) return;
-
-    final bool ok = hasil.status == StatusUnggah.selesai;
-    Haptics.sedang();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(ok
-            ? 'Foto disimpan di perangkat.'
-            : hasil.pesan.isEmpty
-                ? 'Unggah dibatalkan.'
-                : hasil.pesan),
-      ),
-    );
-  }
-
-  static Future<void> _konfirmasiHapus(
-    BuildContext context,
-    WidgetRef ref,
-    MediaGaleri m,
-  ) async {
-    Haptics.ringan();
-    final bool ya = await AppDialog.konfirmasi(
-      context,
-      judul: 'Hapus foto?',
-      pesan: '"${m.judul}" akan dihapus dari perangkat ini, termasuk '
-          'berkasnya. Tindakan ini tidak bisa dibatalkan.',
-      labelYa: 'Hapus',
-      labelBatal: 'Batal',
-      ikon: Ik.broom,
-      bahaya: true,
-    );
-    if (!ya) return;
-    await ref.read(mediaGaleriProvider.notifier).hapus(m.id);
-  }
+class _MediaContoh {
+  const _MediaContoh(this.title, this.cover);
+  final String title;
+  final String cover;
 }
 
 /// Data yang dikembalikan sheet isian ke pemanggilnya.
-class _DataUnggah {
-  const _DataUnggah(this.judul, this.keterangan);
+class DataUnggah {
+  const DataUnggah(this.judul, this.keterangan);
   final String judul;
   final String keterangan;
 }
 
 /// Isian sebelum memilih berkas: judul kegiatan + keterangan singkat.
-class _FormUnggah extends StatefulWidget {
-  const _FormUnggah();
+class FormUnggah extends StatefulWidget {
+  const FormUnggah({super.key});
 
   @override
-  State<_FormUnggah> createState() => _FormUnggahState();
+  State<FormUnggah> createState() => _FormUnggahState();
 }
 
-class _FormUnggahState extends State<_FormUnggah> {
+class _FormUnggahState extends State<FormUnggah> {
   final TextEditingController _judul = TextEditingController();
   final TextEditingController _keterangan = TextEditingController();
 
@@ -250,18 +267,12 @@ class _FormUnggahState extends State<_FormUnggah> {
           label: 'Lanjut pilih foto',
           icon: Ik.gallery,
           onPressed: () => Navigator.of(context).pop(
-            _DataUnggah(_judul.text.trim(), _keterangan.text.trim()),
+            DataUnggah(_judul.text.trim(), _keterangan.text.trim()),
           ),
         ),
       ],
     );
   }
-}
-
-class _MediaContoh {
-  const _MediaContoh(this.title, this.cover);
-  final String title;
-  final String cover;
 }
 
 /// Foto hasil unggahan warga: gambar aslinya, bukan sampul.
@@ -390,7 +401,7 @@ class _MediaTileContoh extends StatelessWidget {
                     overflow: TextOverflow.ellipsis),
                 Text(
                   'Data contoh',
-                  style: context.text.labelSmall
+                  style: context.text.bodySmall
                       ?.copyWith(color: context.semantic.textSecondary),
                 ),
               ],

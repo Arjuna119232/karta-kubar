@@ -1,18 +1,19 @@
-### KUNBAR Connect v0.12.0
+### KUNBAR Connect v0.12.1
 
-Tombol yang tadinya kosong sekarang benar-benar bekerja.
+Tampilan diseragamkan ke satu bahasa visual baru di semua layar.
 
-**Layar baru**
-- Edit profil: nama, WhatsApp, NIK, alamat, RT/RW, tersimpan di perangkat
-- Notifikasi: riwayat status FISH dan laporan darurat milikmu sendiri
-- Bantuan: pertanyaan yang sering muncul dan cara menghubungi pengurus
+**Tampilan baru**
+- Beranda: header besar dengan sapaan, kartu aksi cepat dua baris, kartu bergaya baru
+- Kegiatan, Keuangan, Galeri, Aspirasi, UMKM, Darurat, Absen, dan Profil memakai komponen bersama yang sama
+- State kosong tampil dengan ilustrasi bergerak pelan, bukan teks polos
+- Mode gelap dan terang mengikuti tema HP
 
-**Bug navigasi yang diperbaiki**
-- Tombol Iuran di beranda tidak melakukan apa-apa untuk tamu
-- Anggota dan pengurus tidak punya cara membuka Galeri sama sekali
-- Tile Agenda di Panel Pengurus membuka tab "Absen", bukan Agenda
-- Tab Galeri untuk anggota sebelumnya mendarat di tab "Kas"
+**Tombol yang sebelumnya kosong**
+- Ikon kalender di Kegiatan membuka kalender bulan bertanda pada hari ada acara
+- Tombol Unduh di Keuangan membuat laporan kas CSV, bisa disalin atau dibagikan
+- Ikon foto di Galeri mengunggah foto kegiatan dan menyimpannya di perangkat
+- Edit profil, Notifikasi, dan Bantuan di Profil jadi layar sungguhan
 
-**Pemeriksa kode**
-- Layar "segera hadir" yang tersisa dihapus beserta method yang tak terpakai
-- Cek import dan kode mati diperkuat; sudah diuji dengan sengaja rusak
+**Yang dibersihkan**
+- Navigasi dalam memakai tombol push, jadi tombol back HP kembali ke halaman sebelumnya
+- Kode mati dan widget yang tidak dipakai di mana pun sudah dihapus

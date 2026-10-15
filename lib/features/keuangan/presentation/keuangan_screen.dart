@@ -6,14 +6,14 @@ import '../../../core/data/data_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/ekspor_csv.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../shared/widgets/app_card.dart';
-import '../../../shared/widgets/app_sheet.dart';
-import '../../../shared/widgets/haptics.dart';
+import '../../../shared/widgets/app_dialogs.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/app_icon.dart';
-import '../../../shared/widgets/status_views.dart';
 import '../domain/keuangan.dart';
+import '../../../shared/widgets/shimmer_box.dart';
 
 /// Layar keuangan. Data SELALU lewat repository (`iuranProvider`), bukan
 /// membaca data demo langsung, supaya sumber data bisa diganti tanpa mengubah
@@ -41,170 +41,72 @@ class KeuanganScreen extends ConsumerWidget {
           _IuranCard(iuran: iuran),
           const SizedBox(height: AppSpacing.section),
           const SectionHeader(title: 'Transparansi'),
-          _TransparansiCard(
-            onUnduh: () => _unduhLaporan(context, ref),
-          ),
+          _TransparansiCard(onUnduh: () => _unduhLaporan(context, ref)),
         ],
       ),
     );
   }
-
-  /// Susun CSV dari data yang sedang tampil, lalu buka pratinjau.
-  ///
-  /// Data dibaca dari provider yang SAMA dengan layar ini, jadi berkas yang
-  /// diunduh selalu sama dengan angka yang dibaca anggota.
-  static Future<void> _unduhLaporan(BuildContext context, WidgetRef ref) async {
-    Haptics.ringan();
-    final List<Iuran> iuran =
-        ref.read(iuranProvider).valueOrNull ?? const <Iuran>[];
-    // `kas()` sudah mengembalikan list kosong saat gagal (bukan Hasil), jadi
-    // tidak ada penanganan galat yang perlu ditulis ulang di sini.
-    final List<KasBulanan> dataKas =
-        await ref.read(iuranProvider.notifier).kas();
-
-    if (!context.mounted) return;
-    final String csv = _csvLaporan(iuran, dataKas);
-    await AppSheet.tampilkan<void>(
-      context,
-      judul: 'Laporan kas',
-      subjudul: 'CSV siap dibuka di Excel atau Google Sheets',
-      isi: _PratinjauCsv(csv: csv),
-    );
-  }
-
-  /// CSV: satu blok iuran, satu blok rekap kas.
-  static String _csvLaporan(List<Iuran> iuran, List<KasBulanan> kas) {
-    final StringBuffer b = StringBuffer()
-      ..writeln(EksporBerkas.baris(<Object?>['IURAN WARGA']))
-      ..writeln(EksporBerkas.baris(<Object?>['Periode', 'Nominal', 'Status']));
-    for (final Iuran i in iuran) {
-      b.writeln(EksporBerkas.baris(
-        <Object?>[i.periode, i.nominal, i.lunas ? 'Lunas' : 'Belum'],
-      ));
-    }
-    final int sudah = iuran.where((Iuran i) => i.lunas).length;
-    final int total = iuran.fold<int>(0, (int s, Iuran i) => s + i.nominal);
-    b
-      ..writeln()
-      ..writeln(EksporBerkas.baris(<Object?>['RINGKASAN']))
-      ..writeln(EksporBerkas.baris(<Object?>['Jumlah bulan', sudah]))
-      ..writeln(EksporBerkas.baris(<Object?>['Belum lunas', iuran.length - sudah]))
-      ..writeln(EksporBerkas.baris(<Object?>['Total iuran', total]))
-      ..writeln()
-      ..writeln(EksporBerkas.baris(<Object?>['REKAP KAS BULANAN']))
-      ..writeln(EksporBerkas.baris(<Object?>['Bulan', 'Juta']));
-    for (final KasBulanan k in kas) {
-      b.writeln(EksporBerkas.baris(<Object?>[k.label, k.juta]));
-    }
-    return b.toString();
-  }
 }
 
-/// Pratinjau isi CSV + dua jalan keluarnya: salin ke clipboard, atau tulis
-/// berkas lalu buka sheet berbagi Android.
-class _PratinjauCsv extends StatefulWidget {
-  const _PratinjauCsv({required this.csv});
+/// Susun CSV dari data yang sedang tampil, lalu buka pratinjau.
+///
+/// Data dibaca dari provider yang SAMA dengan layar ini, jadi berkas yang
+/// diunduh selalu sama dengan angka yang dibaca anggota.
+Future<void> _unduhLaporan(BuildContext context, WidgetRef ref) async {
+  Haptics.light();
+  final List<Iuran> iuran =
+      ref.read(iuranProvider).valueOrNull ?? const <Iuran>[];
+  // `kas()` sudah mengembalikan list kosong saat gagal (bukan Hasil), jadi
+  // tidak ada penanganan galat yang perlu ditulis ulang di sini.
+  final List<KasBulanan> dataKas =
+      await ref.read(iuranProvider.notifier).kas();
 
-  final String csv;
-
-  @override
-  State<_PratinjauCsv> createState() => _PratinjauCsvState();
-}
-
-class _PratinjauCsvState extends State<_PratinjauCsv> {
-  bool _sibuk = false;
-
-  Future<void> _salin() async {
-    Haptics.ringan();
-    await Clipboard.setData(ClipboardData(text: widget.csv));
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('CSV disalin ke clipboard.')),
-    );
-  }
-
-  Future<void> _bagikan() async {
-    Haptics.sedang();
-    setState(() => _sibuk = true);
-    try {
-      await EksporBerkas.bagikan(
-        isi: widget.csv,
-        namaBerkas: EksporBerkas.namaBerkasTanggal('laporan-kas', DateTime.now()),
-        subyek: 'Laporan kas KARANG TARUNA',
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menyiapkan berkas: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _sibuk = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final int baris = '\n'.allMatches(widget.csv).length + 1;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  if (!context.mounted) return;
+  final String csv = _csvLaporan(iuran, dataKas);
+  await AppSheet.show<void>(
+    context,
+    builder: (BuildContext ctx) => Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        Text('Laporan kas', style: ctx.text.titleLarge),
+        const SizedBox(height: 4),
         Text(
-          '$baris baris - siap diunduh atau disalin.',
-          style: context.text.bodySmall
-              ?.copyWith(color: context.semantic.textSecondary),
+          'CSV siap dibuka di Excel atau Google Sheets',
+          style: ctx.text.bodySmall?.copyWith(color: ctx.semantic.textSecondary),
         ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(maxHeight: 220),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: context.semantic.card,
-            borderRadius: BorderRadius.circular(AppRadius.field),
-            border: Border.all(color: context.semantic.line),
-          ),
-          child: SingleChildScrollView(
-            child: SelectableText(
-              widget.csv,
-              style: context.text.bodySmall?.copyWith(
-                fontFamily: 'monospace',
-                height: 1.45,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _sibuk ? null : _salin,
-                // Tanpa ikon: enum `Ik` tidak punya ikon salin, dan memakai
-                // ikon yang maknanya beda lebih buruk daripada tanpa ikon.
-                child: const Text('Salin'),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.button),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: PrimaryButton(
-                onPressed: _sibuk ? null : _bagikan,
-                loading: _sibuk,
-                icon: Ik.download,
-                label: 'Unduh',
-              ),
-            ),
-          ],
-        ),
+        const SizedBox(height: AppSpacing.md),
+        PratinjauCsv(csv: csv),
       ],
-    );
+    ),
+  );
+}
+
+/// CSV: satu blok iuran, satu blok rekap kas.
+String _csvLaporan(List<Iuran> iuran, List<KasBulanan> kas) {
+  final StringBuffer b = StringBuffer()
+    ..writeln(EksporBerkas.baris(<Object?>['IURAN WARGA']))
+    ..writeln(EksporBerkas.baris(<Object?>['Periode', 'Nominal', 'Status']));
+  for (final Iuran i in iuran) {
+    b.writeln(EksporBerkas.baris(
+      <Object?>[i.periode, i.nominal, i.lunas ? 'Lunas' : 'Belum'],
+    ));
   }
+  final int sudah = iuran.where((Iuran i) => i.lunas).length;
+  final int total = iuran.fold<int>(0, (int s, Iuran i) => s + i.nominal);
+  b
+    ..writeln()
+    ..writeln(EksporBerkas.baris(<Object?>['RINGKASAN']))
+    ..writeln(EksporBerkas.baris(<Object?>['Jumlah bulan', sudah]))
+    ..writeln(EksporBerkas.baris(<Object?>['Belum lunas', iuran.length - sudah]))
+    ..writeln(EksporBerkas.baris(<Object?>['Total iuran', total]))
+    ..writeln()
+    ..writeln(EksporBerkas.baris(<Object?>['REKAP KAS BULANAN']))
+    ..writeln(EksporBerkas.baris(<Object?>['Bulan', 'Juta']));
+  for (final KasBulanan k in kas) {
+    b.writeln(EksporBerkas.baris(<Object?>[k.label, k.juta]));
+  }
+  return b.toString();
 }
 
 class _SaldoCard extends StatelessWidget {
@@ -228,7 +130,7 @@ class _SaldoCard extends StatelessWidget {
           Text(
             'Saldo Kas Karang Taruna',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.85),
+              color: AppColors.white.withValues(alpha: 0.85),
               fontSize: 13,
             ),
           ),
@@ -236,7 +138,7 @@ class _SaldoCard extends StatelessWidget {
           const Text(
             'Rp 12.450.000',
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.white,
               fontSize: 30,
               fontWeight: FontWeight.w800,
               height: 1.1,
@@ -284,12 +186,12 @@ class _MiniStat extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.14),
+        color: AppColors.white.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: <Widget>[
-          AppIcon(icon, color: Colors.white, size: 18),
+          AppIcon(icon, color: AppColors.white, size: 18),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,7 +199,7 @@ class _MiniStat extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: AppColors.white.withValues(alpha: 0.8),
                   fontSize: 11,
                 ),
               ),
@@ -305,7 +207,7 @@ class _MiniStat extends StatelessWidget {
               Text(
                 value,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppColors.white,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
@@ -441,7 +343,18 @@ class _IuranCard extends StatelessWidget {
     return AppCard(
       padding: EdgeInsets.zero,
       child: iuran.when(
-        loading: () => const _IuranSkeleton(),
+        loading: () => const Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            children: <Widget>[
+              ShimmerBox(height: 18, radius: 10),
+              SizedBox(height: 12),
+              ShimmerBox(height: 18, width: 180, radius: 10),
+              SizedBox(height: 12),
+              ShimmerBox(height: 18, radius: 10),
+            ],
+          ),
+        ),
         error: (Object e, StackTrace st) => Padding(
           padding: const EdgeInsets.all(20),
           child: Text('Iuran belum bisa dimuat: $e',
@@ -595,41 +508,110 @@ class _TransparansiCard extends StatelessWidget {
 }
 
 
-/// Kerangka baris iuran saat data masih dimuat — bentuknya meniru baris asli
-/// (lingkaran status + dua baris teks) supaya tidak ada lompatan tata letak
-/// ketika data benar-benar tiba.
-class _IuranSkeleton extends StatelessWidget {
-  const _IuranSkeleton();
+/// Pratinjau isi CSV + dua jalan keluarnya: salin ke clipboard, atau tulis
+/// berkas lalu buka sheet berbagi Android.
+class PratinjauCsv extends StatefulWidget {
+  const PratinjauCsv({required this.csv, super.key});
+
+  final String csv;
+
+  @override
+  State<PratinjauCsv> createState() => _PratinjauCsvState();
+}
+
+class _PratinjauCsvState extends State<PratinjauCsv> {
+  bool _sibuk = false;
+
+  Future<void> _salin() async {
+    Haptics.light();
+    await Clipboard.setData(ClipboardData(text: widget.csv));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('CSV disalin ke clipboard.')),
+    );
+  }
+
+  Future<void> _bagikan() async {
+    Haptics.medium();
+    setState(() => _sibuk = true);
+    try {
+      await EksporBerkas.bagikan(
+        isi: widget.csv,
+        namaBerkas:
+            EksporBerkas.namaBerkasTanggal('laporan-kas', DateTime.now()),
+        subyek: 'Laporan kas KARANG TARUNA',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal menyiapkan berkas: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _sibuk = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return AppShimmer(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: <Widget>[
-            for (int i = 0; i < 3; i++) ...<Widget>[
-              if (i > 0) const SizedBox(height: AppSpacing.md),
-              Row(
-                children: <Widget>[
-                  const AppSkeleton(height: 36, width: 36, radius: 18),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const <Widget>[
-                        AppSkeleton(height: 12, width: 128, radius: 6),
-                        SizedBox(height: AppSpacing.xs),
-                        AppSkeleton(height: 10, radius: 5),
-                      ],
-                    ),
-                  ),
-                ],
+    final int baris = '\n'.allMatches(widget.csv).length + 1;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Text(
+          '\$baris baris - siap diunduh atau disalin.',
+          style: context.text.bodySmall
+              ?.copyWith(color: context.semantic.textSecondary),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxHeight: 220),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: context.semantic.card,
+            borderRadius: BorderRadius.circular(AppRadius.field),
+            border: Border.all(color: context.semantic.line),
+          ),
+          child: SingleChildScrollView(
+            child: SelectableText(
+              widget.csv,
+              style: context.text.bodySmall?.copyWith(
+                fontFamily: 'monospace',
+                height: 1.45,
               ),
-            ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: OutlinedButton(
+                onPressed: _sibuk ? null : _salin,
+                // Tanpa ikon: enum `Ik` tidak punya ikon salin, dan memakai
+                // ikon yang maknanya beda lebih buruk daripada tanpa ikon.
+                child: const Text('Salin'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.button),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: PrimaryButton(
+                onPressed: _sibuk ? null : _bagikan,
+                loading: _sibuk,
+                icon: Ik.download,
+                label: 'Unduh',
+              ),
+            ),
           ],
         ),
-      ),
+      ],
     );
   }
 }

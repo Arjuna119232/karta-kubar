@@ -3,16 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/data/data_providers.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_id.dart';
+import '../../../shared/widgets/animated_list_item.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/shimmer_box.dart';
 import '../../../shared/widgets/status_views.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../domain/kegiatan.dart';
-import 'kalender_kegiatan.dart';
 import '../../../shared/widgets/cover_pilih.dart';
-import '../../../shared/widgets/haptics.dart';
-import '../../../shared/widgets/app_sheet.dart';
+import '../../../core/utils/haptics.dart';
+import '../../../shared/widgets/app_dialogs.dart';
+import 'kalender_kegiatan.dart';
 
 /// Layar kegiatan. Data lewat repository (`kegiatanProvider`), bukan data demo.
 class KegiatanScreen extends ConsumerStatefulWidget {
@@ -50,14 +53,27 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen> {
                 const Spacer(),
                 IconButton(
                   onPressed: () {
-                    Haptics.ringan();
-                    AppSheet.tampilkan<void>(
+                    Haptics.light();
+                    AppSheet.show<void>(
                       context,
-                      judul: 'Kalender kegiatan',
-                      subjudul: 'Pilih tanggal untuk lihat kegiatan',
-                      isi: KalenderKegiatan(
-                        kegiatan: semua,
-                        accent: context.colors.primary,
+                      builder: (BuildContext ctx) => Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text('Kalender kegiatan',
+                              style: ctx.text.titleLarge),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Pilih tanggal untuk lihat kegiatan',
+                            style: ctx.text.bodySmall
+                                ?.copyWith(color: ctx.semantic.textSecondary),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          KalenderKegiatan(
+                            kegiatan: semua,
+                            accent: ctx.colors.primary,
+                          ),
+                        ],
                       ),
                     );
                   },
@@ -92,36 +108,145 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: _filtered.isEmpty
-                ? const AppEmptyState(
-                    art: 'empty_kegiatan',
-                    title: 'Belum ada kegiatan',
-                    message: 'Kegiatan pada kategori ini belum tersedia.',
-                  )
-                : ListView(
-                    padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 8,
-                        AppSpacing.screen, 96),
-                    children: <Widget>[
-                      if (upcoming.isNotEmpty) ...<Widget>[
-                        const _GroupLabel('Akan Datang'),
-                        for (final Kegiatan a in upcoming)
-                          Padding(
-                            padding:
-                                const EdgeInsets.only(bottom: AppSpacing.gap),
-                            child: _ActivityCard(activity: a),
-                          ),
-                      ],
-                      if (past.isNotEmpty) ...<Widget>[
-                        const _GroupLabel('Sudah Lewat'),
-                        for (final Kegiatan a in past)
-                          Padding(
-                            padding:
-                                const EdgeInsets.only(bottom: AppSpacing.gap),
-                            child: _ActivityCard(activity: a),
-                          ),
-                      ],
-                    ],
-                  ),
+            child: async.when(
+              loading: () => const SingleChildScrollView(
+                physics: NeverScrollableScrollPhysics(),
+                child: ShimmerListSkeleton(itemCount: 5, itemHeight: 96),
+              ),
+              error: (Object e, StackTrace st) => AppErrorState(
+                onRetry: () => ref.invalidate(kegiatanProvider),
+              ),
+              data: (_) => _filtered.isEmpty
+                  ? const AppEmptyState(
+                      art: 'empty_kegiatan',
+                      title: 'Belum ada kegiatan',
+                      message: 'Kegiatan pada kategori ini belum tersedia.',
+                    )
+                  : RefreshIndicator(
+                      color: context.colors.primary,
+                      onRefresh: () async {
+                        ref.invalidate(kegiatanProvider);
+                        await Future<void>.delayed(
+                            const Duration(milliseconds: 600));
+                      },
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.screen, 8, AppSpacing.screen, 96),
+                        children: <Widget>[
+                          if (_terdekat(upcoming) != null)
+                            AnimatedListItem(
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                    bottom: AppSpacing.lg),
+                                child: _HitungMundur(
+                                    kegiatan: _terdekat(upcoming)!),
+                              ),
+                            ),
+                          if (upcoming.isNotEmpty) ...<Widget>[
+                            const _GroupLabel('Akan Datang'),
+                            for (final (int i, Kegiatan a) in upcoming.indexed)
+                              AnimatedListItem(
+                                index: i,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                      bottom: AppSpacing.gap),
+                                  child: _ActivityCard(activity: a),
+                                ),
+                              ),
+                          ],
+                          if (past.isNotEmpty) ...<Widget>[
+                            const _GroupLabel('Sudah Lewat'),
+                            for (final (int i, Kegiatan a) in past.indexed)
+                              AnimatedListItem(
+                                index: i,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                      bottom: AppSpacing.gap),
+                                  child: _ActivityCard(activity: a),
+                                ),
+                              ),
+                          ],
+                        ],
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kegiatan mendatang dengan tanggal paling dekat dari sekarang.
+Kegiatan? _terdekat(List<Kegiatan> daftar) {
+  final DateTime sekarang = DateTime.now();
+  Kegiatan? hasil;
+  for (final Kegiatan k in daftar) {
+    final DateTime? t = k.tanggal;
+    if (t == null || t.isBefore(DateTime(sekarang.year, sekarang.month, sekarang.day))) {
+      continue;
+    }
+    if (hasil == null || t.isBefore(hasil.tanggal!)) hasil = k;
+  }
+  return hasil;
+}
+
+/// Kartu hitung mundur untuk kegiatan terdekat.
+class _HitungMundur extends StatelessWidget {
+  const _HitungMundur({required this.kegiatan});
+
+  final Kegiatan kegiatan;
+
+  @override
+  Widget build(BuildContext context) {
+    final DateTime now = DateTime.now();
+    final DateTime hariIni = DateTime(now.year, now.month, now.day);
+    final DateTime t = kegiatan.tanggal!;
+    final int selisih = DateTime(t.year, t.month, t.day).difference(hariIni).inDays;
+    final String angka = selisih <= 0 ? 'Hari ini' : selisih == 1 ? 'Besok' : '$selisih hari lagi';
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary,
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        boxShadow: AppShadows.colored(AppColors.primary),
+      ),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'KEGIATAN TERDEKAT',
+                  style: context.text.labelSmall
+                      ?.copyWith(color: AppColors.heroSubtext),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  kegiatan.judul,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.text.titleMedium
+                      ?.copyWith(color: AppColors.white),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: AppColors.white.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            child: Text(
+              angka,
+              style: context.text.titleSmall?.copyWith(color: AppColors.white),
+            ),
           ),
         ],
       ),
@@ -163,13 +288,13 @@ class _CategoryChip extends StatelessWidget {
       label: Text(label),
       selected: selected,
       onSelected: (_) {
-        Haptics.ringan();
+        Haptics.selection();
         onTap();
       },
       showCheckmark: false,
       selectedColor: context.colors.primary,
       labelStyle: context.text.labelMedium?.copyWith(
-        color: selected ? Colors.white : context.semantic.textSecondary,
+        color: selected ? AppColors.white : context.semantic.textSecondary,
       ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.chip),
@@ -249,63 +374,62 @@ class _ActivityCard extends StatelessWidget {
   }
 
   void _showDetail(BuildContext context) {
-    Haptics.ringan();
-    AppSheet.tampilkan<void>(
-      context,
-      gambar: AppCover(coverKategori(activity.kategori), radius: 0),
-      judul: activity.judul,
-      subjudul: DateId.hariTanggal(activity.tanggal),
-      gulir: true,
-      isi: _RincianKegiatan(activity: activity),
-    );
-  }
-}
-
-/// Isi kartu rincian kegiatan: label kategori, baris meta, dan penutup.
-class _RincianKegiatan extends StatelessWidget {
-  const _RincianKegiatan({required this.activity});
-
-  final Kegiatan activity;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color cat = warnaKategori(activity.kategori);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: cat.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(999),
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (BuildContext c) {
+        final Color cat = warnaKategori(activity.kategori);
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              SizedBox(
+                height: 130,
+                width: double.infinity,
+                child: AppCover(coverKategori(activity.kategori), radius: 18),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: cat.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(activity.kategori,
+                    style: c.text.labelSmall?.copyWith(color: cat)),
+              ),
+              const SizedBox(height: 12),
+              Text(activity.judul, style: c.text.headlineSmall),
+              const SizedBox(height: 16),
+              _MetaRow(
+                icon: Ik.calendar,
+                text: DateId.hariTanggal(activity.tanggal),
+              ),
+              const SizedBox(height: 8),
+              _MetaRow(icon: Ik.place, text: activity.lokasi),
+              const SizedBox(height: 8),
+              _MetaRow(
+                icon: activity.mendatang
+                    ? Ik.clock
+                    : Ik.checkCircle,
+                text: activity.mendatang
+                    ? DateId.hitungMundur(activity.tanggal)
+                    : 'Kegiatan sudah selesai',
+              ),
+              const SizedBox(height: 20),
+              Text(
+                activity.mendatang
+                    ? 'Tandai kehadiran kamu lewat menu Absen di Beranda saat kegiatan berlangsung.'
+                    : 'Terima kasih untuk partisipasi kamu pada kegiatan ini.',
+                style: c.text.bodyMedium
+                    ?.copyWith(color: c.semantic.textSecondary),
+              ),
+            ],
           ),
-          child: Text(activity.kategori,
-              style: context.text.labelSmall?.copyWith(color: cat)),
-        ),
-        const SizedBox(height: 16),
-        _MetaRow(
-          icon: Ik.calendar,
-          text: DateId.hariTanggal(activity.tanggal),
-        ),
-        const SizedBox(height: 8),
-        _MetaRow(icon: Ik.place, text: activity.lokasi),
-        const SizedBox(height: 8),
-        _MetaRow(
-          icon: activity.mendatang ? Ik.clock : Ik.checkCircle,
-          text: activity.mendatang
-              ? DateId.hitungMundur(activity.tanggal)
-              : 'Kegiatan sudah selesai',
-        ),
-        const SizedBox(height: 20),
-        Text(
-          activity.mendatang
-              ? 'Tandai kehadiran kamu lewat menu Absen di Beranda saat kegiatan berlangsung.'
-              : 'Terima kasih untuk partisipasi kamu pada kegiatan ini.',
-          style: context.text.bodyMedium
-              ?.copyWith(color: context.semantic.textSecondary),
-        ),
-      ],
+        );
+      },
     );
   }
 }

@@ -86,12 +86,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 controller: _controller,
                 itemCount: _slides.length,
                 onPageChanged: (int i) => setState(() => _page = i),
-                itemBuilder: (BuildContext context, int i) => _SlideView(
-                  slide: _slides[i],
-                  // Hanya slide yang sedang terlihat yang menjalankan
-                  // animasi masuknya. Tanpa ini, halaman tetangga ikut
-                  // selesai beranimasi sebelum sempat dilihat.
-                  aktif: i == _page,
+                itemBuilder: (BuildContext context, int i) => AnimatedBuilder(
+                  animation: _controller,
+                  // Parallax: slide bergeser lebih lambat dari jari dan
+                  // memudar saat meninggalkan layar.
+                  builder: (BuildContext context, Widget? child) {
+                    double d = 0;
+                    if (_controller.hasClients &&
+                        _controller.position.haveDimensions) {
+                      d = (_controller.page ?? _page.toDouble()) - i;
+                    }
+                    return Opacity(
+                      opacity: (1 - d.abs() * 0.6).clamp(0.0, 1.0),
+                      child: Transform.translate(
+                        offset: Offset(d * -60, 0),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: _SlideView(
+                    slide: _slides[i],
+                    // Hanya slide yang sedang terlihat yang menjalankan
+                    // animasi masuknya.
+                    aktif: i == _page,
+                  ),
                 ),
               ),
             ),

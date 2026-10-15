@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_icon.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Topik FISH (aspirasi, laporan, pengaduan warga).
 ///
@@ -35,7 +35,7 @@ extension KategoriAspirasiX on KategoriAspirasi {
         KategoriAspirasi.kebersihan => AppColors.success,
         KategoriAspirasi.layanan => AppColors.warning,
         KategoriAspirasi.kegiatan => AppColors.social,
-        KategoriAspirasi.lain => AppColors.muted,
+        KategoriAspirasi.lain => AppColors.textSecondaryLight,
       };
 
   static KategoriAspirasi fromDb(String? v) => KategoriAspirasi.values.firstWhere(
@@ -62,7 +62,7 @@ extension StatusAspirasiX on StatusAspirasi {
         StatusAspirasi.baru => AppColors.error,
         StatusAspirasi.diproses => AppColors.warning,
         StatusAspirasi.selesai => AppColors.success,
-        StatusAspirasi.ditolak => AppColors.muted,
+        StatusAspirasi.ditolak => AppColors.textSecondaryLight,
       };
 
   Ik get ikon => switch (this) {

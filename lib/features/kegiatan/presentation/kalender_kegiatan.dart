@@ -5,8 +5,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_id.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_icon.dart';
-import '../../../shared/widgets/app_sheet.dart';
-import '../../../shared/widgets/haptics.dart';
+import '../../../shared/widgets/app_dialogs.dart';
+import '../../../core/utils/haptics.dart';
 import '../domain/kegiatan.dart';
 
 /// Kalender kegiatan: grid bulan penuh + daftar kegiatan pada tanggal yang
@@ -47,7 +47,7 @@ class _KalenderKegiatanState extends State<KalenderKegiatan> {
   }
 
   void _geser(int jumlahBulan) {
-    Haptics.ringan();
+    Haptics.light();
     setState(() {
       _bulan = DateTime(_bulan.year, _bulan.month + jumlahBulan);
       _dipilih = null;
@@ -55,7 +55,7 @@ class _KalenderKegiatanState extends State<KalenderKegiatan> {
   }
 
   void _keBulanIni() {
-    Haptics.ringan();
+    Haptics.light();
     final DateTime n = DateTime.now();
     setState(() {
       _bulan = DateTime(n.year, n.month);
@@ -113,7 +113,7 @@ class _KalenderKegiatanState extends State<KalenderKegiatan> {
           accent: widget.accent,
           dipilih: _dipilih,
           onPilih: (DateTime d) {
-            Haptics.ringan();
+            Haptics.light();
             setState(() => _dipilih = d);
           },
         ),
@@ -360,22 +360,28 @@ class _BarisKegiatan extends StatelessWidget {
   }
 
   void _buka(BuildContext context) {
-    Haptics.ringan();
-    AppSheet.tampilkan<void>(
+    Haptics.light();
+    AppSheet.show<void>(
       context,
-      judul: kegiatan.judul,
-      subjudul: DateId.hariTanggal(kegiatan.tanggal),
-      isi: Column(
+      builder: (BuildContext ctx) => Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('Kategori: ${kegiatan.kategori}', style: context.text.bodyMedium),
+          Text(kegiatan.judul, style: ctx.text.titleLarge),
+          const SizedBox(height: 4),
+          Text(
+            DateId.hariTanggal(kegiatan.tanggal),
+            style: ctx.text.bodySmall
+                ?.copyWith(color: ctx.semantic.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text('Kategori: ${kegiatan.kategori}', style: ctx.text.bodyMedium),
           const SizedBox(height: 6),
-          Text('Lokasi: ${kegiatan.lokasi}', style: context.text.bodyMedium),
+          Text('Lokasi: ${kegiatan.lokasi}', style: ctx.text.bodyMedium),
           const SizedBox(height: 6),
           Text(
             kegiatan.mendatang ? 'Status: akan datang' : 'Status: sudah selesai',
-            style: context.text.bodyMedium,
+            style: ctx.text.bodyMedium,
           ),
         ],
       ),

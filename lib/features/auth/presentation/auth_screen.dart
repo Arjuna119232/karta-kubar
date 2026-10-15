@@ -98,7 +98,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       child: Text(
                         'KK',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontSize: 26,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1,
@@ -301,7 +301,7 @@ class _Tab extends StatelessWidget {
             boxShadow: active
                 ? <BoxShadow>[
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
+                      color: AppColors.black.withValues(alpha: 0.06),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 import '../../shared/widgets/app_icon.dart';
+import '../theme/app_colors.dart';
 
 /// Lima level akses KUNBAR Connect. Hierarkis: angka lebih besar = lebih tinggi.
 ///
@@ -48,7 +48,7 @@ extension UserRoleX on UserRole {
       };
 
   Color get warna => switch (this) {
-        UserRole.guest => AppColors.muted,
+        UserRole.guest => AppColors.textSecondaryLight,
         UserRole.warga => AppColors.primary,
         UserRole.anggota => AppColors.accent,
         UserRole.pengurus => AppColors.warning,

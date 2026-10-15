@@ -9,12 +9,13 @@ import '../../../core/providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/flip_card.dart';
 import '../../../shared/widgets/pseudo_qr.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../core/data/data_providers.dart';
 import '../domain/anggota.dart';
-import '../../../shared/widgets/haptics.dart';
+import '../../../core/utils/haptics.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -38,7 +39,12 @@ class ProfileScreen extends ConsumerWidget {
           _Header(nama: nama, role: role),
           const SizedBox(height: 18),
           if (user != null && role.bisa(UserRole.anggota))
-            _KartuAnggota(nama: nama, role: role, anggota: anggota)
+            FlipCard(
+              semanticLabel:
+                  'Kartu anggota digital, ketuk untuk melihat kode QR',
+              front: _KartuAnggota(nama: nama, role: role, anggota: anggota),
+              back: _KartuBelakang(anggota: anggota),
+            )
           else
             _AjukanVerifikasi(role: role, sudahLogin: user != null),
           if (user != null && role.bisa(UserRole.anggota)) ...<Widget>[
@@ -99,7 +105,7 @@ class _Header extends StatelessWidget {
           child: const Center(
             child: Text('WK',
                 style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.white,
                     fontWeight: FontWeight.w700,
                     fontSize: 20)),
           ),
@@ -166,7 +172,7 @@ class _KartuAnggota extends StatelessWidget {
                 Text(
                   'KARTU ANGGOTA DIGITAL',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: AppColors.white.withValues(alpha: 0.8),
                     fontSize: 10.5,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.1,
@@ -176,7 +182,7 @@ class _KartuAnggota extends StatelessWidget {
                 Text(
                   nama,
                   style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.white,
                       fontSize: 17,
                       fontWeight: FontWeight.w700),
                 ),
@@ -184,20 +190,20 @@ class _KartuAnggota extends StatelessWidget {
                 Text(
                   '${anggota.nomorAnggota} · ${role.label}',
                   style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9), fontSize: 12),
+                      color: AppColors.white.withValues(alpha: 0.9), fontSize: 12),
                 ),
                 const SizedBox(height: 12),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
+                    color: AppColors.white.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
                     anggota.divisi,
                     style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.white,
                         fontSize: 11,
                         fontWeight: FontWeight.w600),
                   ),
@@ -208,7 +214,7 @@ class _KartuAnggota extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(9),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(16),
             ),
             child: PseudoQr(
@@ -216,6 +222,60 @@ class _KartuAnggota extends StatelessWidget {
               size: 88,
               color: grad.first,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Sisi belakang kartu anggota: QR besar dengan cahaya lembut.
+class _KartuBelakang extends StatelessWidget {
+  const _KartuBelakang({required this.anggota});
+
+  final Anggota anggota;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Color> grad = context.semantic.heroGradient;
+    return Container(
+      constraints: const BoxConstraints(minHeight: 150),
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: grad,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: AppColors.white.withValues(alpha: 0.4),
+                  blurRadius: 32,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: PseudoQr(
+              seed: anggota.nomorAnggota,
+              size: 140,
+              color: grad.first,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            anggota.nomorAnggota,
+            style: context.text.titleSmall?.copyWith(color: AppColors.white),
           ),
         ],
       ),
@@ -448,7 +508,7 @@ class _RoleSwitcher extends ConsumerWidget {
                   role: r,
                   aktif: r == aktif,
                   onTap: () {
-                    Haptics.ringan();
+                    Haptics.selection();
                     final SessionNotifier ctrl =
                         ref.read(sessionProvider.notifier);
                     ref.read(navigationIndexProvider.notifier).state = 0;
@@ -493,12 +553,12 @@ class _RoleChip extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               AppIcon(role.ikon,
-                  size: 15, color: aktif ? Colors.white : role.warna),
+                  size: 15, color: aktif ? AppColors.white : role.warna),
               const SizedBox(width: 6),
               Text(
                 role.label,
                 style: context.text.labelSmall?.copyWith(
-                  color: aktif ? Colors.white : role.warna,
+                  color: aktif ? AppColors.white : role.warna,
                   letterSpacing: 0,
                 ),
               ),
@@ -541,7 +601,7 @@ class _MenuUmum extends ConsumerWidget {
               selected: <ThemeMode>{mode},
               showSelectedIcon: false,
               onSelectionChanged: (Set<ThemeMode> s) {
-                Haptics.ringan();
+                Haptics.selection();
                 ref.read(themeModeProvider.notifier).atur(s.first);
               },
             ),
@@ -549,11 +609,11 @@ class _MenuUmum extends ConsumerWidget {
           Divider(height: 1, color: context.semantic.line),
           _Baris(
             icon: Ik.accessibility,
-            label: 'Mode lansia (teks lebih besar)',
+            label: 'Mode lansia (teks 1,3x, tombol besar, kontras tinggi)',
             trailing: Switch(
               value: lansia,
               onChanged: (bool v) {
-                Haptics.ringan();
+                Haptics.selection();
                 ref.read(elderModeProvider.notifier).atur(v);
               },
             ),
@@ -563,51 +623,52 @@ class _MenuUmum extends ConsumerWidget {
             _Baris(
               icon: Ik.chat,
               label: 'Aspirasi & Laporan',
-              onTap: () => context.go('/aspirasi'),
+              onTap: () => context.push('/aspirasi'),
             ),
           ],
           Divider(height: 1, color: context.semantic.line),
           _Baris(
             icon: Ik.handHeart,
             label: 'UMKM warga',
-            onTap: () => context.go('/umkm'),
+            onTap: () => context.push('/umkm'),
           ),
           Divider(height: 1, color: context.semantic.line),
           _Baris(
             icon: Ik.megaphone,
             label: 'Lapor darurat',
-            onTap: () => context.go('/darurat'),
+            onTap: () => context.push('/darurat'),
           ),
           if (role.bisa(UserRole.pengurus)) ...<Widget>[
             Divider(height: 1, color: context.semantic.line),
             _Baris(
               icon: Ik.adminShield,
               label: 'Panel Pengurus',
-              onTap: () => context.go('/pengurus'),
+              onTap: () => context.push('/pengurus'),
             ),
           ],
           Divider(height: 1, color: context.semantic.line),
           _Baris(
             icon: Ik.edit,
             label: 'Edit profil',
-            onTap: () => context.go('/edit-profil'),
+            onTap: () => context.push('/edit-profil'),
           ),
           Divider(height: 1, color: context.semantic.line),
           _Baris(
             icon: Ik.bell,
             label: 'Notifikasi',
-            onTap: () => context.go('/notifikasi'),
+            onTap: () => context.push('/notifikasi'),
           ),
           Divider(height: 1, color: context.semantic.line),
           _Baris(
             icon: Ik.help,
             label: 'Bantuan',
-            onTap: () => context.go('/bantuan'),
+            onTap: () => context.push('/bantuan'),
           ),
         ],
       ),
     );
   }
+
 }
 
 class _Baris extends StatelessWidget {

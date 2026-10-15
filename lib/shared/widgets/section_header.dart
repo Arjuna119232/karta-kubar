@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import 'app_icon.dart';
 
 /// Judul bagian + aksi opsional di kanan.
 class SectionHeader extends StatelessWidget {
@@ -28,10 +29,16 @@ class SectionHeader extends StatelessWidget {
               onPressed: onAction,
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
-                minimumSize: const Size(0, 32),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                minimumSize: const Size(48, 48),
               ),
-              child: Text(actionLabel!),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(actionLabel!),
+                  const SizedBox(width: 2),
+                  const AppIcon(Ik.chevronRight, size: 18),
+                ],
+              ),
             ),
         ],
       ),

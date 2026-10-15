@@ -12,8 +12,7 @@ import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/status_views.dart';
 import '../data/darurat_repository.dart';
 import '../domain/darurat.dart';
-import '../../../shared/widgets/haptics.dart';
-import '../../../shared/widgets/app_sheet.dart';
+import '../../../core/utils/haptics.dart';
 
 /// Lapor darurat. Layar ini sengaja dibuat satu tombol besar di atas:
 /// saat panik, tidak ada yang membaca form panjang.
@@ -60,14 +59,12 @@ class DaruratScreen extends ConsumerWidget {
   }
 
   void _bukaForm(BuildContext context, Session session) {
-    Haptics.kuat();
-    AppSheet.tampilkan<void>(
-      context,
-      judul: 'Lapor darurat',
-      subjudul: 'Nomor darurat bisa ditelepon tanpa internet',
-      ikon: Ik.megaphone,
-      gulir: false,
-      isi: FormDarurat(pengirim: session.user?.name ?? 'Warga'),
+    Haptics.heavy();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (BuildContext _) => FormDarurat(pengirim: session.user?.name ?? 'Warga'),
     );
   }
 }
@@ -91,17 +88,17 @@ class _TombolDarurat extends StatelessWidget {
           width: double.infinity,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+            border: Border.all(color: AppColors.white.withValues(alpha: 0.25)),
           ),
           child: const Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              AppIcon(Ik.megaphone, size: 40, color: Colors.white),
+              AppIcon(Ik.megaphone, size: 40, color: AppColors.white),
               SizedBox(height: 10),
               Text(
                 'LAPOR DARURAT',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.white,
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.1,
@@ -110,7 +107,7 @@ class _TombolDarurat extends StatelessWidget {
               SizedBox(height: 4),
               Text(
                 'Ketuk untuk melapor ke pengurus RW',
-                style: TextStyle(color: AppColors.onErrorSoft, fontSize: 13),
+                style: TextStyle(color: AppColors.heroSubtext, fontSize: 13),
               ),
             ],
           ),
@@ -162,7 +159,7 @@ class _KartuNomorDarurat extends StatelessWidget {
                   IconButton(
                     tooltip: 'Telepon $nomor',
                     onPressed: () {
-                      Haptics.ringan();
+                      Haptics.selection();
                       launchUrl(Uri(scheme: 'tel', path: nomor));
                     },
                     icon: AppIcon(Ik.phone,
@@ -276,11 +273,17 @@ class _FormDaruratState extends ConsumerState<FormDarurat> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    final double bawah = MediaQuery.viewInsetsOf(context).bottom;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+          AppSpacing.screen, 0, AppSpacing.screen, bawah + 20),
+      child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            const SectionHeader(title: 'Apa yang terjadi?'),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -296,7 +299,7 @@ class _FormDaruratState extends ConsumerState<FormDarurat> {
                     ),
                     onSelected: (bool v) {
                       if (!v) return;
-                      Haptics.ringan();
+                      Haptics.selection();
                       setState(() => _jenis = j);
                     },
                   ),
@@ -346,7 +349,8 @@ class _FormDaruratState extends ConsumerState<FormDarurat> {
             ),
           ],
         ),
-      );
+      ),
+    );
   }
 
   Future<void> _submit() async {

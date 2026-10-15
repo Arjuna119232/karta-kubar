@@ -1,129 +1,134 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_colors.dart';
 import 'app_spacing.dart';
 import 'app_typography.dart';
 
-// Token dipisah ke berkas sendiri supaya gampang dipindah ke
-// `packages/shared/` untuk APK Mitra. Di-export di sini agar kode lama yang
-// meng-import `app_theme.dart` tetap mendapat AppSpacing/AppRadius.
-export 'app_assets.dart';
-export 'app_motion.dart';
-export 'app_shadows.dart';
 export 'app_spacing.dart';
 
-/// Tema KUNBAR Connect — satu tema untuk terang & gelap.
-///
-/// Semua warna diambil dari [AppColors] / [AppSemantic]. TIDAK ada hex
-/// yang ditulis langsung di layar: kalau butuh warna baru, turunkan dari
-/// token di sini supaya terang & gelap selalu konsisten.
 class AppTheme {
   AppTheme._();
 
-  static ThemeData light() => _build(Brightness.light);
-  static ThemeData dark() => _build(Brightness.dark);
+  static ThemeData light({bool lansia = false}) =>
+      _build(Brightness.light, lansia);
+  static ThemeData dark({bool lansia = false}) =>
+      _build(Brightness.dark, lansia);
 
-  static ThemeData _build(Brightness brightness) {
+  static ThemeData _build(Brightness brightness, bool lansia) {
     final bool isDark = brightness == Brightness.dark;
     final TextTheme textTheme = AppTypography.textTheme(brightness);
-    final AppSemantic semantic = isDark ? AppSemantic.dark : AppSemantic.light;
-
-    // Warna tombol utama DIPISAH per tema dan kontrasnya dihitung:
-    //  - terang : #1B5E20 + teks putih      = 7,9:1  (lolos AAA)
-    //  - gelap  : #7BD88F + teks #06210C    = 9,8:1  (lolos AAA)
-    // Tombol TIDAK memakai `scheme.primary` mentah supaya Material tidak
-    // pernah memasangkan hijau terang dengan teks putih (kontras hancur).
-    final Color brand = isDark ? AppColors.primaryOnDark : AppColors.primary;
-    final Color onBrand = isDark ? AppColors.onPrimaryDark : AppColors.onPrimary;
 
     final ColorScheme scheme = ColorScheme.fromSeed(
       seedColor: AppColors.primary,
       brightness: brightness,
     ).copyWith(
-      primary: brand,
-      onPrimary: onBrand,
+      primary: isDark ? AppColors.primaryOnDark : AppColors.primary,
       secondary: AppColors.secondary,
-      onSecondary: AppColors.onSecondary,
+      tertiary: AppColors.accent,
       error: AppColors.error,
-      onError: Colors.white,
-      surface: isDark ? AppColors.bgDark : AppColors.bgLight,
-      onSurface: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
     );
 
-    final OutlineInputBorder fieldIdle = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.field),
-      borderSide: BorderSide(color: semantic.line),
-    );
+    final AppSemantic semantic = lansia
+        ? (isDark ? AppSemantic.elderDark : AppSemantic.elderLight)
+        : (isDark ? AppSemantic.dark : AppSemantic.light);
+
+    final Color bg = isDark ? AppColors.bgDark : AppColors.bgLight;
+    final Color surface = isDark ? AppColors.cardDark : AppColors.white;
+    // Tombol min 52dp; mode lansia min 64dp (>= 60dp).
+    final double tinggiTombol = lansia ? 64 : 56;
+
+    final SystemUiOverlayStyle overlay = isDark
+        ? SystemUiOverlayStyle.light.copyWith(
+            statusBarColor: Colors.transparent,
+            systemNavigationBarColor: AppColors.cardDark,
+          )
+        : SystemUiOverlayStyle.dark.copyWith(
+            statusBarColor: Colors.transparent,
+            systemNavigationBarColor: AppColors.white,
+          );
 
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
       colorScheme: scheme,
-      scaffoldBackgroundColor: isDark ? AppColors.bgDark : AppColors.bgLight,
+      scaffoldBackgroundColor: bg,
       textTheme: textTheme,
       extensions: <ThemeExtension<dynamic>>[semantic],
-      splashFactory: InkSparkle.splashFactory,
-      visualDensity: VisualDensity.standard,
-
+      visualDensity:
+          lansia ? VisualDensity.comfortable : VisualDensity.standard,
+      materialTapTargetSize: MaterialTapTargetSize.padded,
+      iconTheme: IconThemeData(size: lansia ? 28 : 24),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: <TargetPlatform, PageTransitionsBuilder>{
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
       appBarTheme: AppBarTheme(
-        backgroundColor: isDark ? AppColors.bgDark : AppColors.bgLight,
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
+        systemOverlayStyle: overlay,
         titleTextStyle: textTheme.titleLarge,
-        iconTheme: IconThemeData(color: scheme.onSurface),
       ),
-
-      dividerTheme: DividerThemeData(color: semantic.line, thickness: 1, space: 1),
-
       cardTheme: CardThemeData(
         color: semantic.card,
         elevation: 0,
         margin: EdgeInsets.zero,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
           side: BorderSide(color: semantic.line),
         ),
       ),
-
-      iconTheme: IconThemeData(color: semantic.textSecondary, size: 22),
-
+      dividerTheme: DividerThemeData(
+        color: semantic.line,
+        thickness: 1,
+        space: 1,
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? AppColors.cardDark : Colors.white,
+        fillColor: surface,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.md,
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.lg,
         ),
-        border: fieldIdle,
-        enabledBorder: fieldIdle,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.field),
+          borderSide: BorderSide(color: semantic.line),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.field),
+          borderSide: BorderSide(color: semantic.line),
+        ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.field),
-          borderSide: BorderSide(color: scheme.primary, width: 1.6),
+          borderSide: BorderSide(color: scheme.primary, width: 1.8),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.field),
           borderSide: const BorderSide(color: AppColors.error),
         ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.field),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.8),
+        ),
       ),
-
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size.fromHeight(56),
-          backgroundColor: brand,
-          foregroundColor: onBrand,
+          minimumSize: Size.fromHeight(tinggiTombol),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.button),
           ),
           textStyle: textTheme.labelLarge,
         ),
       ),
-
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(52),
-          foregroundColor: brand,
+          minimumSize: Size.fromHeight(tinggiTombol),
           side: BorderSide(color: semantic.line),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.button),
@@ -131,91 +136,81 @@ class AppTheme {
           textStyle: textTheme.labelLarge,
         ),
       ),
-
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: brand,
-          minimumSize: const Size(48, 44),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          textStyle: textTheme.labelMedium,
+          minimumSize: Size(48, lansia ? 56 : 48),
+          textStyle: textTheme.labelLarge,
         ),
       ),
-
-      chipTheme: ChipThemeData(
-        backgroundColor: isDark ? AppColors.cardDark : Colors.white,
-        selectedColor: scheme.primary.withValues(alpha: 0.14),
-        labelStyle: textTheme.labelMedium,
-        side: BorderSide(color: semantic.line),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.chip),
-        ),
-      ),
-
-      // Dialog custom KUNBAR — dipakai lewat helper `AppDialog`.
-      dialogTheme: DialogThemeData(
-        backgroundColor: semantic.card,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.card),
-        ),
-      ),
-
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        showDragHandle: false,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
-        ),
-      ),
-
-      snackBarTheme: SnackBarThemeData(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: isDark ? AppColors.cardDark : const Color(0xFF23262F),
-        contentTextStyle: textTheme.bodyMedium?.copyWith(color: Colors.white),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
-      ),
-
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: isDark ? AppColors.cardDark : Colors.white,
-        indicatorColor: scheme.primary.withValues(alpha: 0.14),
-        indicatorShape: const StadiumBorder(),
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        height: 68,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-      ),
-
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: brand,
-        foregroundColor: onBrand,
         elevation: 0,
         highlightElevation: 0,
+        backgroundColor: scheme.primary,
+        foregroundColor: isDark ? AppColors.ink : AppColors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: surface,
+        selectedColor: scheme.primary.withValues(alpha: 0.16),
+        labelStyle: textTheme.labelMedium,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.chip),
+          side: BorderSide(color: semantic.line),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.dialog),
+        ),
+        titleTextStyle: textTheme.titleLarge,
+        contentTextStyle: textTheme.bodyMedium,
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: isDark ? AppColors.textPrimaryDark : AppColors.ink,
+        contentTextStyle: textTheme.bodyMedium?.copyWith(
+          color: isDark ? AppColors.ink : AppColors.white,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
       ),
-
-      progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: scheme.primary,
-        linearMinHeight: 6,
-        linearTrackColor: semantic.line,
+      bottomSheetTheme: BottomSheetThemeData(
+        showDragHandle: true,
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius:
+              BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        ),
       ),
-
-      listTileTheme: ListTileThemeData(
-        iconColor: scheme.primary,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.xxs,
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (Set<WidgetState> s) =>
+              s.contains(WidgetState.selected) ? AppColors.white : null,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+        trackColor: WidgetStateProperty.resolveWith(
+          (Set<WidgetState> s) =>
+              s.contains(WidgetState.selected) ? scheme.primary : null,
         ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: surface,
+        indicatorColor: scheme.primary.withValues(alpha: 0.16),
+        indicatorShape: const StadiumBorder(),
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        height: lansia ? 80 : 68,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       ),
     );
   }

@@ -9,6 +9,7 @@ import '../../../core/data/data_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_id.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/fade_slide_in.dart';
@@ -18,7 +19,6 @@ import '../../../shared/widgets/stat_tile.dart';
 import '../../kegiatan/domain/kegiatan.dart';
 import '../../shell/data/app_tabs.dart';
 import '../../../shared/widgets/cover_pilih.dart';
-import '../../../shared/widgets/haptics.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -34,7 +34,18 @@ class HomeScreen extends ConsumerWidget {
 
     return SafeArea(
       bottom: false,
-      child: ListView(
+      child: RefreshIndicator(
+        color: context.colors.primary,
+        backgroundColor: context.semantic.card,
+        onRefresh: () async {
+          Haptics.medium();
+          ref.invalidate(kegiatanProvider);
+          ref.invalidate(beritaProvider);
+          ref.invalidate(ringkasanBerandaProvider);
+          await Future<void>.delayed(const Duration(milliseconds: 700));
+        },
+        child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(
             AppSpacing.screen, 12, AppSpacing.screen, 96),
         children: <Widget>[
@@ -76,6 +87,7 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
         ],
+      ),
       ),
     );
   }
@@ -131,7 +143,7 @@ class _KartuDarurat extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       child: Row(
         children: <Widget>[
-          const AppIcon(Ik.megaphone, size: 30, color: Colors.white),
+          const AppIcon(Ik.megaphone, size: 30, color: AppColors.white),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -139,18 +151,18 @@ class _KartuDarurat extends StatelessWidget {
               children: <Widget>[
                 Text(
                   'Lapor Darurat',
-                  style: context.text.titleMedium?.copyWith(color: Colors.white),
+                  style: context.text.titleMedium?.copyWith(color: AppColors.white),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Kebakaran, kecelakaan, kekerasan, atau banjir di RW 05.',
                   style: context.text.bodySmall
-                      ?.copyWith(color: AppColors.onErrorSoft),
+                      ?.copyWith(color: AppColors.heroSubtext),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: Colors.white),
+          const AppIcon(Ik.chevronRight, color: AppColors.white),
         ],
       ),
     );
@@ -184,7 +196,7 @@ class _Greeting extends StatelessWidget {
           icon: Ik.bell,
           showDot: true,
           onTap: () {
-            Haptics.ringan();
+            Haptics.selection();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Belum ada notifikasi baru')),
             );
@@ -194,9 +206,9 @@ class _Greeting extends StatelessWidget {
         Container(
           width: 46,
           height: 46,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: context.semantic.heroGradient,
+              colors: <Color>[AppColors.primary, AppColors.success],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -206,7 +218,7 @@ class _Greeting extends StatelessWidget {
             child: Text(
               _inisial(nama),
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.white,
                 fontWeight: FontWeight.w700,
                 fontSize: 15,
               ),
@@ -271,8 +283,17 @@ class _AnnouncementCarousel extends ConsumerStatefulWidget {
 }
 
 class _AnnouncementCarouselState extends ConsumerState<_AnnouncementCarousel> {
-  final PageController _controller = PageController();
+  final PageController _controller = PageController(viewportFraction: 0.92);
   int _page = 0;
+  late final Future<List<Pengumuman>> _memuat;
+
+  @override
+  void initState() {
+    super.initState();
+    // Dimuat sekali. Sebelumnya dipanggil di build(), jadi tiap geser
+    // halaman memicu pemuatan ulang.
+    _memuat = ref.read(beritaProvider.notifier).pengumuman();
+  }
 
   @override
   void dispose() {
@@ -282,11 +303,8 @@ class _AnnouncementCarouselState extends ConsumerState<_AnnouncementCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    // Pengumuman lewat repository, sama seperti berita di atas.
-    final Future<List<Pengumuman>> memuat =
-        ref.read(beritaProvider.notifier).pengumuman();
     return FutureBuilder<List<Pengumuman>>(
-      future: memuat,
+      future: _memuat,
       builder: (BuildContext context, AsyncSnapshot<List<Pengumuman>> snap) {
         final List<Pengumuman> items =
             snap.data ?? const <Pengumuman>[];
@@ -307,7 +325,19 @@ class _AnnouncementCarouselState extends ConsumerState<_AnnouncementCarousel> {
             onPageChanged: (int i) => setState(() => _page = i),
             itemBuilder: (BuildContext context, int i) {
               final Pengumuman a = items[i];
-              return _AnnouncementCard(item: a);
+              return AnimatedBuilder(
+                animation: _controller,
+                builder: (BuildContext context, Widget? child) {
+                  double d = 0;
+                  if (_controller.hasClients &&
+                      _controller.position.haveDimensions) {
+                    d = (_controller.page ?? _page.toDouble()) - i;
+                  }
+                  final double skala = (1 - d.abs() * 0.06).clamp(0.9, 1.0);
+                  return Transform.scale(scale: skala, child: child);
+                },
+                child: _AnnouncementCard(item: a),
+              );
             },
           ),
         ),
@@ -360,13 +390,13 @@ class _AnnouncementCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.18),
+              color: AppColors.white.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
               item.tag,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.white,
                 fontSize: 10.5,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.08,
@@ -377,7 +407,7 @@ class _AnnouncementCard extends StatelessWidget {
           Text(
             item.judul,
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.white,
               fontSize: 20,
               fontWeight: FontWeight.w700,
               height: 1.2,
@@ -387,7 +417,7 @@ class _AnnouncementCard extends StatelessWidget {
           Text(
             item.isi,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.85),
+              color: AppColors.white.withValues(alpha: 0.85),
               fontSize: 13,
             ),
           ),
@@ -395,18 +425,18 @@ class _AnnouncementCard extends StatelessWidget {
           Row(
             children: <Widget>[
               AppIcon(Ik.megaphone,
-                  color: Colors.white.withValues(alpha: 0.9), size: 16),
+                  color: AppColors.white.withValues(alpha: 0.9), size: 16),
               const SizedBox(width: 6),
               Text(
                 'Pengumuman',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: AppColors.white.withValues(alpha: 0.9),
                   fontSize: 12,
                 ),
               ),
               const Spacer(),
               const AppIcon(Ik.arrowForward,
-                  color: Colors.white, size: 18),
+                  color: AppColors.white, size: 18),
             ],
           ),
         ],
@@ -420,22 +450,28 @@ class _QuickActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Setiap aksi disaring sesuai role. Tanpa penyaringan, tamu menekan
+    // "Iuran" (tab "Kas" hanya untuk anggota) dan "Absen" (minimal
+    // anggota) lalu hanya berakhir di layar "Akses perlu ...".
     final UserRole role = ref.watch(sessionProvider).efektif;
-    // Aksi cepat WAJIB ikut role. Dulu daftar ini tetap sama untuk semua
-    // role lalu mencari tab via label - hasilnya: tombol "Iuran" tidak
-    // melakukan apa-apa untuk tamu (tab "Kas" tidak ada di sana).
-    // "Galeri" untuk anggota mendarat di tab "Kas".
     final List<_QuickItem> items = <_QuickItem>[
       if (role.bisa(UserRole.anggota))
-        _QuickItem(Ik.qrScan, 'Absen', AppColors.primary, () => context.push('/absen')),
-      _QuickItem(Ik.chat, 'Aspirasi', AppColors.warning, () => context.push('/aspirasi')),
-      _QuickItem(Ik.handHeart, 'UMKM', AppColors.social, () => context.push('/umkm')),
+        _QuickItem(Ik.qrScan, 'Absen', AppColors.primary,
+            () => context.push('/absen')),
       if (role.bisa(UserRole.anggota))
-        _QuickItem(Ik.wallet, 'Iuran', AppColors.accent, () => _keTab(ref, 'Kas'))
-      else
-        _QuickItem(Ik.gallery, 'Galeri', AppColors.success, () => context.push('/galeri')),
+        _QuickItem(Ik.wallet, 'Iuran', AppColors.accent,
+            () => _keTab(ref, 'Kas')),
+      if (role.bisa(UserRole.warga))
+        _QuickItem(Ik.chat, 'Aspirasi', AppColors.warning,
+            () => context.push('/aspirasi')),
+      _QuickItem(Ik.handHeart, 'UMKM', AppColors.social,
+          () => context.push('/umkm')),
+      // PUSH, bukan pindah tab: tab "Galeri" hanya ada untuk tamu/warga.
+      // Anggota ke atas memakai tab "Kas", jadi tanpa rute /galeri mereka
+      // tidak punya cara membuka Galeri sama sekali.
+      _QuickItem(Ik.gallery, 'Galeri', AppColors.success,
+          () => context.push('/galeri')),
     ];
-;
 
     // BUKAN `Row` dengan 5 `Expanded`: di layar 360 dp tiap kolom tinggal
     // ~66 dp, sehingga nama tombol seperti "Aspirasi" terpotong atau meluber.
@@ -444,7 +480,11 @@ class _QuickActions extends ConsumerWidget {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints c) {
         const double jarak = 8;
-        final double lebarItem = (c.maxWidth - jarak * 3) / 4;
+        // Jumlah kolom ikut jumlah tombol yang benar-benar tampil, supaya
+        // tamu (cuma UMKM + Galeri) tidak mendapat baris setengah kosong.
+        final int kolom = items.length <= 2 ? items.length : 4;
+        final double lebarItem =
+            (c.maxWidth - jarak * (kolom - 1)) / kolom;
         return Wrap(
           spacing: jarak,
           runSpacing: jarak,
@@ -455,7 +495,7 @@ class _QuickActions extends ConsumerWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(18),
                   onTap: () {
-                    Haptics.ringan();
+                    Haptics.selection();
                     it.onTap();
                   },
                   child: Padding(

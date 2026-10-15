@@ -6,7 +6,7 @@ import '../../../core/auth/user_role.dart';
 import '../../../core/providers.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../data/app_tabs.dart';
-import '../../../shared/widgets/haptics.dart';
+import '../../../core/utils/haptics.dart';
 
 /// Kerangka utama. Bottom navigation ditentukan oleh role yang sedang aktif.
 class AppShell extends ConsumerWidget {
@@ -23,44 +23,38 @@ class AppShell extends ConsumerWidget {
     // supaya tidak keluar dari jangkauan tab yang sekarang tampil.
     final int aman = index.clamp(0, tabs.length - 1);
 
-    return PopScope(
-      // Tab bukan rute: semuanya hidup di dalam satu halaman `/home`. Tanpa
-      // ini, tombol back perangkat langsung menutup aplikasi walau pengguna
-      // sedang di tab "Galeri" atau "Profil".
-      canPop: aman == 0,
-      onPopInvokedWithResult: (bool didPop, Object? _) {
-        if (didPop) return;
-        // Belum keluar aplikasi: kembalikan ke tab pertama, jangan tutup.
-        if (aman != 0) {
-          Haptics.ringan();
-          ref.read(navigationIndexProvider.notifier).state = 0;
-        }
-      },
-      child: Scaffold(
-        // IndexedStack menjaga scroll position tiap tab saat berpindah.
-        body: IndexedStack(
-          index: aman,
-          children: <Widget>[for (final AppTab t in tabs) t.screen],
-        ),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: aman,
-          destinations: <Widget>[
-            for (final AppTab t in tabs)
-              NavigationDestination(
-                icon: t.badge == null
-                    ? AppIcon(t.icon)
-                    : Badge.count(count: t.badge!, child: AppIcon(t.icon)),
-                selectedIcon: AppIcon(t.selectedIcon, aktif: true),
-                label: t.label,
-                tooltip: t.label,
-              ),
-          ],
-          onDestinationSelected: (int i) {
-            if (i >= tabs.length) return;
-            if (i != aman) Haptics.ringan();
-            ref.read(navigationIndexProvider.notifier).state = i;
-          },
-        ),
+    return Scaffold(
+      // IndexedStack menjaga scroll position tiap tab saat berpindah.
+      body: IndexedStack(
+        index: aman,
+        children: <Widget>[
+          for (final (int i, AppTab t) in tabs.indexed)
+            AnimatedOpacity(
+              opacity: i == aman ? 1 : 0,
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeOut,
+              child: t.screen,
+            ),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: aman,
+        destinations: <Widget>[
+          for (final AppTab t in tabs)
+            NavigationDestination(
+              icon: t.badge == null
+                  ? AppIcon(t.icon)
+                  : Badge.count(count: t.badge!, child: AppIcon(t.icon)),
+              selectedIcon: AppIcon(t.selectedIcon, aktif: true),
+              label: t.label,
+              tooltip: t.label,
+            ),
+        ],
+        onDestinationSelected: (int i) {
+          if (i >= tabs.length) return;
+          if (i != aman) Haptics.selection();
+          ref.read(navigationIndexProvider.notifier).state = i;
+        },
       ),
     );
   }

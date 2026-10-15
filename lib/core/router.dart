@@ -5,9 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/absen/presentation/absen_screen.dart';
 import '../features/aspirasi/presentation/aspirasi_screen.dart';
 import '../features/darurat/presentation/darurat_screen.dart';
+import '../features/auth/presentation/auth_screen.dart';
 import '../features/galeri/presentation/galeri_screen.dart';
 import '../features/profile/presentation/edit_profil_screen.dart';
-import '../features/auth/presentation/auth_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/pengurus/presentation/pengurus_screen.dart';
 import '../features/shell/presentation/app_shell.dart';
@@ -16,6 +16,7 @@ import 'auth/session.dart';
 import 'auth/user_role.dart';
 import 'boot.dart';
 import '../shared/widgets/app_icon.dart';
+import '../shared/widgets/loading_dots.dart';
 
 /// Halaman "kamu belum punya akses" — muncul kalau guard menolak rute.
 class AksesDitolakScreen extends ConsumerWidget {
@@ -50,17 +51,8 @@ class AksesDitolakScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               FilledButton(
-                onPressed: () {
-                  // Kalau halaman ini hasil `push`, tombol back harus
-                  // kembali ke halaman sebelumnya - bukan melompat ke beranda
-                  // dan membuang riwayat.
-                  if (context.canPop()) {
-                    context.pop();
-                  } else {
-                    context.go('/home');
-                  }
-                },
-                child: const Text('Kembali'),
+                onPressed: () => context.go('/home'),
+                child: const Text('Kembali ke beranda'),
               ),
             ],
           ),
@@ -92,9 +84,7 @@ class RoleGate extends ConsumerWidget {
     // selesai, `sudahLogin` masih false dan guard akan sempat menampilkan
     // "Akses Ditolak" untuk user yang sebenarnya masih masuk.
     if (!session.siap) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const LoadingScreen();
     }
     if (!session.sudahLogin || !session.efektif.bisa(minimal)) {
       return AksesDitolakScreen(minimal: minimal);
@@ -198,9 +188,9 @@ GoRouter buatRouter(LokasiAwal awal) => GoRouter(
       path: '/darurat',
       pageBuilder: (_, GoRouterState s) => _halaman(s, const DaruratScreen()),
     ),
-    // Galeri sebagai rute sendiri, bukan hanya tab._tab Galeri hanya ada
-    // untuk tamu; anggota dan pengurus tidak punya tab itu, jadi tanpa rute
-    // ini mereka tidak punya cara sama sekali membuka galeri.
+    // Galeri sebagai rute PENUH, bukan cuma tab. Hanya tamu/warga yang punya
+    // tab Galeri; anggota ke atas mendapat tab "Kas" sebagai gantinya, jadi
+    // tanpa rute ini anggota dan pengurus tidak punya cara membuka Galeri.
     GoRoute(
       path: '/galeri',
       pageBuilder: (_, GoRouterState s) => _halaman(s, const GaleriScreen()),
@@ -208,8 +198,10 @@ GoRouter buatRouter(LokasiAwal awal) => GoRouter(
     // Tiga layar yang tadinya cuma SnackBar "segera hadir".
     GoRoute(
       path: '/edit-profil',
-      pageBuilder: (_, GoRouterState s) =>
-          _halaman(s, const RoleGate(minimal: UserRole.warga, child: EditProfilScreen())),
+      pageBuilder: (_, GoRouterState s) => _halaman(
+        s,
+        const RoleGate(minimal: UserRole.warga, child: EditProfilScreen()),
+      ),
     ),
     GoRoute(
       path: '/notifikasi',

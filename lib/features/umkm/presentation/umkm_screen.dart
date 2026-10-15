@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -9,11 +10,14 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/fade_slide_in.dart';
+import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/status_views.dart';
 import '../data/umkm_repository.dart';
 import '../domain/umkm.dart';
-import '../../../shared/widgets/haptics.dart';
-import '../../../shared/widgets/app_sheet.dart';
+import '../../../shared/widgets/loading_dots.dart';
+import '../../../core/utils/haptics.dart';
+import '../../../shared/widgets/animated_fab.dart';
+import '../../../shared/widgets/shimmer_box.dart';
 
 /// Katalog UMKM warga: lihat semua, ajukan usaha baru.
 class UmkmScreen extends ConsumerStatefulWidget {
@@ -40,12 +44,10 @@ class _UmkmScreenState extends ConsumerState<UmkmScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('UMKM Warga')),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: context.colors.primary,
-        foregroundColor: Colors.white,
+      floatingActionButton: AnimatedFab(
+        icon: Ik.addPhoto,
+        label: 'Ajukan Usaha',
         onPressed: () => _bukaForm(session),
-        icon: const AppIcon(Ik.addPhoto, size: 20),
-        label: const Text('Ajukan Usaha'),
       ),
       body: SafeArea(
         top: false,
@@ -60,12 +62,19 @@ class _UmkmScreenState extends ConsumerState<UmkmScreen> {
               _Filter(
                 aktif: _filter,
                 onPilih: (KategoriUmkm? v) {
-                  Haptics.ringan();
+                  Haptics.selection();
                   setState(() => _filter = v);
                 },
               ),
               const SizedBox(height: 16),
-              if (semua.isEmpty)
+              if (state.isLoading && semua.isEmpty)
+                const ShimmerListSkeleton(
+                    itemCount: 4, itemHeight: 104, padding: EdgeInsets.zero)
+              else if (state.hasError && semua.isEmpty)
+                AppErrorState(
+                  onRetry: () => ref.read(umkmProvider.notifier).muatUlang(),
+                )
+              else if (semua.isEmpty)
                 AppEmptyState(
                   title: 'Belum ada UMKM terdaftar',
                   message: session.sudahLogin
@@ -96,14 +105,12 @@ class _UmkmScreenState extends ConsumerState<UmkmScreen> {
   }
 
   void _bukaForm(Session session) {
-    Haptics.sedang();
-    AppSheet.tampilkan<void>(
-      context,
-      judul: 'Daftarkan UMKM',
-      subjudul: 'Isi data usaha, pengurus akan memverifikasi',
-      ikon: Ik.handHeart,
-      gulir: false,
-      isi: const FormUmkm(),
+    Haptics.medium();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (BuildContext _) => const FormUmkm(),
     );
   }
 }
@@ -213,7 +220,7 @@ class _ChipUmkm extends StatelessWidget {
             child: Text(
               label,
               style: context.text.labelLarge?.copyWith(
-                color: selected ? Colors.white : context.semantic.textSecondary,
+                color: selected ? AppColors.white : context.semantic.textSecondary,
               ),
             ),
           ),
@@ -324,7 +331,7 @@ class _KartuUmkm extends StatelessWidget {
   }
 
   void _telepon(BuildContext context, String nomor) {
-    Haptics.ringan();
+    Haptics.selection();
     launchUrl(Uri(scheme: 'tel', path: nomor));
   }
 }
@@ -360,13 +367,19 @@ class _FormUmkmState extends ConsumerState<FormUmkm> {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
+    final double bawah = MediaQuery.viewInsetsOf(context).bottom;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+          AppSpacing.screen, 0, AppSpacing.screen, bawah + 20),
+      child: Form(
         key: _formKey,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              const SectionHeader(title: 'Ajukan Usaha'),
               Text(
                 'Setelah diajukan, pengurus akan memverifikasi. Usaha belum '
                 'bertanda centang sampai disetujui.',
@@ -490,16 +503,15 @@ class _FormUmkmState extends ConsumerState<FormUmkm> {
                 child: _kirim
                     ? const SizedBox(
                         height: 22,
-                        width: 22,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2.4, color: Colors.white),
+                        child: LoadingDots(color: AppColors.white, size: 8),
                       )
                     : const Text('Kirim pengajuan'),
               ),
             ],
           ),
         ),
-      );
+      ),
+    );
   }
 
   Future<void> _submit() async {

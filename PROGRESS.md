@@ -2,8 +2,8 @@
 
 Berkas ini supaya sesi baru bisa melanjutkan tanpa membaca ulang semua riwayat.
 
-**Terakhir diperbarui:** 15 Okt 2026
-**Versi aplikasi:** 0.12.0+22 (build 20 = 0.7.0 sudah DIRUSAK, jangan dipakai sebagai acuan)
+**Terakhir diperbarui:** 16 Okt 2026
+**Versi aplikasi:** 0.12.1+23 (build 20 = 0.7.0 sudah DIRUSAK, jangan dipakai sebagai acuan)
 
 ---
 
@@ -19,8 +19,7 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 
 | # | Tahap | Status | Commit |
 |---|---|---|---|
-| 11 | UMKM warga + Lapor darurat | ✅ | `04e81e6` |
-| 12 | Edit profil + Notifikasi + Bantuan, perbaikan 3 bug navigasi | ✅ | (commit ini) |
+| 11 | UMKM warga + Lapor darurat | ✅ | (commit ini) |
 | 0 | Fondasi: tema M3, ikon, router, build CI | ✅ | `c3d6bb3`, `1440406` |
 | 1 | ~~`SplashScreen` + `onFinished`~~ (diganti splash native 15 Okt) | ✅ | `f512dca` |
 | 2 | `OnbArt` (aspirasi, komunitas, terhubung) untuk 3 sampul | ✅ | `f512dca` |
@@ -32,7 +31,10 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 | 7 | README + PROGRESS.md | ✅ | `0580097` |
 | 8 | Splash native Android 12+ + iOS `UILaunchScreen` (logo + warna solid, tanpa frame putih) | ✅ | `c100e61` |
 | 9 | Nama lengkap "KUNBAR CONNECT" + kredit "from Katar KunBar" seragam di Android & iOS | ✅ | `09cb8df`, `a41e283`, `3c12216` |
-| 10 | FISH warga (kirim + pantau status) + Pengurus (antrean + aksi status) | ✅ | (commit ini) |
+| 10 | FISH warga (kirim + pantau status) + Pengurus (antrean + aksi status) | ✅ | `bc3f88e` |
+| 11 | UMKM warga + Lapor darurat | ✅ | `04e81e6` |
+| 12 | Overhaul tampilan v6 (satu bahasa visual untuk semua layar) | ✅ | (commit ini) |
+| 13 | Empat tombol kosong jadi fitur nyata: kalender, unduh CSV, unggah galeri, edit profil | ✅ | (commit ini) |
 
 ### Status 15 fitur APK (dicek dari kode, bukan dari daftar)
 
@@ -52,7 +54,7 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 | 12 | Kartu anggota digital | ⚠️ | Kartu sudah ada, **QR-nya masih gambar tiruan** (belum bisa discan) |
 | 13 | Chat | ❌ | Skema `pesan` ada. Butuh login Supabase Auth + Realtime |
 | 14 | Profil | ✅ | Kartu anggota, hak akses, menu |
-| 15 | Pengaturan | ✅ | Tema, mode Lansia, status backend, Edit profil, Notifikasi, Bantuan (v0.12.0) |
+| 15 | Pengaturan | ✅ | Tema, mode Lansia, status backend, edit profil, notifikasi, bantuan |
 
 **Angka: 11 jadi, 1 setengah, 3 belum.** Tidak ada fitur yang ditandai selesai
 padahal baru kerangka.
@@ -82,15 +84,32 @@ kas, laporan, kelola role, audit log, export CSV/PDF.
 - Onboarding 3 slide beranimasi, bisa digeser
 - Masuk / daftar (mode demo, OTP `123456`)
 - Beranda: greeting, pengumuman, berita, agenda, aksi cepat
-- Kegiatan: filter kategori, tinggi ilustrasi dihitung dari lebar layar
+- Kegiatan: filter kategori, kalender bulanan bertanda hari ada acara, tinggi
+  ilustrasi dihitung dari lebar layar
 - Absen: scan QR tiruan, riwayat, ubah status
-- Keuangan: saldo, grafik kas 5 bulan, riwayat iuran
-- Galeri: berita + sampul
+- Keuangan: saldo, grafik kas 5 bulan, riwayat iuran, unduh laporan kas CSV
+  (salin ke clipboard atau bagikan lewat sheet Android)
+- Galeri: berita + sampul + unggahan foto warga (tersimpan di perangkat)
 - Aspirasi & Laporan: kirim FISH, filter status, tersimpan di perangkat
 - Panel Pengurus: antrean FISH, tandai Diproses/Selesai/Ditolak + catatan
 - Profil: kartu anggota, level akses 5 tingkat, **kartu "Sumber data"**
 - Mode terang/gelap + mode Lansia
+- Edit profil, Notifikasi, dan Bantuan sebagai layar penuh
 
+
+### Bentuk layar setelah overhaul v6
+
+Semua layar sekarang memakai satu set komponen bersama di
+`lib/shared/widgets/`: `app_card`, `app_dialogs` (dialog + bottom sheet),
+`primary_button`, `section_header`, `status_views` (skeleton, state kosong,
+state galat), `shimmer_box`, `loading_dots`, `animated_list_item`,
+`fade_slide_in`, `animated_fab`, `flip_card`, `confetti`. Efek dan ikon
+dipusatkan di `lib/core/theme/` (`app_colors`, `app_spacing`, `app_shadows`,
+`app_typography`, `app_assets`) dan getaran di `lib/core/utils/haptics.dart`.
+
+Widget yang dulu ada (`app_surface`, `app_sheet`, `app_dialog`,
+`glass_card`, `modern_card`, `animated_button`) sudah dihapus karena tidak
+dipakai satu layar pun.
 
 ### Belum dikerjakan (sengaja)
 
@@ -188,11 +207,6 @@ grep -rn "Lokal\." lib/features/*/presentation/   # harus kosong
 11. **`required this.x` tanpa `final bool x;` = compile error.** Nimanya ketahuan
     hanya saat CI compile (v0.10.0 build pertama gagal 4 baris error).
     `tool/check_dart.py` punya cek `FIELD-HILANG` untuk itu.
-12. **Import `app_colors.dart` tidak boleh dihapus** hanya karena "tidak ada
-    simbol yang dipakai": `context.colors/text/semantic` milik extension
-    `AppSemanticX` di file itu. Cek `EXT-HILANG` menjaga ini.
-13. **Aksi cepat harus ikut role.** Tab berbeda per role; tombol yang
-    menunjuk tab milik role lain diam-diam tidak melakukan apa-apa.
 
 ---
 
@@ -210,3 +224,8 @@ Lalu cek cepat:
 ```bash
 cd ~/karta-kubar && git status --short && python3 tool/check_dart.py | tail -3
 ```
+## v6.0.0+22 — Rombak UI/UX (design system v6)
+- Design system: `app_spacing`, `app_shadows`, `app_assets`, gradient preset, tema (transisi Cupertino, dialog/sheet/snackbar/FAB/chip), mode lansia 1,3x + tombol 64dp + kontras tinggi.
+- Widget baru: `AnimatedButton`, `GlassCard`, `Shimmer*`, `AnimatedListItem`, `EmptyState`, `ErrorState`, `ModernCard`, `AnimatedFab`, `LoadingDots`, `FlipCard`, `Confetti`, `AppDialog`/`AppSheet`, `Haptics`.
+- Spinner polos, AlertDialog, dan warna hardcode sudah diganti token.
+- Catatan: build number sengaja 22 (bukan 6) supaya bisa menimpa v0.11.0+21 di HP.

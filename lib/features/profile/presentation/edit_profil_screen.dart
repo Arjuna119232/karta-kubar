@@ -14,7 +14,7 @@ import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/status_views.dart';
-import '../../../shared/widgets/haptics.dart';
+import '../../../core/utils/haptics.dart';
 
 /// Edit profil. Sebelumnya hanya SnackBar "segera hadir".
 ///
@@ -211,7 +211,7 @@ class _EditProfilScreenState extends ConsumerState<EditProfilScreen> {
 
     if (!mounted) return;
     setState(() => _simpan = false);
-    Haptics.sedang();
+    Haptics.medium();
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Profil disimpan.')),

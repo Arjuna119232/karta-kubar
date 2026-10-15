@@ -7,45 +7,11 @@ class AppColors {
   static const Color primary = Color(0xFF1B5E20); // Hijau Karang Taruna
   static const Color secondary = Color(0xFFFFC107); // Kuning energi muda
   static const Color accent = Color(0xFF0D47A1); // Biru kepercayaan
-
-  // --- Warna teks di atas warna brand (kontras dihitung, bukan dikira) ---
-
-  /// Teks di atas [primary]: putih = 7,9:1 (lolos WCAG AA & AAA).
-  static const Color onPrimary = Color(0xFFFFFFFF);
-
-  /// Teks di atas [secondary] (kuning): HITAM = 12,9:1.
-  /// Putih di atas kuning cuma 1,6:1 — GAGAL total, jangan dipakai.
-  static const Color onSecondary = Color(0xFF1A1A1A);
-
-  /// Teks di atas [primaryOnDark] (hijau terang, tema gelap): 9,8:1.
-  static const Color onPrimaryDark = Color(0xFF06210C);
-
-  /// Hijau versi TERANG — untuk teks/ikon di atas latar GELAP.
-  /// Kontras terhadap `bgDark` = 10,9:1, jadi tetap terbaca di HP murah.
-  /// `primary` (#1B5E20) di atas latar gelap terlalu redup.
-  static const Color primaryOnDark = Color(0xFF7BD88F);
-
-  /// Hijau sangat muda untuk latar "soft" (chip terpilih, lencana) — terang.
-  static const Color primarySoft = Color(0xFFE8F5E9);
-
-  /// Hijau soft versi gelap — pasangan [primarySoft] saat tema gelap.
-  static const Color primarySoftDark = Color(0xFF1E3323);
   // Accent pink untuk highlight kegiatan sosial (identitas KUNBAR Connect).
   static const Color social = Color(0xFFE91E63);
   static const Color error = Color(0xFFD32F2F);
   static const Color success = Color(0xFF2E7D32);
   static const Color warning = Color(0xFFB26A00);
-
-  /// Abu netral untuk status yang tidak punya warna sendiri
-  /// (ditolak / tamu / topik 'lain').
-  static const Color muted = Color(0xFF6A6A72);
-
-  /// Teks di atas permukaan [error] yang terisi penuh. Putih penuh terlalu
-  /// silau untuk banner darurat sepanjang paragraf.
-  static const Color onErrorSoft = Color(0xFFFFD9D9);
-
-  /// Hijau paling gelap: ujung bawah gradasi hero di tema gelap.
-  static const Color primaryDeep = Color(0xFF123815);
 
   static const Color bgLight = Color(0xFFF6F7F9);
   static const Color cardLight = Color(0xFFFFFFFF);
@@ -58,6 +24,58 @@ class AppColors {
   static const Color textPrimaryDark = Color(0xFFF2F2F4);
   static const Color textSecondaryDark = Color(0xFF9A9AA0);
   static const Color lineDark = Color(0xFF2A2A2E);
+
+  // Alias semantik v6.
+  static const Color highlight = social;
+  static const Color info = accent;
+  static const Color white = Color(0xFFFFFFFF);
+  static const Color ink = Color(0xFF1A1A1A);
+  static const Color black = Color(0xFF000000);
+  static const Color heroSubtext = Color(0xFFFFD9D9);
+  static const Color primaryOnDark = Color(0xFF7FC98A);
+  static const Color successAlt = Color(0xFF1B7A43);
+
+  // Mode lansia: kontras lebih tinggi.
+  static const Color textSecondaryElderLight = Color(0xFF3A3A40);
+  static const Color textSecondaryElderDark = Color(0xFFD0D0D6);
+  static const Color lineElderLight = Color(0xFFB8B8C0);
+  static const Color lineElderDark = Color(0xFF55555C);
+}
+
+/// Preset gradient.
+class AppGradients {
+  AppGradients._();
+
+  static const LinearGradient primary = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: <Color>[Color(0xFF1B5E20), Color(0xFF2E7D32)],
+  );
+  static const LinearGradient warm = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: <Color>[Color(0xFFFFC107), Color(0xFFFF8F00)],
+  );
+  static const LinearGradient sunset = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: <Color>[Color(0xFFFF8F00), Color(0xFFE91E63)],
+  );
+  static const LinearGradient ocean = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: <Color>[Color(0xFF0D47A1), Color(0xFF1E88E5)],
+  );
+
+  /// Gradient dari satu warna (ikon quick action, header).
+  static LinearGradient dari(Color c) => LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[
+          Color.lerp(c, AppColors.white, 0.22)!,
+          c,
+        ],
+      );
 }
 
 /// Warna semantik yang tidak ada di Material ColorScheme.
@@ -85,7 +103,7 @@ class AppSemantic extends ThemeExtension<AppSemantic> {
     textSecondary: AppColors.textSecondaryLight,
     success: AppColors.success,
     warning: AppColors.warning,
-    heroGradient: <Color>[AppColors.primary, AppColors.success],
+    heroGradient: <Color>[Color(0xFF1B5E20), Color(0xFF2E7D32)],
   );
 
   static const AppSemantic dark = AppSemantic(
@@ -94,7 +112,25 @@ class AppSemantic extends ThemeExtension<AppSemantic> {
     textSecondary: AppColors.textSecondaryDark,
     success: AppColors.success,
     warning: AppColors.warning,
-    heroGradient: <Color>[AppColors.primaryDeep, AppColors.primary],
+    heroGradient: <Color>[Color(0xFF123815), Color(0xFF1B5E20)],
+  );
+
+  static const AppSemantic elderLight = AppSemantic(
+    card: AppColors.cardLight,
+    line: AppColors.lineElderLight,
+    textSecondary: AppColors.textSecondaryElderLight,
+    success: AppColors.success,
+    warning: AppColors.warning,
+    heroGradient: <Color>[Color(0xFF123815), Color(0xFF1B5E20)],
+  );
+
+  static const AppSemantic elderDark = AppSemantic(
+    card: AppColors.cardDark,
+    line: AppColors.lineElderDark,
+    textSecondary: AppColors.textSecondaryElderDark,
+    success: AppColors.success,
+    warning: AppColors.warning,
+    heroGradient: <Color>[Color(0xFF123815), Color(0xFF1B5E20)],
   );
 
   @override

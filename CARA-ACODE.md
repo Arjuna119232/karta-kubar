@@ -1,6 +1,6 @@
 # KUNBAR Connect — Cara Membuka & Edit di Acode
 
-Versi: **0.11.0** · Kelurahan Kuningan Barat, Jakarta Selatan
+Versi: **0.12.1** · Kelurahan Kuningan Barat, Jakarta Selatan
 
 Aplikasi warga (Flutter) — **bukan** aplikasi admin. Panel pengurus
 dipindah ke web terpisah.
@@ -9,7 +9,7 @@ dipindah ke web terpisah.
 
 ## 1. Cara buka di Acode
 
-1. **Ekstrak** `KUNBAR-Connect-v0.11.0-source.zip` ke folder di HP, misal
+1. **Ekstrak** `KUNBAR-Connect-v0.12.1-source.zip` ke folder di HP, misal
    `/storage/emulated/0/Acode/kunbar/`.
 2. Acode → **Open Folder** → pilih folder **yang berisi `pubspec.yaml`**
    (bukan folder di dalam zip).
@@ -28,7 +28,7 @@ dipindah ke web terpisah.
 |---|---|
 | `lib/core/` | Tema, router, sesi + role, konfigurasi, klien Supabase |
 | `lib/features/` | Satu folder per fitur: `domain` + `data` + `presentation` |
-| `lib/shared/widgets/` | Komponen dipakai lintas fitur |
+| `lib/shared/widgets/` | Komponen dipakai lintas fitur (lihat daftar di bagian 4) |
 | `assets/` | Ilustrasi, ikon, berkas brand splash |
 | `tool/` | Skrip Python: cek kode, cek karakter, patch Android/iOS |
 | `supabase/schema.sql` | Skema 15 tabel + aturan RLS |
@@ -129,10 +129,27 @@ Tiap `context.go('/x')` harus punya rute di `lib/core/router.dart`.
 |---|---|
 | 0.10.0 | Papan FISH warga + Panel Pengurus |
 | 0.11.0 | Katalog UMKM + Lapor darurat + perbaikan aksi cepat |
+| 0.12.0 | Empat tombol kosong jadi fitur nyata (edit profil, notifikasi, bantuan) |
+| 0.12.1 | Overhaul tampilan: satu bahasa visual di semua layar, kalender kegiatan, unduh CSV, unggah galeri |
+
+### Komponen bersama (`lib/shared/widgets/`)
+
+`app_card`, `app_dialogs` (dialog + bottom sheet), `primary_button`,
+`section_header`, `status_views` (skeleton, state kosong, state galat),
+`shimmer_box`, `loading_dots`, `animated_list_item`, `animated_fab`,
+`fade_slide_in`, `flip_card`, `confetti`, `app_icon`, `cover_pilih`,
+`onboarding_art`, `pseudo_qr`, `stat_tile`.
+
+Jangan pakai `AppDialog`/sheet bawaan Flutter dan jangan langsung menulis
+`Color(0x...)` di layar: warna diambil dari `AppColors`, jarak dari
+`AppSpacing`, bayangan dari `AppShadows`, getaran lewat `Haptics`.
 
 Dependency penting:
 - `url_launcher ^6.3.1` — **jangan** naikkan ke 6.3.3, butuh Dart `^3.11`
   sedangkan project mendeklarasikan `sdk >=3.4.0`.
+- `image_picker ^1.1.2`, `path_provider ^2.1.5`, `share_plus ^12.0.2`,
+  `cross_file ^0.3.4+2` — dipakai galeri (unggah foto) dan keuangan (CSV).
+  Jangan naikkan ke rilis terbaru; semuanya butuh Dart `^3.10`–`^3.11`.
 - `sdk: ">=3.4.0 <4.0.0"` di `pubspec.yaml`
 
 ---

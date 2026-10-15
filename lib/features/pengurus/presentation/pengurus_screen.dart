@@ -17,9 +17,8 @@ import '../../../shared/widgets/status_views.dart';
 import '../../aspirasi/data/aspirasi_state.dart';
 import '../../aspirasi/domain/aspirasi.dart';
 import '../../aspirasi/presentation/aspirasi_screen.dart';
-import '../../shell/data/app_tabs.dart';
-import '../../../shared/widgets/haptics.dart';
-import '../../../shared/widgets/app_dialog.dart';
+import '../../../shared/widgets/app_dialogs.dart';
+import '../../../core/utils/haptics.dart';
 
 /// Panel kendali untuk pengurus / RT / RW / kelurahan.
 ///
@@ -123,7 +122,7 @@ class PengurusScreen extends ConsumerWidget {
     }
 
 
-    Haptics.sedang();
+    Haptics.medium();
     final Hasil<Aspirasi> h = await ref
         .read(aspirasiProvider.notifier)
         .ubahStatus(a.id, baru, catatan: catatan);
@@ -143,40 +142,12 @@ class PengurusScreen extends ConsumerWidget {
     Aspirasi a,
     StatusAspirasi baru,
   ) {
-    final TextEditingController c = TextEditingController();
-    return AppDialog.tampilkan<String>(
+    return AppDialog.catatan(
       context,
       judul: 'Tandai ${baru.label}',
-      pesan: '"${a.judul}"',
-      ikon: Ik.edit,
-      isi: TextField(
-        controller: c,
-        autofocus: true,
-        minLines: 2,
-        maxLines: 4,
-        maxLength: 240,
-        textCapitalization: TextCapitalization.sentences,
-        decoration: const InputDecoration(
-          labelText: 'Catatan untuk warga (opsional)',
-        ),
-      ),
-      aksi: (BuildContext ctx, void Function() tutup) => <Widget>[
-        TextButton(
-          onPressed: () {
-            Haptics.ringan();
-            tutup();
-          },
-          child: const Text('Batal'),
-        ),
-        FilledButton(
-          onPressed: () {
-            Haptics.sedang();
-            Navigator.of(ctx).pop(c.text.trim());
-          },
-          child: const Text('Simpan'),
-        ),
-      ],
-    ).whenComplete(c.dispose);
+      subjudul: '"${a.judul}"',
+      label: 'Catatan untuk warga (opsional)',
+    );
   }
 }
 
@@ -341,12 +312,7 @@ class _Pintasan extends ConsumerWidget {
             judul: 'Agenda',
             ket: 'Kelola kegiatan',
             onTap: () {
-              // Angka 1 salah: untuk role pengurus urutan tabnya
-              // (Beranda / Absen / Kegiatan / Kas / Profil), jadi indeks 1
-              // membuka tab "Absen", bukan Agenda.
-              final UserRole role = ref.read(sessionProvider).efektif;
-              ref.read(navigationIndexProvider.notifier).state =
-                  indeksTab(role, 'Agenda');
+              ref.read(navigationIndexProvider.notifier).state = 1;
               context.go('/home');
             },
           ),

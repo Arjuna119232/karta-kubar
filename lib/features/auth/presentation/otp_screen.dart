@@ -11,7 +11,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/app_icon.dart';
-import '../../../shared/widgets/haptics.dart';
+import '../../../core/utils/haptics.dart';
 
 /// Kode demo karena backend belum aktif.
 const String _kodeDemo = '123456';
@@ -83,7 +83,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     ref.read(sessionProvider.notifier).masuk(
           AuthUser(name: nama, phone: widget.nomor),
         );
-    Haptics.sedang();
+    Haptics.medium();
     context.go('/home');
   }
 
