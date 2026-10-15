@@ -70,6 +70,17 @@ class LocationService {
     _orderId = null;
   }
 
+  /// Titik posisi sekarang untuk marker peta. Null kalau izin lokasi belum ada.
+  Future<({double lat, double lng})?> posisiSekarang() async {
+    try {
+      final p = await current();
+      if (p == null) return null;
+      return (lat: p.latitude, lng: p.longitude);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<Position?> current() async {
     try {
       if (!await ensurePermission()) return null;

@@ -226,6 +226,9 @@ class AppState extends ChangeNotifier {
 
   Future<void> refresh() => loadAll();
 
+  /// Posisi mitra untuk marker peta di Beranda (null kalau izin belum ada).
+  Future<({double lat, double lng})?> posisiSaya() => _loc.posisiSekarang();
+
   void _cacheSave() {
     _p?.setString(
         'cache',
@@ -441,6 +444,9 @@ class AppState extends ChangeNotifier {
       history.where((o) => o.isDone && !o.doneAt.toLocal().isBefore(from)).toList();
   int earned(DateTime from) => doneSince(from).fold(0, (s, o) => s + o.fee);
   int get todayEarnings => earned(_today);
+
+  /// Target harian mitra (bisa diubah di Jadwal nanti); dipakai untuk progres.
+  static const int targetHarian = 75000;
   int get todayCount => doneSince(_today).length;
   double get avgRating => ratings.isEmpty ? 0 : ratings.fold(0, (s, r) => s + r.stars) / ratings.length;
 
@@ -512,7 +518,7 @@ class AppState extends ChangeNotifier {
   }
 
   void _cekTarget() {
-    if (todayCount > 0 && todayCount % 3 == 0) {
+    if (todayCount > 0 && todayCount % 3 == 0 && todayEarnings >= targetHarian) {
       _notif(JenisNotif.targetHarian, 'Target harian tercapai',
           '$todayCount order selesai hari ini. Lanjut!');
     }

@@ -115,8 +115,12 @@ class Notifikasi {
   final _plugin = FlutterLocalNotificationsPlugin();
   bool siap = false;
 
-  static const chPenting = 'orders';
-  static const chStatus = 'status';
+  static const chOrder = 'incoming_order_channel';
+  static const chJalan = 'ongoing_order_channel';
+  static const chPanggilan = 'incoming_call_channel';
+  static const chSistem = 'system_alert_channel';
+  static const chDarurat = 'emergency_channel';
+  static const chInfo = 'info_channel';
 
   Future<void> init() async {
     if (siap) return;
@@ -126,35 +130,84 @@ class Notifikasi {
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     await android?.createNotificationChannel(const AndroidNotificationChannel(
-      chPenting,
-      'Order & Penting',
-      description: 'Order masuk, warga menelepon, darurat',
+      chOrder,
+      'Order Masuk',
+      description: 'Order baru menunggu (< 30 detik)',
       importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
     ));
     await android?.createNotificationChannel(const AndroidNotificationChannel(
-      chStatus,
-      'Status & Peringatan',
-      description: 'GPS, internet, baterai, pengingat',
+      chJalan,
+      'Order Berjalan',
+      description: 'Order yang sedang dikerjakan',
+      importance: Importance.high,
+    ));
+    await android?.createNotificationChannel(const AndroidNotificationChannel(
+      chPanggilan,
+      'Warga Telepon',
+      description: 'Panggilan masuk dari warga',
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+    ));
+    await android?.createNotificationChannel(const AndroidNotificationChannel(
+      chSistem,
+      'Peringatan Sistem',
+      description: 'GPS mati, internet putus, baterai kritis, order dibatalkan',
+      importance: Importance.high,
+    ));
+    await android?.createNotificationChannel(const AndroidNotificationChannel(
+      chDarurat,
+      'Mode Darurat',
+      description: 'SOS dan keadaan bahaya',
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+    ));
+    await android?.createNotificationChannel(const AndroidNotificationChannel(
+      chInfo,
+      'Pengingat',
+      description: 'Pengingat pickup, dropoff, istirahat, target',
       importance: Importance.defaultImportance,
     ));
+    await android?.requestNotificationsPermission();
     siap = true;
+  }
+
+  static String channelOf(JenisNotif j) {
+    if (j == JenisNotif.orderMasuk) return chOrder;
+    if (j == JenisNotif.orderBerjalan) return chJalan;
+    if (j == JenisNotif.wargaTelepon) return chPanggilan;
+    if (j == JenisNotif.sos) return chDarurat;
+    if (j == JenisNotif.gpsOff ||
+        j == JenisNotif.internetHilang ||
+        j == JenisNotif.bateraiKritis ||
+        j == JenisNotif.orderDibatalkan) {
+      return chSistem;
+    }
+    return chInfo;
   }
 
   AndroidNotificationDetails _detail(JenisNotif j, {required bool layarPenuh}) {
     final penting = j.importance == Importance.max;
     return AndroidNotificationDetails(
-      penting ? chPenting : chStatus,
-      penting ? 'Order & Penting' : 'Status & Peringatan',
+      channelOf(j),
+      j.judul,
       channelDescription: j.alasan,
       importance: j.importance,
       priority: penting ? Priority.max : Priority.defaultPriority,
       ongoing: j.persisten,
       autoCancel: !j.persisten,
       onlyAlertOnce: true,
-      fullScreenIntent: layarPenuh,
-      category: layarPenuh
-          ? AndroidNotificationCategory.call
-          : AndroidNotificationCategory.event,
+      fullScreenIntent: layarPenuh || j == JenisNotif.orderMasuk,
+      usesChronometer: j == JenisNotif.orderBerjalan,
+      chronometerCountDown: false,
+      category: j == JenisNotif.orderBerjalan
+          ? AndroidNotificationCategory.service
+          : (layarPenuh
+              ? AndroidNotificationCategory.call
+              : AndroidNotificationCategory.event),
       playSound: penting,
       enableVibration: penting,
       visibility: NotificationVisibility.public,
