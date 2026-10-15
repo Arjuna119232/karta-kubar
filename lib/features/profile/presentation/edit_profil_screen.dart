@@ -29,21 +29,33 @@ class EditProfilScreen extends ConsumerStatefulWidget {
 }
 
 class _EditProfilScreenState extends ConsumerState<EditProfilScreen> {
-  late final TextEditingController _nama =
-      TextEditingController(text: ref.read(sessionProvider).user?.name ?? '');
-  late final TextEditingController _telepon =
-      TextEditingController(text: ref.read(sessionProvider).user?.phone ?? '');
-  final TextEditingController _nik = TextEditingController(
-      text: ref.read(sessionProvider).user?.nik ?? '');
-  final TextEditingController _alamat =
-      TextEditingController(text: ref.read(sessionProvider).user?.alamat ?? '');
-  final TextEditingController _rt =
-      TextEditingController(text: ref.read(sessionProvider).user?.rt ?? '');
-  final TextEditingController _rw =
-      TextEditingController(text: ref.read(sessionProvider).user?.rw ?? '');
+  // PENTING: keenam controller dibuat di `initState`, BUKAN sebagai
+  // `final X = TextEditingController(text: ref.read(...))` di baris field.
+  // Dart tidak mengizinkan akses member instance (`ref`) di initializer field,
+  // jadi `final` biasa = compile error "Undefined name 'ref'".
+  // `late final` bisa lolos kompilasi, tapi initializer-nya baru jalan saat
+  // controller dibaca pertama kali - lebih sulit dilacak kalau ada bug.
+  late final TextEditingController _nama;
+  late final TextEditingController _telepon;
+  late final TextEditingController _nik;
+  late final TextEditingController _alamat;
+  late final TextEditingController _rt;
+  late final TextEditingController _rw;
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _simpan = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final AuthUser? u = ref.read(sessionProvider).user;
+    _nama = TextEditingController(text: u?.name ?? '');
+    _telepon = TextEditingController(text: u?.phone ?? '');
+    _nik = TextEditingController(text: u?.nik ?? '');
+    _alamat = TextEditingController(text: u?.alamat ?? '');
+    _rt = TextEditingController(text: u?.rt ?? '');
+    _rw = TextEditingController(text: u?.rw ?? '');
+  }
 
   @override
   void dispose() {

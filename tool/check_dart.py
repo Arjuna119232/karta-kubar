@@ -689,6 +689,59 @@ for f in files:
                 "pakai `context.%s` tapi import `%s` tidak ada -> compile error"
                 % (m, EXT_KONTEKSTUAL[m]))
 
+# ------------------------------------------------- 11b. ref/context di field initializer
+# KELAS BUG NYATA (ketahuan dari CI 15 Okt 2026, run `main` GAGAL):
+#   class _XState extends ConsumerState<X> {
+#     final TextEditingController _nik = TextEditingController(
+#         text: ref.read(sessionProvider).user?.nik ?? '');   // <-- 4 error
+# Dart tidak mengizinkan akses member INSTANCE di initializer field, jadi
+# `final` biasa = compile error "Undefined name 'ref'". `late final` lolos
+# kompilasi (initializer ditunda) tapi runtime-nya baru jalan saat dibaca.
+# `check_dart.py` TIDAK bisa menangkapnya dari symbol table karena `ref`
+# memang ada sebagai member - jadi harus dicek dari bentuk kodenya.
+#
+# POLA WAJIB (sudah diuji dengan fault injection):
+#   - hanya field di body class (indent 2 spasi, kelas mulai kolom 0)
+#   - SKIP `late` (legal, initializer ditunda)
+#   - SKIP `static` (tidak punya akses ke instance sama sekali)
+#   - SKIP getter (`=>`) dan initializer yang cuma `const`/literal
+#   - initializer boleh multiline: kumpulkan sampai kurung seimbang DAN ';'
+MEMBER_FIELD = re.compile(r"\b(ref|context|widget)\s*\.\s*\w")
+FIELD_DECL = re.compile(
+    r"^  (?!late\b)(?!static\b)(?:covariant\b\s+)?final\b[^=;]*?\s(\w+)\s*=\s*(.*)$"
+)
+for f in files:
+    if f in dead:
+        continue
+    lines = raw[f].split("\n")
+    in_class = False
+    for i, ln in enumerate(lines, 1):
+        if re.match(r"^(?:abstract\s+)?class\s", ln):
+            in_class = True
+            continue
+        if in_class and ln.startswith("}"):
+            in_class = False
+            continue
+        if not in_class or "=>" in ln:
+            continue
+        m = FIELD_DECL.match(ln)
+        if not m:
+            continue
+        buf = m.group(2)
+        j = i
+        while j < len(lines) and j - i < 8 and not (
+            buf.count("(") == buf.count(")") and ";" in buf
+        ):
+            j += 1
+            buf += " " + lines[j - 1].strip()
+        hit = MEMBER_FIELD.search(buf)
+        if hit:
+            bad("REF-FIELD-AWAL", f,
+                "field `final %s` memakai `%s.` di initializer - Dart menolak "
+                "akses member instance di field initializer (compile error "
+                "'Undefined name'). Pindah ke initState()." % (m.group(1), hit.group(1))
+            )
+
 # ---------------------------------------------------------------- report
 print("=" * 62)
 print("  KUNBAR Connect - Dart static check")
@@ -707,7 +760,7 @@ if problems:
              "CTOR-UNKNOWN": 3, "ROUTE-UNKNOWN": 4,
              "IMPORT-RESOLVE": 5, "UNUSED-IMPORT": 6, "UNUSED-PRIVATE": 7,
              "UNUSED-PROVIDER": 8, "BRACE": 9, "NON-LATIN": 10, "ASSET": 11,
-             "FIELD-HILANG": 2, "EXT-HILANG": 2}
+             "FIELD-HILANG": 2, "EXT-HILANG": 2, "REF-FIELD-AWAL": 2}
     for kind, path, msg in sorted(problems, key=lambda p: (order.get(p[0], 9), p[1])):
         print(f"  [{kind}] {path}\n      {msg}")
     sys.exit(1)
