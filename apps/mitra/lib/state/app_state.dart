@@ -188,7 +188,7 @@ class AppState extends ChangeNotifier {
     online = v;
     // PENTING: status dibalik + UI dibangun ulang SEBELUM kerja berat.
     // Dohulu `await _startLokasi(...)` menahan notifyListeners, dan
-    _startLokasi -> Geolocator.requestPermission() MENUNGGU user menutup dialog
+    // _startLokasi -> Geolocator.requestPermission() menunggu user menutup dialog
     // Android. Akibatnya tombol ONLINE terlihat "tidak merespons".
     menyiapkanOnline = v;
     notifyListeners();
