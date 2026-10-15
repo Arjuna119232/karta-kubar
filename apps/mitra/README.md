@@ -29,8 +29,15 @@ APK: `build/app/outputs/flutter-apk/app-release.apk`.
 Atau lewat GitHub: tambah 6 secret di atas, jalankan workflow "Build KUNBAR Mitra APK".
 
 ## Catatan desain
+- **Notifikasi ONLINE yang tidak bisa dihapus**: saat mitra menekan ONLINE, `LocationService.startOnline()`
+  menyalakan *foreground service* geolocator dengan `ForegroundNotificationConfig(setOngoing: true)`
+  → notifikasi "KUNBAR Mitra • Sedang ONLINE" **tidak bisa di-swipe**, hanya hilang saat OFFLINE / Keluar.
+  Sampling adaptif: idle 100 m / 30 detik, ada order aktif 30 m / 10 detik.
+  Kalau izin lokasi ditolak, service GPS tidak bisa jalan → fallback ke notifikasi lokal
+  `ongoing: true` (`NotificationService.showOnlineStatus()`), lalu dibersihkan saat OFFLINE.
 - **Google Maps** lewat intent `google.navigation:` (tanpa Maps SDK/API key, lebih ringan).
-- **GPS** hanya jalan saat ada order aktif (foreground service, akurasi sedang, filter 30 m).
+- **GPS** menyala selama ONLINE (bukan hanya saat order aktif) supaya notifikasi status
+  permanen bisa hidup; sering hemat baterai karena hanya terkirim saat geser 100 m.
 - **Offline**: order/riwayat terakhir disimpan di perangkat; banner muncul saat tanpa sinyal.
 - **Push FCM**: sisi app siap (channel `orders`, suara + getar). Pengirimnya harus server
   (Edge Function/trigger saat insert order) memakai `fcm_token` di tabel `profiles`.

@@ -51,10 +51,21 @@ class HomeScreen extends StatelessWidget {
                 if (err != null && context.mounted) toast(context, err);
               },
             ),
-            Padding(
+Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Text(s.online ? 'Ketuk untuk berhenti terima order' : 'Ketuk untuk mulai terima order', textAlign: TextAlign.center),
             ),
+            if (s.online)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text(
+                  s.lokasiDariGps
+                      ? 'Notifikasi "KUNBAR Mitra • Sedang ONLINE" muncul dan tidak bisa dihapus. Baru hilang saat kamu tekan OFFLINE.'
+                      : 'Izin lokasi belum diberikan — notifikasi status ONLINE tetap muncul. Izinkan lokasi di Pengaturan HP agar GPS ikut aktif.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 13),
+                ),
+              ),
             const SizedBox(height: 8),
             Card(
               child: Padding(

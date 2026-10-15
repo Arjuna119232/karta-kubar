@@ -100,6 +100,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> logout() async {
     await setOnline(false);
+    await _stopLokasi();
     await _loc.stop();
     await repo.signOut();
     loggedIn = false;
@@ -166,11 +167,13 @@ class AppState extends ChangeNotifier {
       await repo.setOnline(v);
     } catch (_) {}
     if (v) {
+      await _startLokasi(aktifOrder: active != null && active!.isActive);
       _listen();
     } else {
       await _sub?.cancel();
       _sub = null;
       incoming = [];
+      await _stopLokasi();
     }
     notifyListeners();
     return null;
@@ -241,16 +244,45 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // ---------- lokasi (hanya saat order aktif) ----------
+  // ---------- lokasi & notifikasi ONLINE ----------
+  // Selama ONLINE, GPS + notifikasi foreground (tidak bisa di-swipe) menyala.
+  // Mati hanya ketika mitra menekan OFFLINE / keluar.
+  bool lokasiDariGps = false;
+
   void _syncLocation() {
-    if (active != null && active!.isActive) {
-      _loc.start((p) {
-        final id = active?.id;
-        if (id != null) repo.pushLocation(id, p.latitude, p.longitude).catchError((_) {});
-      });
-    } else {
-      _loc.stop();
+    if (!online) {
+      _stopLokasi();
+      return;
     }
+    _startLokasi(aktifOrder: active != null && active!.isActive);
+  }
+
+  Future<void> _startLokasi({required bool aktifOrder}) async {
+    final id = aktifOrder ? active?.id : null;
+    final ok = await _loc.startOnline(
+      aktifOrder: aktifOrder,
+      orderId: id,
+      onPos: (p) {
+        if (id != null && id.isNotEmpty) {
+          repo.pushLocation(id, p.latitude, p.longitude).catchError((_) {});
+        }
+      },
+    );
+    lokasiDariGps = ok;
+    if (ok) {
+      // Notifikasi foreground (dari service GPS) yang_handle.
+      await NotificationService.instance.cancelOnlineStatus();
+    } else {
+      // Izin lokasi ditolak: pakai notifikasi lokal yang tetap nempel.
+      await NotificationService.instance.showOnlineStatus();
+    }
+    notifyListeners();
+  }
+
+  Future<void> _stopLokasi() async {
+    await _loc.stop();
+    await NotificationService.instance.cancelOnlineStatus();
+    lokasiDariGps = false;
   }
 
   Future<String> sos() async {
@@ -323,6 +355,7 @@ class AppState extends ChangeNotifier {
   void dispose() {
     _sub?.cancel();
     _loc.stop();
+    NotificationService.instance.cancelOnlineStatus();
     super.dispose();
   }
 }

@@ -2,10 +2,15 @@ import 'dart:async';
 
 import 'package:geolocator/geolocator.dart';
 
-/// GPS HANYA menyala saat ada order aktif (hemat baterai).
+/// GPS + notifikasi foreground.
+///
+/// Selama mitra ONLINE, service ini hidup terus dan notifikasinya
+/// `setOngoing: true` -> tidak bisa di-swipe, baru hilang saat OFFLINE.
 class LocationService {
   StreamSubscription<Position>? _sub;
   bool get running => _sub != null;
+  bool _aktifOrder = false;
+  String? _orderId;
 
   Future<bool> ensurePermission() async {
     if (!await Geolocator.isLocationServiceEnabled()) return false;
@@ -14,25 +19,46 @@ class LocationService {
     return p == LocationPermission.always || p == LocationPermission.whileInUse;
   }
 
-  Future<void> start(void Function(Position) onPos) async {
-    if (running) return;
-    if (!await ensurePermission()) return;
+  /// Nyalakan GPS + notifikasi "Sedang ONLINE".
+  /// [aktifOrder] = ada order yang sedang jalan -> sampling rapat.
+  /// Mengembalikan false kalau izin lokasi ditolak (panggil pakai fallback).
+  Future<bool> startOnline({
+    required bool aktifOrder,
+    String? orderId,
+    void Function(Position)? onPos,
+  }) async {
+    if (running) {
+      // Sudah hidup: set ulang hanya kalau mode atau order-nya berubah.
+      if (_aktifOrder == aktifOrder && _orderId == orderId) return true;
+      await stop();
+    }
+    if (!await ensurePermission()) return false;
+    _aktifOrder = aktifOrder;
+    _orderId = orderId;
     _sub = Geolocator.getPositionStream(
       locationSettings: AndroidSettings(
-        accuracy: LocationAccuracy.medium,
-        distanceFilter: 30,
-        intervalDuration: const Duration(seconds: 10),
-        foregroundNotificationConfig: const ForegroundNotificationConfig(
-          notificationTitle: 'KUNBAR Mitra',
-          notificationText: 'Lokasi dibagikan ke warga selama order aktif',
+        accuracy: aktifOrder ? LocationAccuracy.medium : LocationAccuracy.low,
+        distanceFilter: aktifOrder ? 30 : 100,
+        intervalDuration: Duration(seconds: aktifOrder ? 10 : 30),
+        foregroundNotificationConfig: ForegroundNotificationConfig(
+          notificationTitle: 'KUNBAR Mitra • Sedang ONLINE',
+          notificationText: aktifOrder
+              ? 'Order aktif. Lokasi Anda dikirim ke warga.'
+              : 'Menunggu order di sekitar Anda. Buka aplikasi lalu tekan OFFLINE untuk berhenti.',
+          notificationChannelName: 'Status ONLINE',
+          setOngoing: true, // tidak bisa di-swipe pengguna
+          enableWakeLock: aktifOrder,
         ),
       ),
-    ).listen(onPos, onError: (_) {});
+    ).listen(onPos ?? (_) {}, onError: (_) {});
+    return true;
   }
 
   Future<void> stop() async {
     await _sub?.cancel();
     _sub = null;
+    _aktifOrder = false;
+    _orderId = null;
   }
 
   Future<Position?> current() async {

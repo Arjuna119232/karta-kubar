@@ -100,4 +100,32 @@ class NotificationService {
       ),
     );
   }
+
+  /// Fallback kalau izin lokasi ditolak: notifikasi "ONLINE" yang tetap
+  /// nempel (ongoing) walau service GPS tidak bisa jalan.
+  static const _idOnline = 999001;
+
+  Future<void> showOnlineStatus() async {
+    await init();
+    return _plugin.show(
+      _idOnline,
+      'KUNBAR Mitra • Sedang ONLINE',
+      'Menunggu order. Buka aplikasi lalu tekan OFFLINE untuk berhenti.',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'online_status',
+          'Status ONLINE',
+          channelDescription: 'Tanda mitra sedang ONLINE menerima order',
+          ongoing: true,
+          autoCancel: false,
+          onlyAlertOnce: true,
+          importance: Importance.low,
+          priority: Priority.low,
+          category: AndroidNotificationCategory.service,
+        ),
+      ),
+    );
+  }
+
+  Future<void> cancelOnlineStatus() => _plugin.cancel(_idOnline);
 }
