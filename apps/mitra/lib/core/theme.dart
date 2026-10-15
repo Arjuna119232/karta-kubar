@@ -31,7 +31,7 @@ ThemeData buildTheme(Brightness b) {
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.field)),
       contentPadding: const EdgeInsets.all(18),
     ),
     listTileTheme: const ListTileThemeData(minVerticalPadding: 14),

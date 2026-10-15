@@ -13,7 +13,7 @@ class JadwalScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<AppState>();
-    final target = s.targetHarian;
+    final target = AppState.targetHarian;
     final tercapai = s.todayEarnings;
 
     return Scaffold(

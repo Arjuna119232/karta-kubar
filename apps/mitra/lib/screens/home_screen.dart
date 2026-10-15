@@ -256,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final pos = await context.read<AppState>().posisiSaya();
       if (!mounted || pos == null) return;
-      setState(() => _saya = pos);
+      setState(() => _saya = AnyLatLng(pos.lat, pos.lng));
     } catch (_) {
       // Izin lokasi belum diberikan: peta tetap jalan tanpa titik biru.
     }
