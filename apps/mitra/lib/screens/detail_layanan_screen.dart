@@ -76,7 +76,7 @@ class _DetailLayananScreenState extends State<DetailLayananScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          _Judul('Pengaturan'),
+          const _Judul('Pengaturan'),
           Text('Radius maksimal: ${_p.radiusKm} km'),
           Slider(
             value: _p.radiusKm.toDouble(),
@@ -123,7 +123,7 @@ class _DetailLayananScreenState extends State<DetailLayananScreen> {
                 'Berisiko: order langsung diterima tanpa kamu pilih.'),
           ),
           const SizedBox(height: 8),
-          _Judul('Prioritas'),
+          const _Judul('Prioritas'),
           SegmentedButton<PrioritasLayanan>(
             showSelectedIcon: false,
             segments: [
@@ -134,7 +134,7 @@ class _DetailLayananScreenState extends State<DetailLayananScreen> {
             onSelectionChanged: (v) => setState(() => _p = _p.salin(prioritas: v.first)),
           ),
           const SizedBox(height: 20),
-          _Judul('Statistik'),
+          const _Judul('Statistik'),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -153,7 +153,7 @@ class _DetailLayananScreenState extends State<DetailLayananScreen> {
             style: TextStyle(fontSize: 12),
           ),
           const SizedBox(height: 20),
-          _Judul('Info'),
+          const _Judul('Info'),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),

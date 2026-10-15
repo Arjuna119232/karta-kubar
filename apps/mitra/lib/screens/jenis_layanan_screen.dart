@@ -381,7 +381,7 @@ class _DialogLayanan extends StatelessWidget {
             ),
             if (!aktif && adaOrderAktif) ...[
               const SizedBox(height: 10),
-              Row(
+              const Row(
                 children: [
                   const Icon(Icons.info_rounded, size: 16, color: Colors.orange),
                   const SizedBox(width: 6),
