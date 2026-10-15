@@ -28,6 +28,16 @@ dependencies:
   #   cross_file 0.3.4+2 -> sdk ^3.3.0
   # `cross_file` dideklarasikan eksplisit karena `XFile` dipakai langsung
   # (dilarang mengimpor dependensi transitif).
+  # Peta gratis tanpa API key: any_map sebagai satu API, any_map_maplibre
+  # yang membawa MapLibre (OpenFreeMap = tiles vektor tanpa kunci).
+  # PENTING: any_map_maplibre -> maplibre_gl yang WAJIB Java 21 di CI
+  # (lihat .github/workflows/build.yml, java-version: '21').
+  any_map: ^1.0.0
+  any_map_maplibre: ^1.0.0
+  # geolocator DIKUNCI di 12.x, sama seperti APK Mitra. 13.x mengubah
+  # `getCurrentPosition` jadi wajib `locationSettings` dan menarik paket
+  # yang butuh Dart/compileSdk lebih baru.
+  geolocator: ^12.0.0
   image_picker: ^1.1.2
   path_provider: ^2.1.5
   share_plus: ^12.0.2

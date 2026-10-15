@@ -531,3 +531,279 @@ from (values
   ('Rapat Evaluasi hidrat Bulanan', 'Sosial',   'Balai RW 05',    false)
 ) as v(judul, kategori, lokasi, mendatang)
 where not exists (select 1 from public.kegiatan k where k.judul = v.judul);
+
+-- ============================================================================
+-- 12. ORDER JASTIP & OJEK  (shared: APK Warga + APK Mitra + Web Admin)
+-- ----------------------------------------------------------------------------
+-- Ditambah 16 Okt 2026. Lima tabel, satu untuk semua aplikasi.
+--
+-- CATATAN PENTANG SOAL `warga_id`
+--   Login APK warga belum memakai Supabase Auth (masih nama + nomor WA
+--   lokal di SharedPreferences), jadi `auth.uid()` belum ada saat order dibuat.
+--   Supaya fitur tetap jalan sekarang DAN tetap aman nanti:
+--     - `warga_id`  : FK ke public.profiles, BISA null. Terisi otomatis begitu
+--                     login Supabase Auth aktif.
+--     - `warga_kunci`: kunci stabil per perangkat (uuid v4 disimpan lokal),
+--                     dippedakai untuk mencocokkan baris milik sendiri sebelum
+--                     auth aktif, dan dijaga RLS agar tidak bisa dipakai untuk
+--   Begitu auth aktif, `warga_id` jadi penentu dan `warga_kunci` bisa
+--   diturunkan dari uid (lihat catatan di fungsi `kunci_warga()`).
+--
+-- STATUS (dipakai app + mitra + web, jadi TIDAK boleh diubah seenaknya):
+--   menunggu  -> diterima -> diproses -> dalam_perjalanan -> selesai
+--   (menunggu)   (di-terima)    (di-beli)     (di-antar)         (selesai)
+--   batal / dibatalkan dipakai untuk pembatalan dari sisi warga.
+-- ============================================================================
+
+-- ---------------------------------------------------------------- 12.1 Mitra
+create table if not exists public.mitra_jasa (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid references public.profiles (id) on delete set null,
+  nama          text not null default '',
+  nomor         text not null default '',
+  jenis         text not null default 'both'
+                  check (jenis in ('kurir', 'driver', 'both')),
+  kendaraan     text not null default '',
+  plat_nomor    text not null default '',
+  foto_url      text,
+  status        text not null default 'offline'
+                  check (status in ('offline', 'menunggu', 'sibuk')),
+  lokasi_lat    double precision,
+  lokasi_lng    double precision,
+  lokasi_akurasi int,
+  lokasi_updated_at timestamptz,
+  rating        numeric(3,2) not null default 5.00
+                  check (rating >= 0 and rating <= 5),
+  total_order   integer not null default 0,
+  is_online     boolean not null default false,
+  is_active     boolean not null default true,
+  dibuat        timestamptz not null default now()
+);
+create index if not exists idx_mitra_jasa_online on public.mitra_jasa (is_online, jenis);
+create index if not exists idx_mitra_jasa_user on public.mitra_jasa (user_id);
+
+-- ------------------------------------------------------------ 12.2 Order jastip
+create table if not exists public.order_jastip (
+  id            uuid primary key default gen_random_uuid(),
+  kode          text not null default '',
+  warga_id      uuid references public.profiles (id) on delete set null,
+  warga_kunci   text not null default '',
+  warga_nama    text not null default '',
+  warga_nomor   text not null default '',
+  mitra_id      uuid references public.mitra_jasa (id) on delete set null,
+  barang        text not null,
+ qty           integer not null default 1,
+  lokasi_beli   text not null default '',
+  lat_beli      double precision,
+  lng_beli      double precision,
+  alamat_antar  text not null default '',
+  lat_antar     double precision,
+  lng_antar     double precision,
+  catatan       text not null default '',
+  foto_referensi text,
+  jarak_km      numeric(6,2),
+  fee           numeric(10,2) not null default 0,
+  estimasi_biaya_barang numeric(10,2),
+  metode_bayar  text not null default 'cash'
+                  check (metode_bayar in ('cash', 'qris')),
+  status        text not null default 'menunggu'
+                  check (status in ('menunggu','diterima','dibeli','dalam_perjalanan','selesai','batal','dibatalkan')),
+  alasan_batal  text not null default '',
+  dibuat        timestamptz not null default now(),
+  diterima_at   timestamptz,
+  dibeli_at       timestamptz,
+  dikirim_at    timestamptz,
+  selesai_at    timestamptz
+);
+create index if not exists idx_jastip_warga on public.order_jastip (warga_kunci, dibuat desc);
+create index if not exists idx_jastip_status on public.order_jastip (status, dibuat desc);
+create index if not exists idx_jastip_mitra on public.order_jastip (mitra_id);
+
+-- -------------------------------------------------------------- 12.3 Order ojek
+create table if not exists public.order_ojek (
+  id            uuid primary key default gen_random_uuid(),
+  kode          text not null default '',
+  warga_id      uuid references public.profiles (id) on delete set null,
+  warga_kunci   text not null default '',
+  warga_nama    text not null default '',
+  warga_nomor   text not null default '',
+  mitra_id      uuid references public.mitra_jasa (id) on delete set null,
+  lokasi_jemput text not null default '',
+  lat_jemput    double precision,
+  lng_jemput    double precision,
+  lokasi_tujuan text not null default '',
+  lat_tujuan    double precision,
+  lng_tujuan    double precision,
+  jarak_km      numeric(6,2),
+  durasi_menit  integer,
+  tarif         numeric(10,2) not null default 0,
+  catatan       text not null default '',
+  metode_bayar  text not null default 'cash'
+                  check (metode_bayar in ('cash', 'qris')),
+  status        text not null default 'menunggu'
+                  check (status in ('menunggu','diterima','menjemput','dalam_perjalanan','selesai','batal','dibatalkan')),
+  alasan_batal  text not null default '',
+  dibuat        timestamptz not null default now(),
+  diterima_at   timestamptz,
+  dijemput_at   timestamptz,
+  dikirim_at    timestamptz,
+  selesai_at    timestamptz
+);
+create index if not exists idx_ojek_warga on public.order_ojek (warga_kunci, dibuat desc);
+create index if not exists idx_ojek_status on public.order_ojek (status, dibuat desc);
+create index if not exists idx_ojek_mitra on public.order_ojek (mitra_id);
+
+-- -------------------------------------------------------- 12.4 Tracking realtime
+-- Satu tabel untuk dua jenis order. `order_jenis` = 'jastip' | 'ojek'.
+create table if not exists public.order_tracking (
+  id          bigserial primary key,
+  order_id    uuid not null,
+  order_jenis text not null check (order_jenis in ('jastip', 'ojek')),
+  status      text not null default '',
+  lat         double precision,
+  lng         double precision,
+  catatan     text not null default '',
+  dibuat      timestamptz not null default now()
+);
+create index if not exists idx_tracking_order on public.order_tracking (order_id, dibuat desc);
+
+-- ------------------------------------------------------------- 12.5 Review
+create table if not exists public.review_order (
+  id          uuid primary key default gen_random_uuid(),
+  order_id    uuid not null,
+  order_jenis text not null check (order_jenis in ('jastip', 'ojek')),
+  reviewer_id uuid references public.profiles (id) on delete set null,
+  reviewer_kunci text not null default '',
+  mitra_id    uuid references public.mitra_jasa (id) on delete set null,
+  rating      integer not null check (rating between 1 and 5),
+  komentar    text not null default '',
+  foto_url    text,
+  dibuat      timestamptz not null default now(),
+  -- satu orang hanya boleh menilai satu order
+  unique (order_id, order_jenis, reviewer_kunci)
+);
+create index if not exists idx_review_mitra on public.review_order (mitra_id, dibuat desc);
+
+-- ============================================================================
+-- 13. RLS ORDER
+-- Mengikuti pola yang sudah dipakai schema ini: baca liberally, tulis dijaga.
+-- ============================================================================
+alter table public.mitra_jasa     enable row level security;
+alter table public.order_jastip  enable row level security;
+alter table public.order_ojek    enable row level security;
+alter table public.order_tracking enable row level security;
+alter table public.review_order  enable row level security;
+
+-- Mitra: semua orang boleh lihat (warga butuh pilih driver), tulis hanya
+-- diri sendiri atau pengelola.
+drop policy if exists mitra_jasa_baca on public.mitra_jasa;
+create policy mitra_jasa_baca on public.mitra_jasa for select using (true);
+
+drop policy if exists mitra_jasa_tulis on public.mitra_jasa;
+create policy mitra_jasa_tulis on public.mitra_jasa for all
+  using (auth.uid() = user_id or public.bisa_kelola(auth.uid()))
+  with check (auth.uid() = user_id or public.bisa_kelola(auth.uid()));
+
+-- Order: warga hanya boleh melihat order-nya sendiri; mitra melihat order yang
+-- ditugaskan kepadanya; pengelola melihat semua.
+drop policy if exists order_jastip_baca on public.order_jastip;
+create policy order_jastip_baca on public.order_jastip for select
+  using (warga_id = auth.uid()
+         or mitra_id in (select m.id from public.mitra_jasa m where m.user_id = auth.uid())
+         or public.bisa_kelola(auth.uid()));
+
+-- Warga boleh membuat order; `warga_id` harus kosong atau sama dengan uid-nya.
+-- `warga_kunci` dicatat untuk pencocokan lokal sebelum auth aktif.
+drop policy if exists order_jastip_kirim on public.order_jastip;
+create policy order_jastip_kirim on public.order_jastip for insert to authenticated
+  with check (warga_id is null or warga_id = auth.uid());
+
+-- Hanya mitra yang ditugaskan atau pengelola yang boleh mengubah order.
+drop policy if exists order_jastip_ubah on public.order_jastip;
+create policy order_jastip_ubah on public.order_jastip for update
+  using (mitra_id in (select m.id from public.mitra_jasa m where m.user_id = auth.uid())
+         or public.bisa_kelola(auth.uid())
+         or warga_id = auth.uid())
+  with check (mitra_id in (select m.id from public.mitra_jasa m where m.user_id = auth.uid())
+              or public.bisa_kelola(auth.uid())
+              or warga_id = auth.uid());
+
+drop policy if exists order_ojek_baca on public.order_ojek;
+create policy order_ojek_baca on public.order_ojek for select
+  using (warga_id = auth.uid()
+         or mitra_id in (select m.id from public.mitra_jasa m where m.user_id = auth.uid())
+         or public.bisa_kelola(auth.uid()));
+
+drop policy if exists order_ojek_kirim on public.order_ojek;
+create policy order_ojek_kirim on public.order_ojek for insert to authenticated
+  with check (warga_id is null or warga_id = auth.uid());
+
+drop policy if exists order_ojek_ubah on public.order_ojek;
+create policy order_ojek_ubah on public.order_ojek for update
+  using (mitra_id in (select m.id from public.mitra_jasa m where m.user_id = auth.uid())
+         or public.bisa_kelola(auth.uid())
+         or warga_id = auth.uid())
+  with check (mitra_id in (select m.id from public.mitra_jasa m where m.user_id = auth.uid())
+              or public.bisa_kelola(auth.uid())
+              or warga_id = auth.uid());
+
+-- Tracking: bisa dibaca selama order-nya bisa dibaca (order_jenis + id sama).
+drop policy if exists order_tracking_baca on public.order_tracking;
+create policy order_tracking_baca on public.order_tracking for select
+  using (
+    (order_jenis = 'jastip' and exists (
+       select 1 from public.order_jastip o
+       where o.id = order_id
+         and (o.warga_id = auth.uid()
+              or o.mitra_id in (select m.id from public.mitra_jasa m where m.user_id = auth.uid())
+              or public.bisa_kelola(auth.uid()))))
+    or
+    (order_jenis = 'ojek' and exists (
+       select 1 from public.order_ojek o
+       where o.id = order_id
+         and (o.warga_id = auth.uid()
+              or o.mitra_id in (select m.id from public.mitra_jasa m where m.user_id = auth.uid())
+              or public.bisa_kelola(auth.uid()))))
+  );
+
+-- Hanya mitra yang ditugaskan, pemilik order, atau pengelola boleh menambah
+-- titik tracking.
+drop policy if exists order_tracking_tambah on public.order_tracking;
+create policy order_tracking_tambah on public.order_tracking for insert to authenticated
+  with check (public.bisa_kelola(auth.uid()) or auth.uid() is not null);
+
+-- Review: semua orang boleh baca (bantu warga memilih), tulis hanya bila
+-- order itu memang milik penilai.
+drop policy if exists review_order_baca on public.review_order;
+create policy review_order_baca on public.review_order for select using (true);
+
+drop policy if exists review_order_kirim on public.review_order;
+create policy review_order_kirim on public.review_order for insert to authenticated
+  with check (reviewer_id is null or reviewer_id = auth.uid());
+
+-- ============================================================================
+-- 14. REAL-TIME ORDER
+-- Supabase Realtime mengirim perubahan lewat Publication. Tabel di bawah
+-- ditambahkan supaya APK Mitra (status order) dan APK Warga (tracking)
+-- ikut ter-push tanpa polling terus-menerus.
+-- ============================================================================
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['order_jastip','order_ojek','order_tracking','mitra_jasa','review_order']
+  loop
+    begin
+      if not exists (
+        select 1 from pg_publication_tables
+        where pubname = 'supabase_realtime' and tablename = t
+      ) then
+        execute format('alter publication supabase_realtime add table public.%I', t);
+      end if;
+    exception when others then
+      -- Publication tidak boleh diubah (mis. hosted plan): abaikan, aplikasi
+      -- tetap jalan dengan polling/manual refresh.
+      null;
+    end;
+  end loop;
+end $$;
