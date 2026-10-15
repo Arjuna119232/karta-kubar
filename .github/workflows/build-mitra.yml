@@ -19,9 +19,9 @@ jobs:
       # Analisa hanya memberi laporan; tidak boleh menggagalkan build.
       - run: flutter analyze --no-fatal-infos
         continue-on-error: true
-      - name: Build APK (arm64)
+      - name: Build APK (split per ABI)
         run: >
-          flutter build apk --release --target-platform android-arm64
+          flutter build apk --release --split-per-abi
           --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }}
           --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
           --dart-define=FCM_API_KEY=${{ secrets.FCM_API_KEY }}
@@ -32,5 +32,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: kunbar-mitra-apk
-          path: apps/mitra/build/app/outputs/flutter-apk/app-release.apk
+          path: apps/mitra/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
           if-no-files-found: error
