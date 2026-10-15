@@ -37,6 +37,7 @@ if ! grep -q 'android.permission.CAMERA' "$M"; then
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation"/>
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
     <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"/>
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
@@ -73,7 +74,7 @@ fi
 # Guard: izin yang dipakai kode WAJIB ada di manifest.
 for izin in CAMERA RECORD_AUDIO ACCESS_FINE_LOCATION POST_NOTIFICATIONS \
             READ_CONTACTS CALL_PHONE READ_MEDIA_IMAGES READ_MEDIA_VIDEO \
-            BLUETOOTH_SCAN; do
+            BLUETOOTH_SCAN USE_FULL_SCREEN_INTENT; do
   grep -q "android.permission.$izin" "$M" || { echo "GAGAL: izin $izin tidak ada di manifest"; exit 1; }
 done
 echo "Android siap."

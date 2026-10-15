@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,6 +10,7 @@ import '../core/config.dart';
 import '../core/format.dart';
 import '../models/models.dart';
 import '../services/location_service.dart';
+import '../services/notifikasi.dart';
 import '../services/notification_service.dart';
 import '../services/repository.dart';
 
@@ -34,6 +36,10 @@ class AppState extends ChangeNotifier {
 
   StreamSubscription<List<Order>>? _sub;
   final _rejected = <String>{};
+
+  // Pemantau status (semua hanya hidup saat ONLINE)
+  Timer? _tGps, _tInternet, _tIstirahat;
+  DateTime? _onlineMulai;
 
   // ---------- init & auth ----------
   Future<void> init() async {
@@ -112,6 +118,9 @@ class AppState extends ChangeNotifier {
     await setOnline(false);
     await _stopLokasi();
     await _loc.stop();
+    _hentiPemantau();
+    await Notifikasi.instance.sembunyikan(JenisNotif.sos);
+    await Notifikasi.instance.sembunyikan(JenisNotif.orderDibatalkan);
     await repo.signOut();
     loggedIn = false;
     active = null;
@@ -179,11 +188,17 @@ class AppState extends ChangeNotifier {
     if (v) {
       await _startLokasi(aktifOrder: active != null && active!.isActive);
       _listen();
+      _mulaiPemantau();
     } else {
       await _sub?.cancel();
       _sub = null;
       incoming = [];
       await _stopLokasi();
+      _hentiPemantau();
+      await Notifikasi.instance.sembunyikan(JenisNotif.gpsOff);
+      await Notifikasi.instance.sembunyikan(JenisNotif.internetHilang);
+      await Notifikasi.instance.sembunyikan(JenisNotif.pengingatIstirahat);
+      NotificationService.instance.sembunyikanOrderMasuk();
     }
     notifyListeners();
     return null;
@@ -199,8 +214,10 @@ class AppState extends ChangeNotifier {
       offlineMode = false;
       for (final o in added) {
         NotificationService.instance.showOrder(
-            'Order ${o.typeLabel} baru', '${o.distanceKm.toStringAsFixed(1)} km • ${rp(o.fee)}');
+            'Order ${o.typeLabel} baru',
+            '${o.customerName} - ${o.distanceKm.toStringAsFixed(1)} km - ${rp(o.fee)}');
       }
+      if (added.isNotEmpty) _notifOrderMasuk();
       _cacheSave();
       notifyListeners();
     }, onError: (_) {
@@ -219,6 +236,7 @@ class AppState extends ChangeNotifier {
         return 'Order sudah diambil mitra lain';
       }
       active = r;
+      _notifOrderMasuk();
       _syncLocation();
       _cacheSave();
       notifyListeners();
@@ -231,6 +249,7 @@ class AppState extends ChangeNotifier {
   void reject(Order o) {
     _rejected.add(o.id);
     incoming.removeWhere((x) => x.id == o.id);
+    _notifOrderMasuk();
     notifyListeners();
   }
 
@@ -245,6 +264,7 @@ class AppState extends ChangeNotifier {
       } else {
         active = u;
       }
+      _notifStatusOrder(u.status);
       _syncLocation();
       _cacheSave();
       notifyListeners();
@@ -299,6 +319,8 @@ class AppState extends ChangeNotifier {
     final p = await _loc.current();
     try {
       await repo.sendSos(p?.latitude, p?.longitude, active?.id);
+      await _notif(JenisNotif.sos, 'SOS aktif',
+          'Admin sudah menerima lokasi. Jangan matikan aplikasi.');
       return 'SOS terkirim ke admin${p == null ? ' (lokasi tidak tersedia)' : ' beserta lokasi Anda'}.';
     } catch (_) {
       return 'SOS gagal terkirim. Telepon 112 sekarang.';
@@ -321,6 +343,114 @@ class AppState extends ChangeNotifier {
   int get todayEarnings => earned(_today);
   int get todayCount => doneSince(_today).length;
   double get avgRating => ratings.isEmpty ? 0 : ratings.fold(0, (s, r) => s + r.stars) / ratings.length;
+
+  // ---------- notifikasi: pemicu otomatis ----------
+  Future<void> _notif(JenisNotif j, String judul, String isi) =>
+      Notifikasi.instance.tampilkan(j, judul: judul, isi: isi);
+
+  /// Order masuk = notifikasi PERSISTEN sampai diterima/ditolak.
+  void _notifOrderMasuk() {
+    final n = incoming.length;
+    if (n == 0) {
+      NotificationService.instance.sembunyikanOrderMasuk();
+      return;
+    }
+    final o = incoming.first;
+    _notif(
+      JenisNotif.orderMasuk,
+      n == 1 ? 'Order ${o.typeLabel} baru masuk' : '$n order menunggu',
+      '${o.customerName} - ${o.distanceKm.toStringAsFixed(1)} km - ${rp(o.fee)}',
+    );
+  }
+
+  /// Order selesai / pindah tahap.
+  void _notifStatusOrder(String status) {
+    switch (status) {
+      case 'arrived':
+        _notif(JenisNotif.pengingatDropoff, 'Sudah di lokasi jemput',
+            'Lanjut antar barang atau penumpang ke tujuan.');
+      case 'delivering':
+        _notif(JenisNotif.pengingatPickup, 'Sedang diantar',
+            'Wp Mihrim ke warga kalau sudah sampai.');
+      case 'done':
+        _notif(JenisNotif.penghasilan, 'Order selesai',
+            'Penghasilan hari ini ${rp(todayEarnings)} dari $todayCount order.');
+        _cekTarget();
+      default:
+        break;
+    }
+  }
+
+  void _cekTarget() {
+    if (todayCount > 0 && todayCount % 3 == 0) {
+      _notif(JenisNotif.targetHarian, 'Target harian tercapai',
+          '$todayCount order selesai hari ini. Lanjut!');
+    }
+  }
+
+  /// Timer yang hidup hanya selama ONLINE.
+  void _mulaiPemantau() {
+    _hentiPemantau();
+    _onlineMulai = DateTime.now();
+    _tGps = Timer.periodic(const Duration(seconds: 20), (_) => _cekGps());
+    _tInternet = Timer.periodic(const Duration(seconds: 20), (_) => _cekInternet());
+    _tIstirahat = Timer.periodic(const Duration(minutes: 30), (_) => _cekIstirahat());
+    _cekGps();
+    _cekInternet();
+  }
+
+  void _hentiPemantau() {
+    _tGps?.cancel();
+    _tInternet?.cancel();
+    _tIstirahat?.cancel();
+    _tGps = _tInternet = _tIstirahat = null;
+    _onlineMulai = null;
+  }
+
+  Future<void> _cekGps() async {
+    if (!online) return;
+    final nyala = await _loc.lokasiNyala();
+    if (nyala) {
+      await Notifikasi.instance.sembunyikan(JenisNotif.gpsOff);
+    } else {
+      _notif(JenisNotif.gpsOff, 'GPS dimatikan',
+          'Nyalakan GPS dulu, kalau tidak tidak bisa terima order dan warga tidak melihat posisimu.');
+    }
+  }
+
+  Future<void> _cekInternet() async {
+    if (!online) return;
+    var ada = false;
+    try {
+      final hasil = await InternetAddress.lookup('one.one.one.one')
+          .timeout(const Duration(seconds: 6));
+      ada = hasil.isNotEmpty && hasil.first.rawAddress.isNotEmpty;
+    } catch (_) {
+      ada = false;
+    }
+    if (!online) return;
+    if (ada) {
+      await Notifikasi.instance.sembunyikan(JenisNotif.internetHilang);
+      offlineMode = false;
+    } else {
+      offlineMode = true;
+      _notif(JenisNotif.internetHilang, 'Internet hilang',
+          'Order bisa terlambat masuk. Koneksi kembalinya otomatis.');
+      notifyListeners();
+    }
+  }
+
+  Future<void> _cekIstirahat() async {
+    if (!online || _onlineMulai == null) return;
+    final jamOnline = DateTime.now().difference(_onlineMulai!).inMinutes;
+    if (jamOnline >= 240) {
+      await Notifikasi.instance.sembunyikan(JenisNotif.pengingatIstirahat);
+      _notif(JenisNotif.pengingatIstirahat, 'Sudah 4 jam online',
+          'Minum dulu. Istirahat 15 menit tidakurangi Targeting.');
+    } else {
+      await Notifikasi.instance.sembunyikan(JenisNotif.pengingatIstirahat);
+    }
+  }
 
   // ---------- pengaturan ----------
   void setTheme(ThemeMode m) {
@@ -364,6 +494,7 @@ class AppState extends ChangeNotifier {
   @override
   void dispose() {
     _sub?.cancel();
+    _hentiPemantau();
     _loc.stop();
     NotificationService.instance.cancelOnlineStatus();
     super.dispose();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/models.dart';
+import '../services/notifikasi.dart';
 import '../state/app_state.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -13,6 +14,24 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final _ctl = TextEditingController();
+  int _jumlahLalu = 0;
+
+  /// Notifikasi biasa (bisa swipe) setiap warga mengirim pesan.
+  List<ChatMessage> _pantauPesan(List<ChatMessage> list) {
+    if (list.length > _jumlahLalu) {
+      for (final m in list.sublist(_jumlahLalu)) {
+        if (!m.mine) {
+          Notifikasi.instance.tampilkan(
+            JenisNotif.chat,
+            judul: 'Pesan dari ${widget.order.customerName}',
+            isi: m.body,
+          );
+        }
+      }
+      _jumlahLalu = list.length;
+    }
+    return list;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +42,7 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(children: [
         Expanded(
           child: StreamBuilder<List<ChatMessage>>(
-            stream: repo.messages(widget.order.id),
+            stream: repo.messages(widget.order.id).map(_pantauPesan),
             builder: (c, snap) {
               final msgs = snap.data ?? [];
               if (msgs.isEmpty) return const Center(child: Text('Belum ada pesan'));

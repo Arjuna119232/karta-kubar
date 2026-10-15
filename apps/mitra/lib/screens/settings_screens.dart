@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../core/config.dart';
 import '../core/format.dart';
 import '../models/models.dart';
+import '../services/notifikasi.dart';
 import '../state/app_state.dart';
 import 'widgets.dart';
 
@@ -42,6 +43,29 @@ class SettingsScreen extends StatelessWidget {
           ],
           selected: {s.themeMode},
           onSelectionChanged: (v) => s.setTheme(v.first),
+        ),
+        const SizedBox(height: 28),
+        const Text('Notifikasi aplikasi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 4),
+        const Text(
+          '8 notifikasi PERSISTEN tidak bisa di-swipe (hilang sendiri kalau kondisinya beres). '
+          '12 notifikasi biasa bisa di-swipe. Tekan "Tes" untuk lihat masing-masing.',
+          style: TextStyle(fontSize: 13),
+        ),
+        const SizedBox(height: 8),
+        ..._DaftarNotif(jenis: JenisNotif.daftarPersisten, label: 'PERSISTEN (tidak bisa di-swipe)'),
+        ..._DaftarNotif(
+          jenis: JenisNotif.values.where((j) => !j.persisten).toList(),
+          label: 'BIASA (bisa di-swipe)',
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: () async {
+            await Notifikasi.instance.bersihkanSemua();
+            if (context.mounted) toast(context, 'Semua notifikasi dibersihkan');
+          },
+          icon: const Icon(Icons.cleaning_services_outlined),
+          label: const Text('BERSIHKAN SEMUA NOTIFIKASI'),
         ),
         if (Config.demo) ...[
           const SizedBox(height: 32),
@@ -162,6 +186,51 @@ class RatingsScreen extends StatelessWidget {
             isThreeLine: true,
           ),
       ]),
+    );
+  }
+}
+
+
+class _DaftarNotif extends StatelessWidget {
+  const _DaftarNotif({required this.jenis, required this.label});
+
+  final List<JenisNotif> jenis;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 12, bottom: 6),
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: Theme.of(context).colorScheme.primary)),
+        ),
+        for (final j in jenis)
+          ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            title: Text('${j.index + 1}. ${j.judul}'),
+            subtitle: Text(j.alasan),
+            trailing: TextButton(
+              onPressed: () async {
+                await Notifikasi.instance.tampilkan(
+                  j,
+                  judul: j.judul,
+                  isi: j.alasan,
+                );
+                if (context.mounted) {
+                  toast(context, '${j.judul} dikirim${j.persisten ? ' (persisten)' : ''}');
+                }
+              },
+              child: const Text('Tes'),
+            ),
+          ),
+      ],
     );
   }
 }

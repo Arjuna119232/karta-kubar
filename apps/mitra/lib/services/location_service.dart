@@ -12,6 +12,15 @@ class LocationService {
   bool _aktifOrder = false;
   String? _orderId;
 
+  /// true = GPS di HP sedang menyala (bukan soal izin).
+  Future<bool> lokasiNyala() async {
+    try {
+      return await Geolocator.isLocationServiceEnabled();
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<bool> ensurePermission() async {
     if (!await Geolocator.isLocationServiceEnabled()) return false;
     var p = await Geolocator.checkPermission();

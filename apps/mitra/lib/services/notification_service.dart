@@ -1,10 +1,9 @@
-import 'dart:typed_data';
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../core/config.dart';
+import 'notifikasi.dart';
 
 FirebaseOptions get _fcmOptions => const FirebaseOptions(
       apiKey: Config.fcmApiKey,
@@ -14,8 +13,7 @@ FirebaseOptions get _fcmOptions => const FirebaseOptions(
     );
 
 /// Handler pesan FCM saat aplikasi di background/tertutup.
-/// Kirim pesan sebagai DATA-ONLY (tanpa blok "notification") agar suara+getar
-/// ditangani channel "orders" di bawah dan tidak muncul dobel.
+/// Kirim pesan sebagai DATA-ONLY agar tidak muncul dobel.
 @pragma('vm:entry-point')
 Future<void> firebaseBackgroundHandler(RemoteMessage m) async {
   await Firebase.initializeApp(options: _fcmOptions);
@@ -34,23 +32,20 @@ class NotificationService {
   bool _ready = false;
   bool fcmReady = false;
 
-  static const _channel = AndroidNotificationChannel(
-    'orders',
-    'Order Masuk',
-    description: 'Notifikasi order baru dengan suara dan getar',
-    importance: Importance.max,
-    playSound: true,
-    enableVibration: true,
-  );
-
   Future<void> init() async {
     if (_ready) return;
+    await Notifikasi.instance.init();
     await _plugin.initialize(const InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     ));
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
-    await android?.createNotificationChannel(_channel);
+    await android?.createNotificationChannel(const AndroidNotificationChannel(
+      'online_status',
+      'Status ONLINE',
+      description: 'Tanda mitra sedang ONLINE menerima order',
+      importance: Importance.low,
+    ));
     await android?.requestNotificationsPermission();
     _ready = true;
   }
@@ -80,26 +75,16 @@ class NotificationService {
     }
   }
 
-  Future<void> showOrder(String title, String body) {
-    return _plugin.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000,
-      title,
-      body,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          _channel.id,
-          _channel.name,
-          channelDescription: _channel.description,
-          importance: Importance.max,
-          priority: Priority.high,
-          playSound: true,
-          enableVibration: true,
-          vibrationPattern: Int64List.fromList([0, 500, 250, 500]),
-          category: AndroidNotificationCategory.call,
-        ),
-      ),
-    );
-  }
+  /// Order baru = notifikasi PERSISTEN (tidak bisa di-swipe) sampai mitra
+  /// menerima atau menolak. Itu daftar "Order Masuk" di spec.
+  Future<void> showOrder(String title, String body) => Notifikasi.instance.tampilkan(
+        JenisNotif.orderMasuk,
+        judul: title,
+        isi: body,
+      );
+
+  Future<void> sembunyikanOrderMasuk() =>
+      Notifikasi.instance.sembunyikan(JenisNotif.orderMasuk);
 
   /// Fallback kalau izin lokasi ditolak: notifikasi "ONLINE" yang tetap
   /// nempel (ongoing) walau service GPS tidak bisa jalan.
