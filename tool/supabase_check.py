@@ -101,20 +101,24 @@ def main():
     gagal = 0
 
     # 1. Host hidup?
-    print("\n[1] URL bisa dihubungi?")
-    st, body = minta(url + "/rest/v1/", headers=hdr)
+    # PENTING: cek ke /auth/v1/health, BUKAN /rest/v1/. Akar PostgREST di
+    # proyek ini membalas "Secret API key required" untuk publishable key -
+    # itu bukan berarti key rusak. Sudah dibuktikan: query tabel sungguhan
+    # dengan publishable key dijawab PostgREST (PGRST205 = tabel belum ada).
+    print("\n[1] Host hidup?")
+    st, body = minta(url + "/auth/v1/health", headers=hdr)
     if st == 0:
         print("    GAGAL: %s" % body)
         gagal += 1
     elif st == 200:
-        print("    OK (200) - PostgREST menjawab")
+        print("    OK (200) - GoTrue/Auth menjawab")
     else:
         print("    HTTP %s: %s" % (st, body[:120]))
         gagal += 1
 
     # 2. API key ditolak?
     print("\n[2] API key diterima?")
-    st, body = minta(url + "/rest/v1/", headers={
+    st, body = minta(url + "/rest/v1/profiles?select=id&limit=1", headers={
         "apikey": "kunci-ngawur-untuk-tes",
         "Authorization": "Bearer kunci-ngawur-untuk-tes",
         "User-Agent": "KUNBAR-Connect-check/1.0",
