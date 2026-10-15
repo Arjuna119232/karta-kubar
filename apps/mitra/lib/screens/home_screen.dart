@@ -397,8 +397,8 @@ class _KartuOrderAktif extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.only(bottom: 10),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
       child: Kaca(
         onTap: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => OrderDetailScreen(order: order))),
