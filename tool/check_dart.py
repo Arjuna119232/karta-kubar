@@ -601,6 +601,35 @@ for f in files:
                 f"`{nama_field}` tidak dideklarasikan -> compile error")
 
 
+# ------------------------------- 14. EXTENSION CONTEXT DIPAKAI, IMPORT HILANG
+# Bug NYATA (v0.11.0, build CI gagal): `context.colors` / `context.text` /
+# `context.semantic` adalah getter dari extension yang dideklarasikan di
+# app_colors.dart dan app_theme.dart. Kalau import itu terhapus karena
+# "tidak ada simbol yang dipakai", seluruh file gagal compile dengan
+# "The getter 'colors' isn't defined for the type 'BuildContext'" - dozens
+# of baris, padahal perbaikannya satu baris import.
+# KETIGANYA berasal dari SATU extension `AppSemanticX` di app_colors.dart.
+# (Janganonica pendek: `context.text` TIDAK ada di app_theme.dart - itu
+# jebakan yang membuat verifikasi ini sempat menuduh 2 file lama.)
+EXT_KONTEKSTUAL = {
+    "colors": "core/theme/app_colors.dart",
+    "semantic": "core/theme/app_colors.dart",
+    "text": "core/theme/app_colors.dart",
+}
+for f in files:
+    body = code[f]
+    dipakai = sorted(m for m in EXT_KONTEKSTUAL
+                     if re.search(r"\bcontext\." + m + r"\b", body))
+    if not dipakai:
+        continue
+    targets = {str(Path(t).resolve()) for t, _s, _x in imports_of[f]}
+    for m in dipakai:
+        butuh = str((LIB / EXT_KONTEKSTUAL[m]).resolve())
+        if butuh not in targets:
+            bad("EXT-HILANG", f,
+                "pakai `context.%s` tapi import `%s` tidak ada -> compile error"
+                % (m, EXT_KONTEKSTUAL[m]))
+
 # ---------------------------------------------------------------- report
 print("=" * 62)
 print("  KUNBAR Connect - Dart static check")
@@ -619,7 +648,7 @@ if problems:
              "CTOR-UNKNOWN": 3, "ROUTE-UNKNOWN": 4,
              "IMPORT-RESOLVE": 5, "UNUSED-IMPORT": 6, "UNUSED-PRIVATE": 7,
              "UNUSED-PROVIDER": 8, "BRACE": 9, "NON-LATIN": 10, "ASSET": 11,
-             "FIELD-HILANG": 2}
+             "FIELD-HILANG": 2, "EXT-HILANG": 2}
     for kind, path, msg in sorted(problems, key=lambda p: (order.get(p[0], 9), p[1])):
         print(f"  [{kind}] {path}\n      {msg}")
     sys.exit(1)
