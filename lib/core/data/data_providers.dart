@@ -127,3 +127,13 @@ final AsyncNotifierProvider<BerandaNotifier, List<Berita>> beritaProvider =
     AsyncNotifierProvider<BerandaNotifier, List<Berita>>(
   BerandaNotifier.new,
 );
+
+/// Dua angka untuk kartu statistik beranda: jumlah anggota dan jumlah kegiatan
+/// bulan ini. diambil dari repository, BUKAN angka yang dipatok di layar.
+final FutureProvider<(int anggota, int kegiatanBulanIni)>
+    ringkasanBerandaProvider = FutureProvider<(int, int)>((ref) async {
+  final KegiatanRepository repo = ref.watch(kegiatanRepositoryProvider);
+  final Hasil<int> a = await repo.totalAnggota();
+  final Hasil<int> k = await repo.kegiatanBulanIni();
+  return (a.berhasil ? a.data! : 0, k.berhasil ? k.data! : 0);
+});

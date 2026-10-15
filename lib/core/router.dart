@@ -3,8 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/absen/presentation/absen_screen.dart';
+import '../features/aspirasi/presentation/aspirasi_screen.dart';
 import '../features/auth/presentation/auth_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
+import '../features/pengurus/presentation/pengurus_screen.dart';
 import '../features/shell/presentation/app_shell.dart';
 import 'auth/session.dart';
 import 'auth/user_role.dart';
@@ -152,6 +154,29 @@ GoRouter buatRouter(LokasiAwal awal) => GoRouter(
         const RoleGate(
           minimal: UserRole.anggota,
           child: AbsenScreen(),
+        ),
+      ),
+    ),
+    // Papan FISH warga. WAJIB ada di sini: aksi cepat di beranda dan kartu
+    // di panel pengurus sama-sama menuju rute ini.
+    GoRoute(
+      path: '/aspirasi',
+      pageBuilder: (_, GoRouterState s) => _halaman(
+        s,
+        const RoleGate(
+          minimal: UserRole.warga,
+          child: AspirasiScreen(),
+        ),
+      ),
+    ),
+    // Panel kendali pengurus: antrean FISH + sesi absensi.
+    GoRoute(
+      path: '/pengurus',
+      pageBuilder: (_, GoRouterState s) => _halaman(
+        s,
+        const RoleGate(
+          minimal: UserRole.pengurus,
+          child: PengurusScreen(),
         ),
       ),
     ),

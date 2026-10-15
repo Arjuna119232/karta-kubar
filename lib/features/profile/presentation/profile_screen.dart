@@ -517,6 +517,7 @@ class _MenuUmum extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeMode mode = ref.watch(themeModeProvider);
     final bool lansia = ref.watch(elderModeProvider);
+    final UserRole role = ref.watch(sessionProvider).efektif;
 
     return AppCard(
       padding: EdgeInsets.zero,
@@ -557,6 +558,22 @@ class _MenuUmum extends ConsumerWidget {
               },
             ),
           ),
+          if (role.bisa(UserRole.warga)) ...<Widget>[
+            Divider(height: 1, color: context.semantic.line),
+            _Baris(
+              icon: Ik.chat,
+              label: 'Aspirasi & Laporan',
+              onTap: () => context.go('/aspirasi'),
+            ),
+          ],
+          if (role.bisa(UserRole.pengurus)) ...<Widget>[
+            Divider(height: 1, color: context.semantic.line),
+            _Baris(
+              icon: Ik.adminShield,
+              label: 'Panel Pengurus',
+              onTap: () => context.go('/pengurus'),
+            ),
+          ],
           Divider(height: 1, color: context.semantic.line),
           _Baris(
             icon: Ik.edit,

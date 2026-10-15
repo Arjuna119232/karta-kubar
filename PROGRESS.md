@@ -3,7 +3,7 @@
 Berkas ini supaya sesi baru bisa melanjutkan tanpa membaca ulang semua riwayat.
 
 **Terakhir diperbarui:** 15 Okt 2026
-**Versi aplikasi:** 0.9.4+19 (build 20 = 0.7.0 sudah DIRUSAK, jangan dipakai sebagai acuan)
+**Versi aplikasi:** 0.10.0+20 (build 20 = 0.7.0 sudah DIRUSAK, jangan dipakai sebagai acuan)
 
 ---
 
@@ -29,7 +29,8 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 | 6 | Build APK arm64 (~18 MB) + AAB + dokumen signing | ✅ | `9f0e8e3` |
 | 7 | README + PROGRESS.md | ✅ | `0580097` |
 | 8 | Splash native Android 12+ + iOS `UILaunchScreen` (logo + warna solid, tanpa frame putih) | ✅ | `c100e61` |
-| 9 | Nama lengkap "KUNBAR CONNECT" + kredit "from Katar KunBar" seragam di Android & iOS | ✅ | `09cb8df`, (commit ini) |
+| 9 | Nama lengkap "KUNBAR CONNECT" + kredit "from Katar KunBar" seragam di Android & iOS | ✅ | `09cb8df`, `a41e283`, `3c12216` |
+| 10 | FISH warga (kirim + pantau status) + Panel Pengurus (antrean + aksi status) | ✅ | (commit ini) |
 
 ### Fitur yang sudah ada dan jalan
 
@@ -42,6 +43,8 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 - Absen: scan QR tiruan, riwayat, ubah status
 - Keuangan: saldo, grafik kas 5 bulan, riwayat iuran
 - Galeri: berita + sampul
+- Aspirasi & Laporan: kirim FISH, filter status, tersimpan di perangkat
+- Panel Pengurus: antrean FISH, tandai Diproses/Selesai/Ditolak + catatan
 - Profil: kartu anggota, level akses 5 tingkat, **kartu "Sumber data"**
 - Mode terang/gelap + mode Lansia
 
@@ -132,6 +135,13 @@ grep -rn "Lokal\." lib/features/*/presentation/   # harus kosong
    satu satuan.
 7. **Huruf Mandarin dari IME** pernah nyasar ke komentar `.py` dan `.dart`.
    `tool/check_nonlatin.py` sekarang menjaga seluruh repo.
+8. **Indeks tab tidak boleh dipatok.** Jumlah tab berbeda per role, jadi
+   `navigationIndexProvider = 3` mendarat di tab yang salah untuk role lain.
+   Pakai `indeksTab(role, 'label')` dari `features/shell/data/app_tabs.dart`.
+9. **Angka statistik tidak boleh ditulis mati di layar** (`value: '128'`).
+   Ambil dari repository lewat `ringkasanBerandaProvider`.
+10. **Pakai `ScaffoldMessenger` yang diambil SEBELUM `Navigator.pop()`.**
+    Setelah sheet ditutup, `context` sudah tidak terpasang.
 
 ---
 

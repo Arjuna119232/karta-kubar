@@ -106,3 +106,18 @@ List<AppTab> tabsUntuk(UserRole role) {
 
   return dasar;
 }
+
+/// Cari indeks tab berdasarkan LABEL, bukan nomor tetap.
+///
+/// WAJIB dipakai setiap kali ada tombol yang mau pindah tab. Jumlah dan
+/// urutan tab berbeda per role (anggota punya tab "Absen" tambahan, tamu tidak
+/// punya "Kas"), jadi angka yang dipatok di layar bisa meleset diam-diam:
+/// `navigationIndexProvider = 3` untuk tamu mendarat di "Profil", bukan
+/// "Galeri". Bug seperti ini tidak pernah ketahuan analyzer.
+int indeksTab(UserRole role, String label) {
+  final List<AppTab> tabs = tabsUntuk(role);
+  for (int i = 0; i < tabs.length; i++) {
+    if (tabs[i].label == label) return i;
+  }
+  return 0;
+}

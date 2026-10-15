@@ -262,10 +262,24 @@ for f in files:
     # PENTING: extension yang dicek adalah milik FILE TARGET, bukan file ini.
     # Kalau salah, `import app_colors.dart` akan selalu dianggap tak terpakai
     # padahal dipakai implisit lewat `context.colors` / `context.text`.
-    ext_members = set()
+    # Member extension yang namanya DIMILIKI lebih dari satu target tidak
+    # boleh jadi bukti pakai: `label` ada di UserRoleX, StatusAspirasiX,
+    # KategoriAspirasiX, dan PaketKartuX. Kalau tidak dibatasi, file yang
+    # menulis `a.label` akan membuat `import user_role.dart` lolos walau
+    # `UserRole` sama sekali tidak disebut.
+    ext_owner = {}
+    for target, _spec, _tail in imports_of[f]:
+        for member in extension_members(code[target]):
+            ext_owner.setdefault(member, set()).add(target)
+
     for target, spec, tail in imports_of[f]:
-        tcode = code[target]
-        ext_members |= extension_members(tcode)
+        # WAJIB di-reset di dalam loop. Kalau himpunan ini dikumpulkan di luar
+        # loop, extension dari import PERTAMA ikut considers untuk import
+        # BERIKUTNYA: sebuah file yang memakai `.text` (dari app_theme.dart)
+        # akan lolos declared_names untuk SEMUA import lain, termasuk yang
+        # benar-benar tidak dipakai. Akibatnya cek UNUSED-IMPORT praktis mati
+        # untuk file yang punya akses ke extension.
+        ext_members = extension_members(code[target])
         alias = re.search(r"\bas\s+([A-Za-z_$][\w$]*)", tail)
         show = re.search(r"\bshow\s+([^;]+)", tail)
         hide = re.search(r"\bhide\s+([^;]+)", tail)
@@ -273,7 +287,7 @@ for f in files:
             if f"{alias.group(1)}." not in used_text:
                 bad("UNUSED-IMPORT", f, f"'{spec}' (prefix {alias.group(1)}. tidak dipakai)")
             continue
-        names = declared_names(tcode)
+        names = declared_names(code[target])
         if show:
             cand = {x.strip() for x in show.group(1).split(",") if x.strip()}
         else:
@@ -284,8 +298,9 @@ for f in files:
         # atau member extension dipakai lewat `.member`.
         if any(x in used_idents for x in cand):
             continue
-        if ext_members and re.search(
-            r"\.(" + "|".join(map(re.escape, sorted(ext_members))) + r")\b", used_text
+        unik = {x for x in ext_members if len(ext_owner.get(x, ())) == 1}
+        if unik and re.search(
+            r"\.(" + "|".join(map(re.escape, sorted(unik))) + r")\b", used_text
         ):
             continue
         bad("UNUSED-IMPORT", f, f"'{spec}' — nama: {', '.join(sorted(cand)) or 'tidak ada'}")
@@ -432,7 +447,14 @@ for f in files:
                                  r"[\w<>,?\s\[\]]*?\b(\w+)\s*(?:=|;)", blk, re.MULTILINE))
         member |= set(re.findall(r"^[\w<>,?\s\[\]]*?\b(\w+)\s*\(", blk, re.MULTILINE))
         member |= set(re.findall(r"\boperator\s*\[?=?\]?\s*(\w+)", blk))
-        member |= set(re.findall(r"\b(\w+)\s*\([^)]*\)\s*(?:async\s*)?\{", blk))
+        # Parameter boleh punya satu tingkat kurung bersarang. Tanpa ini,
+        # `Hasil<R> peta<R>(R Function(T nilai) ubah) {` TIDAK ikut tertangkap
+        # (karena `[^)]*` berhenti di `Function(`) sehingga pemanggilan
+        # `hasil.peta(...)` dilaporkan "`Hasil` tidak punya member 'peta'"
+        # padahal methodnya ada. Gejalanya: pesan error menunjuk file yang
+        # BENAR, jadi mudah disalahkan.
+        member |= set(re.findall(r"\b(\w+)(?:<[^()<>]*>)?\s*\((?:[^()]|\([^()]*\))*\)\s*"
+                                 r"(?:async\s*)?\{", blk))
         member |= {"hashCode", "toString", "runtimeType", "noSuchMethod"}
         # enum punya `values`, `name`, `index` + nama konstantanya
         if m.group(0).startswith("enum"):

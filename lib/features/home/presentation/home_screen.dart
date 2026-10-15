@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/session.dart';
+import '../../../core/auth/user_role.dart';
 import '../../../core/providers.dart';
 import '../../../core/data/data_providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -16,6 +17,7 @@ import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/stat_tile.dart';
 
 import '../../kegiatan/domain/kegiatan.dart';
+import '../../shell/data/app_tabs.dart';
 import '../../../shared/widgets/cover_pilih.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -40,30 +42,7 @@ class HomeScreen extends ConsumerWidget {
           const SizedBox(height: 18),
           const FadeSlideIn(index: 1, child: _AnnouncementCarousel()),
           const SizedBox(height: 18),
-          const FadeSlideIn(
-            index: 2,
-            child: Row(
-            children: <Widget>[
-              Expanded(
-                child: StatTile(
-                  icon: Ik.groups,
-                  value: '128',
-                  label: 'Anggota aktif',
-                  tint: AppColors.primary,
-                ),
-              ),
-              SizedBox(width: AppSpacing.gap),
-              Expanded(
-                child: StatTile(
-                  icon: Ik.calendarCheck,
-                  value: '12',
-                  label: 'Kegiatan bulan ini',
-                  tint: AppColors.accent,
-                ),
-              ),
-            ],
-          ),
-          ),
+          const FadeSlideIn(index: 2, child: _StatistikBeranda()),
           const SizedBox(height: 22),
           const SectionHeader(title: 'Aksi Cepat'),
           const FadeSlideIn(index: 3, child: _QuickActions()),
@@ -72,7 +51,8 @@ class HomeScreen extends ConsumerWidget {
             title: 'Agenda Terdekat',
             actionLabel: 'Lihat semua',
             onAction: () =>
-                ref.read(navigationIndexProvider.notifier).state = 1,
+                ref.read(navigationIndexProvider.notifier).state =
+                    indeksTab(session.efektif, 'Kegiatan'),
           ),
           for (final (int i, Kegiatan a) in upcoming.indexed)
             FadeSlideIn(
@@ -95,6 +75,42 @@ class HomeScreen extends ConsumerWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Angka anggota + kegiatan bulan ini, diambil dari repository.
+///
+/// Angkanya TIDAK dipatok di layar. Kalau backend belum ada, repository lokal
+/// mengembalikan jumlah baris datanya sendiri; kalau pemuatannya gagal,
+/// tampilannya "-" - bukan angka karangan yang terlihat seperti data asli.
+class _StatistikBeranda extends ConsumerWidget {
+  const _StatistikBeranda();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final (int, int)? angka = ref.watch(ringkasanBerandaProvider).valueOrNull;
+
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: StatTile(
+            icon: Ik.groups,
+            value: angka == null ? '-' : '${angka.$1}',
+            label: 'Anggota terdaftar',
+            tint: AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.gap),
+        Expanded(
+          child: StatTile(
+            icon: Ik.calendarCheck,
+            value: angka == null ? '-' : '${angka.$2}',
+            label: 'Kegiatan bulan ini',
+            tint: AppColors.accent,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -362,15 +378,14 @@ class _QuickActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final UserRole role = ref.watch(sessionProvider).efektif;
     final List<_QuickItem> items = <_QuickItem>[
       _QuickItem(Ik.qrScan, 'Absen', AppColors.primary,
           () => context.go('/absen')),
-      _QuickItem(Ik.wallet, 'Iuran',
-          AppColors.accent, () => ref.read(navigationIndexProvider.notifier).state = 2),
-      _QuickItem(Ik.chat, 'Aspirasi',
-          AppColors.warning, () => _soon(context, 'Aspirasi')),
-      _QuickItem(Ik.gallery, 'Galeri',
-          AppColors.success, () => ref.read(navigationIndexProvider.notifier).state = 3),
+      _QuickItem(Ik.wallet, 'Iuran', AppColors.accent, () => _keTab(ref, 'Kas')),
+      _QuickItem(Ik.chat, 'Aspirasi', AppColors.warning, () => context.go('/aspirasi')),
+      _QuickItem(Ik.gallery, 'Galeri', AppColors.success,
+          () => _keTab(ref, role.bisa(UserRole.anggota) ? 'Kas' : 'Galeri')),
     ];
 
     return Row(
@@ -411,10 +426,9 @@ class _QuickActions extends ConsumerWidget {
     );
   }
 
-  void _soon(BuildContext context, String label) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label segera hadir')),
-    );
+  void _keTab(WidgetRef ref, String label) {
+    final UserRole role = ref.read(sessionProvider).efektif;
+    ref.read(navigationIndexProvider.notifier).state = indeksTab(role, label);
   }
 }
 
