@@ -265,10 +265,10 @@ class _Pendapatan extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _Tag('Cash / QRIS'),
-              _Tag('Fee 15% masuk aplikasi'),
+              _tag('Cash / QRIS'),
+              _tag('Fee 15% masuk aplikasi'),
               if (rute != null)
-                _Tag('${rute!.kilometer.toStringAsFixed(1)} km - ${rute!.etaMenit} menit'),
+                _tag('${rute!.kilometer.toStringAsFixed(1)} km - ${rute!.etaMenit} menit'),
             ],
           ),
         ],
@@ -276,7 +276,7 @@ class _Pendapatan extends StatelessWidget {
     );
   }
 
-  Widget _Tag(String t) => Container(
+  Widget _tag(String t) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.2),

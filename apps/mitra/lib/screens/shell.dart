@@ -4,7 +4,6 @@ import 'account_screen.dart';
 import 'chat_list_screen.dart';
 import 'earnings_screen.dart';
 import 'home_screen.dart';
-import 'jadwal_screen.dart';
 import 'orders_screen.dart';
 
 /// Kerangka 5 tab. Tab Beranda berisi peta, tab lain halaman biasa.
