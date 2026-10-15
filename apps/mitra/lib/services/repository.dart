@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/config.dart';
 import '../models/models.dart';
+import 'chat.dart';
 
 /// Satu pintu data. Mode demo = memori lokal; selain itu = Supabase.
 class OrderRepository {
@@ -16,8 +18,12 @@ class OrderRepository {
   final List<Order> _demoHistory = [];
   Order? _demoActive;
   final _demoCtl = StreamController<List<Order>>.broadcast();
-  final Map<String, List<ChatMessage>> _demoChat = {};
+  final Map<String, List<Pesan>> _demoChat = {};
   final _demoChatCtl = StreamController<String>.broadcast();
+
+  /// Global "warga sedang mengetik" per order (demo disimulasikan).
+  final _demoTyping = <String>{};
+  final _demoTypingCtl = StreamController<String>.broadcast();
   bool _demoSeeded = false;
 
   Order _dummy() {
@@ -186,9 +192,9 @@ class OrderRepository {
   }
 
   // ---------- CHAT ----------
-  Stream<List<ChatMessage>> messages(String orderId) async* {
+  Stream<List<Pesan>> messages(String orderId) async* {
     if (Config.demo) {
-      List<ChatMessage> cur() => List.of(_demoChat[orderId] ?? []);
+      List<Pesan> cur() => List.of(_demoChat[orderId] ?? []);
       yield cur();
       await for (final id in _demoChatCtl.stream) {
         if (id == orderId) yield cur();
@@ -199,25 +205,140 @@ class OrderRepository {
           .stream(primaryKey: ['id'])
           .eq('order_id', orderId)
           .order('created_at')
-          .map((rows) => rows
-              .map((r) => ChatMessage(r['id'].toString(), r['sender_id'].toString(), r['body'] as String,
-                  DateTime.tryParse('${r['created_at']}') ?? DateTime.now(), r['sender_id'] == uid))
-              .toList());
+          .map((rows) =>
+              rows.map((r) => Pesan.fromSupabase(r, uid)).toList());
     }
   }
 
-  Future<void> sendMessage(String orderId, String body) async {
+  /// Snapshot pesan saat ini (dipakai list & state, tanpa await stream).
+  List<Pesan> snapshotPesan(String orderId) => List.of(_demoChat[orderId] ?? []);
+
+  void hapusPesanDemo(String orderId, String pesanId) {
+    final l = _demoChat[orderId];
+    if (l == null) return;
+    l.removeWhere((p) => p.id == pesanId);
+    _demoChatCtl.add(orderId);
+  }
+
+  /// Pilih foto (kamera/galeri). Butuh image_picker; null kalau batal.
+  Future<String?> pilihFoto() async {
+    try {
+      final x = await ImagePicker().pickImage(source: ImageSource.gallery);
+      return x?.path;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Vr("warga sedang mengetik") - hanya bermakna kalau Supabase aktif
+  /// (broadcast channel). Mode demo disimulasikan otomatis setelah pesan mitra.
+  Stream<bool> mengetik(String orderId) async* {
+    if (Config.demo) {
+      yield _demoTyping.contains(orderId);
+      await for (final id in _demoTypingCtl.stream) {
+        if (id == orderId) yield _demoTyping.contains(orderId);
+      }
+    } else {
+      yield false;
+    }
+  }
+
+  Future<void> sendMessage(
+    String orderId,
+    String body, {
+    JenisPesan jenis = JenisPesan.teks,
+    String? attachmentUrl,
+    double? lat,
+    double? lng,
+    String? balasId,
+    String? balasRingkas,
+  }) async {
     if (Config.demo) {
       final l = _demoChat.putIfAbsent(orderId, () => []);
-      l.add(ChatMessage('${l.length}', 'me', body, DateTime.now(), true));
+      l.add(Pesan(
+        id: '${l.length}',
+        orderId: orderId,
+        isi: body,
+        waktu: DateTime.now(),
+        mine: true,
+        jenis: jenis,
+        attachmentUrl: attachmentUrl,
+        lat: lat,
+        lng: lng,
+        balasId: balasId,
+        balasRingkas: balasRingkas,
+      ));
       _demoChatCtl.add(orderId);
-      Future.delayed(const Duration(seconds: 2), () {
-        l.add(ChatMessage('${l.length}', 'warga', 'Siap, terima kasih ya 🙏', DateTime.now(), false));
-        _demoChatCtl.add(orderId);
-      });
+      _simulasiBalasanWarga(l, orderId);
       return;
     }
-    await _sb.from('messages').insert({'order_id': orderId, 'sender_id': uid, 'body': body});
+    await _sb.from('messages').insert({
+      'order_id': orderId,
+      'sender_id': uid,
+      'body': body,
+      'jenis': jenis.name,
+      'attachment_url': attachmentUrl,
+      'lat': lat,
+      'lng': lng,
+      'reply_to': balasId,
+    });
+  }
+
+  /// Tandai pesan mitra sudah dibaca warga (read receipt).
+  Future<void> tandaiDibaca(String orderId) async {
+    if (Config.demo) {
+      final l = _demoChat[orderId];
+      if (l == null) return;
+      var berubah = false;
+      for (final p in l) {
+        if (p.mine && !p.dibaca) {
+          l[l.indexOf(p)] = Pesan(
+            id: p.id,
+            orderId: p.orderId,
+            isi: p.isi,
+            waktu: p.waktu,
+            mine: true,
+            jenis: p.jenis,
+            attachmentUrl: p.attachmentUrl,
+            lat: p.lat,
+            lng: p.lng,
+            dibaca: true,
+            balasId: p.balasId,
+            balasRingkas: p.balasRingkas,
+          );
+          berubah = true;
+        }
+      }
+      if (berubah) _demoChatCtl.add(orderId);
+      return;
+    }
+    await _sb.from('messages').update({'is_read': true}).eq('order_id', orderId).eq('is_read', false);
+  }
+
+  /// Demo: warga mengetik lalu membalas supaya flow-nya terasa hidup.
+  void _simulasiBalasanWarga(List<Pesan> l, String orderId) {
+    Future.delayed(const Duration(milliseconds: 900), () {
+      _demoTyping.add(orderId);
+      _demoTypingCtl.add(orderId);
+    });
+    Future.delayed(const Duration(seconds: 2), () {
+      _demoTyping.remove(orderId);
+      _demoTypingCtl.add(orderId);
+      const jawaban = [
+        'Siap kak, terima kasih',
+        'Oke, ditunggu ya',
+        'Baik, hati-hati di jalan',
+        'Terima kasih banyak',
+      ];
+      l.add(Pesan(
+        id: '${l.length}',
+        orderId: orderId,
+        isi: jawaban[l.length % jawaban.length],
+        waktu: DateTime.now(),
+        mine: false,
+      ));
+      _demoChatCtl.add(orderId);
+    });
   }
 
   // ---------- PENARIKAN SALDO ----------

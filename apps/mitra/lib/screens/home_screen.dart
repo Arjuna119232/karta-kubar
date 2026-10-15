@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../core/format.dart';
 import '../core/theme.dart';
+import '../services/kotak_masuk.dart';
 import '../models/models.dart';
 import '../state/app_state.dart';
 import '../widgets/kit.dart';
@@ -14,6 +15,7 @@ import 'orders_screen.dart';
 import 'pendapatan_screen.dart';
 import 'jadwal_screen.dart';
 import 'order_detail_screen.dart';
+import 'kotak_masuk_screen.dart';
 import 'order_masuk_screen.dart';
 import 'widgets.dart';
 
@@ -353,6 +355,21 @@ class _HeaderKaca extends StatelessWidget {
                     color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
           ),
           const SizedBox(width: 6),
+          Builder(
+            builder: (c) {
+              final belum = NotifikasiService.instance.belumDibaca();
+              return IconButton(
+                tooltip: 'Kotak Masuk',
+                onPressed: () => Navigator.push(c,
+                    MaterialPageRoute(builder: (_) => const KotakMasukScreen())),
+                icon: Badge(
+                  isLabelVisible: belum > 0,
+                  label: Text('$belum'),
+                  child: const Icon(Icons.inbox_rounded),
+                ),
+              );
+            },
+          ),
           IconButton(onPressed: onProfil, icon: const Icon(Icons.person_outline_rounded)),
         ],
       ),

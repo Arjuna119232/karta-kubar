@@ -1,7 +1,7 @@
 name: kunbar_mitra
 description: KUNBAR Mitra - aplikasi driver/kurir jastip & ojek
 publish_to: none
-version: 1.7.0+9
+version: 1.8.0+10
 
 environment:
   sdk: '>=3.6.0 <4.0.0'
@@ -25,6 +25,7 @@ dependencies:
   # Peta gratis: satu API untuk beberapa backend. any_map_maplibre yang
   # membawa MapLibre-nya (OpenFreeMap = tiles tanpa API key).
   fl_chart: ^1.2.0
+  image_picker: ^1.1.2
   any_map: ^1.0.0
   any_map_maplibre: ^1.0.0
 

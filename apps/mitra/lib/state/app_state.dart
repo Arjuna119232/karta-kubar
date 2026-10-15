@@ -10,6 +10,7 @@ import '../core/config.dart';
 import '../core/format.dart';
 import '../models/models.dart';
 import '../services/location_service.dart';
+import '../services/kotak_masuk.dart';
 import '../services/notifikasi.dart';
 import '../services/notification_service.dart';
 import '../services/repository.dart';
@@ -38,6 +39,68 @@ class AppState extends ChangeNotifier {
   String telepon = '';
   String kontakDarurat = '';
   List<Withdraw> withdrawals = [];
+
+  // ---------- CHAT (state turunan) ----------
+  Set<String> arsip = {};
+
+  /// Id order yang sedang berjalan / masuk (dipakai sebagai "online" + filter).
+  Set<String> get aktifOrderIds =>
+      {if (active != null) active!.id, ...incoming.map((e) => e.id)};
+
+  List<Pesan> pesanUntuk(String orderId) => repo.snapshotPesan(orderId);
+  Pesan? pesanTerakhir(String orderId) {
+    final l = pesanUntuk(orderId);
+    return l.isEmpty ? null : l.last;
+  }
+
+  int pesanBelumDibaca(String orderId) {
+    if (arsip.contains(orderId)) return 0;
+    return pesanUntuk(orderId).where((p) => !p.mine).length;
+  }
+
+  int get jumlahBelumDibaca {
+    var n = 0;
+    for (final o in [...incoming, ...history, if (active != null) active!]) {
+      n += pesanBelumDibaca(o.id);
+    }
+    return n;
+  }
+
+  Future<void> tandaiDibaca(String orderId) async {
+    await repo.tandaiDibaca(orderId);
+    await _p?.remove('chat_seen_$orderId');
+    notifyListeners();
+  }
+
+  Future<void> tandaiSemuaDibaca(List<Order> daftar) async {
+    for (final o in daftar) {
+      await repo.tandaiDibaca(o.id);
+    }
+    notifyListeners();
+  }
+
+  void arsipkan(String orderId) {
+    arsip = {...arsip, orderId};
+    _p?.setStringList('chat_arsip', arsip.toList());
+    notifyListeners();
+  }
+
+  void bukaArsip() {
+    arsip = {};
+    _p?.remove('chat_arsip');
+    notifyListeners();
+  }
+
+  /// Paksa UI membangun ulang (dipakai setelah tandai baca/arsip notifikasi).
+  void sentuh() => notifyListeners();
+
+  void hapusPesan(String orderId, String pesanId) {
+    repo.hapusPesanDemo(orderId, pesanId);
+    notifyListeners();
+  }
+
+  /// Pilih foto dari galeri. Null kalau dibatal atau galeri tidak tersedia.
+  Future<String?> pilihFoto() => repo.pilihFoto();
   String? error;
   List<Order> incoming = [], history = [];
   List<Rating> ratings = [];
@@ -67,6 +130,9 @@ class AppState extends ChangeNotifier {
     onboardingBelumDitinjau = _p!.getBool('onboarding_v1') != true;
     kontakDarurat = _p!.getString('kontak_darurat') ?? '';
     withdrawals = _bacaWithdraw();
+    arsip = (_p!.getStringList('chat_arsip') ?? []).toSet();
+    await NotifikasiService.instance
+        .init(SharedPrefHolder.dariPref(_p!));
     name = _p!.getString('mitra_nama') ?? name;
     if (_p!.getString('mitra_telepon') != null) telepon = _p!.getString('mitra_telepon')!;
     vehicleType = _p!.getString('vtype') ?? 'Motor';

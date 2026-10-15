@@ -1,11 +1,21 @@
 name: Build KUNBAR Mitra APK
+# Catatan: `flutter analyze` sekarang memblokir build. Kalau ada warning, build
+# berhenti di awal - lebih murah daripada menunggu 5 menit lalu gagal.
 on:
   workflow_dispatch:
+    inputs:
+      analyze-only:
+        description: 'Hanya analyze, tanpa build APK'
+        type: string
+        default: 'no'
   push:
     paths: ['apps/mitra/**', '.github/workflows/build-mitra.yml']
     branches: ['**']
 jobs:
   apk:
+    # analyze-only: cek analyze + struktur tanpa build APK (dipakai saat masih
+    # develops banyak halaman, buildFinal baru setelah semua beres).
+    if: github.event.inputs.analyze-only != 'yes'
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: apps/mitra } }
     steps:
@@ -16,9 +26,7 @@ jobs:
         with: { channel: stable }
       - run: bash tools/setup_android.sh
       - run: flutter pub get
-      # Analisa hanya memberi laporan; tidak boleh menggagalkan build.
-      - run: flutter analyze --no-fatal-infos
-        continue-on-error: true
+      - run: flutter analyze
       - name: Build APK (universal, 1 file)
         run: >
           flutter build apk --release
@@ -34,3 +42,16 @@ jobs:
           name: kunbar-mitra-apk
           path: apps/mitra/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
+  analyze:
+    if: github.event.inputs.analyze-only == 'yes'
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: apps/mitra } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: python3 ../../tool/check_nonlatin.py

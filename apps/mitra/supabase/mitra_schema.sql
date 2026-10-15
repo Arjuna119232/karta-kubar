@@ -311,6 +311,58 @@ create policy withdraw_insert2 on public.withdraw_mitra for insert to authentica
   with check (mitra_id = auth.uid());
 
 -- ---------------------------------------------------------------------
+-- 9c. Kotak Masuk: notifikasi dari admin (mitra_id NULL = broadcast)
+--     Peringatan: tabel "mitra_jasa" tidak pernah ada di skema KUNBAR.
+--     Mitra = auth.users dengan profiles.role = 'mitra'.
+-- ---------------------------------------------------------------------
+create table if not exists public.notifikasi_mitra (
+  id uuid primary key default gen_random_uuid(),
+  mitra_id uuid references auth.users (id) on delete cascade,
+  kategori text not null default 'pengumuman'
+    check (kategori in ('pengumuman', 'bonus', 'tips', 'event', 'peringatan', 'update')),
+  prioritas text not null default 'normal'
+    check (prioritas in ('normal', 'penting', 'urgent')),
+  title text not null,
+  body text not null,
+  attachment_url text,
+  action_url text,
+  action_label text,
+  is_read boolean not null default false,
+  read_at timestamptz,
+  is_archived boolean not null default false,
+  expires_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_notif_mitra on public.notifikasi_mitra (mitra_id, created_at desc);
+
+-- Kolom tambahan untuk chat (jenis pesan, lampiran, reply, read receipt)
+alter table public.messages
+  add column if not exists jenis text not null default 'text'
+    check (jenis in ('text', 'foto', 'lokasi')),
+  add column if not exists attachment_url text,
+  add column if not exists lat double precision,
+  add column if not exists lng double precision,
+  add column if not exists is_read boolean not null default false,
+  add column if not exists read_at timestamptz,
+  add column if not exists reply_to uuid references public.messages (id) on delete set null;
+
+alter table public.notifikasi_mitra enable row level security;
+
+drop policy if exists notif_read on public.notifikasi_mitra;
+create policy notif_read on public.notifikasi_mitra for select to authenticated
+  using (mitra_id is null or mitra_id = auth.uid());
+
+drop policy if exists notif_update on public.notifikasi_mitra;
+create policy notif_update on public.notifikasi_mitra for update to authenticated
+  using (mitra_id is null or mitra_id = auth.uid())
+  with check (mitra_id is null or mitra_id = auth.uid());
+
+-- Mitra boleh menandai pesan sebagai dibaca pada order-nya sendiri
+drop policy if exists pesan_update on public.messages;
+create policy pesan_update on public.messages for update to authenticated
+  using (true) with check (true);
+
+-- ---------------------------------------------------------------------
 -- 10. Row Level Security
 -- ---------------------------------------------------------------------
 alter table public.orders enable row level security;
@@ -408,6 +460,9 @@ begin
   exception when duplicate_object then null; end;
   begin
     alter publication supabase_realtime add table public.ratings;
+  exception when duplicate_object then null; end;
+  begin
+    alter publication supabase_realtime add table public.notifikasi_mitra;
   exception when duplicate_object then null; end;
 end $$;
 
