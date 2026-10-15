@@ -28,6 +28,22 @@ flutter build apk --release \
 APK: `build/app/outputs/flutter-apk/app-release.apk`.
 Atau lewat GitHub: tambah 6 secret di atas, jalankan workflow "Build KUNBAR Mitra APK".
 
+## Notifikasi (v1.2.0)
+`lib/services/notifikasi.dart` = satu registry 20 notifikasi.
+8 PERSISTEN (`ongoing: true`, tidak bisa di-swipe): Order Masuk, Order Berjalan,
+Warga Telepon (full-screen), GPS Off, Internet Hilang, SOS, Baterai Kritis,
+Order Dibatalkan. 12 biasa: chat, penghasilan, rating, pengingat pickup/dropoff,
+istirahat, target harian, bonus, pengumuman, update app, maintenance, order delay.
+- Pemicu otomatis: order masuk dari stream, tahap order, GPS mati (cek tiap 20 s),
+  internet putus (DNS lookup tiap 20 s), 4 jam online, SOS, chat, order selesai.
+- Pemicu dari server (belum ada, butuh Supabase + FCM): warga menelepon, order
+  dibatalkan warga, rating baru, bonus, pengumuman, maintenance, update app.
+- Semua 20 bisa dites manual: **Akun > Pengaturan > Notifikasi aplikasi > Tes**.
+- `AndroidNotificationCategory.call` + `USE_FULL_SCREEN_INTENT` untuk "Warga Telepon".
+  Catatan jujur: Android 14+ hanya memberi izin ini otomatis ke aplikasi telepon;
+  kalau tidak muncul sebagai layar penuh, pengguna bisa mengaktifkan lewat
+  Pengaturan > Akses aplikasi > Layar penuh.
+
 ## Catatan desain
 - **Notifikasi ONLINE yang tidak bisa dihapus**: saat mitra menekan ONLINE, `LocationService.startOnline()`
   menyalakan *foreground service* geolocator dengan `ForegroundNotificationConfig(setOngoing: true)`
