@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -15,6 +14,7 @@ import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../core/data/data_providers.dart';
 import '../domain/anggota.dart';
+import '../../../shared/widgets/haptics.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -448,7 +448,7 @@ class _RoleSwitcher extends ConsumerWidget {
                   role: r,
                   aktif: r == aktif,
                   onTap: () {
-                    HapticFeedback.selectionClick();
+                    Haptics.ringan();
                     final SessionNotifier ctrl =
                         ref.read(sessionProvider.notifier);
                     ref.read(navigationIndexProvider.notifier).state = 0;
@@ -541,7 +541,7 @@ class _MenuUmum extends ConsumerWidget {
               selected: <ThemeMode>{mode},
               showSelectedIcon: false,
               onSelectionChanged: (Set<ThemeMode> s) {
-                HapticFeedback.selectionClick();
+                Haptics.ringan();
                 ref.read(themeModeProvider.notifier).atur(s.first);
               },
             ),
@@ -553,7 +553,7 @@ class _MenuUmum extends ConsumerWidget {
             trailing: Switch(
               value: lansia,
               onChanged: (bool v) {
-                HapticFeedback.selectionClick();
+                Haptics.ringan();
                 ref.read(elderModeProvider.notifier).atur(v);
               },
             ),

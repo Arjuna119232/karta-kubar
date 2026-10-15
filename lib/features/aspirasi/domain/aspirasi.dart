@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_icon.dart';
 
 /// Topik FISH (aspirasi, laporan, pengaduan warga).
@@ -29,12 +30,12 @@ extension KategoriAspirasiX on KategoriAspirasi {
       };
 
   Color get warna => switch (this) {
-        KategoriAspirasi.jalan => const Color(0xFF0D47A1),
-        KategoriAspirasi.keamanan => const Color(0xFFD32F2F),
-        KategoriAspirasi.kebersihan => const Color(0xFF2E7D32),
-        KategoriAspirasi.layanan => const Color(0xFFB26A00),
-        KategoriAspirasi.kegiatan => const Color(0xFFE91E63),
-        KategoriAspirasi.lain => const Color(0xFF6A6A72),
+        KategoriAspirasi.jalan => AppColors.accent,
+        KategoriAspirasi.keamanan => AppColors.error,
+        KategoriAspirasi.kebersihan => AppColors.success,
+        KategoriAspirasi.layanan => AppColors.warning,
+        KategoriAspirasi.kegiatan => AppColors.social,
+        KategoriAspirasi.lain => AppColors.muted,
       };
 
   static KategoriAspirasi fromDb(String? v) => KategoriAspirasi.values.firstWhere(
@@ -58,10 +59,10 @@ extension StatusAspirasiX on StatusAspirasi {
   int get prioritas => index;
 
   Color get warna => switch (this) {
-        StatusAspirasi.baru => const Color(0xFFD32F2F),
-        StatusAspirasi.diproses => const Color(0xFFB26A00),
-        StatusAspirasi.selesai => const Color(0xFF2E7D32),
-        StatusAspirasi.ditolak => const Color(0xFF6A6A72),
+        StatusAspirasi.baru => AppColors.error,
+        StatusAspirasi.diproses => AppColors.warning,
+        StatusAspirasi.selesai => AppColors.success,
+        StatusAspirasi.ditolak => AppColors.muted,
       };
 
   Ik get ikon => switch (this) {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -13,6 +12,8 @@ import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/status_views.dart';
 import '../data/darurat_repository.dart';
 import '../domain/darurat.dart';
+import '../../../shared/widgets/haptics.dart';
+import '../../../shared/widgets/app_sheet.dart';
 
 /// Lapor darurat. Layar ini sengaja dibuat satu tombol besar di atas:
 /// saat panik, tidak ada yang membaca form panjang.
@@ -59,12 +60,14 @@ class DaruratScreen extends ConsumerWidget {
   }
 
   void _bukaForm(BuildContext context, Session session) {
-    HapticFeedback.heavyImpact();
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (BuildContext _) => FormDarurat(pengirim: session.user?.name ?? 'Warga'),
+    Haptics.kuat();
+    AppSheet.tampilkan<void>(
+      context,
+      judul: 'Lapor darurat',
+      subjudul: 'Nomor darurat bisa ditelepon tanpa internet',
+      ikon: Ik.megaphone,
+      gulir: false,
+      isi: FormDarurat(pengirim: session.user?.name ?? 'Warga'),
     );
   }
 }
@@ -107,7 +110,7 @@ class _TombolDarurat extends StatelessWidget {
               SizedBox(height: 4),
               Text(
                 'Ketuk untuk melapor ke pengurus RW',
-                style: TextStyle(color: Color(0xFFFFD9D9), fontSize: 13),
+                style: TextStyle(color: AppColors.onErrorSoft, fontSize: 13),
               ),
             ],
           ),
@@ -159,7 +162,7 @@ class _KartuNomorDarurat extends StatelessWidget {
                   IconButton(
                     tooltip: 'Telepon $nomor',
                     onPressed: () {
-                      HapticFeedback.selectionClick();
+                      Haptics.ringan();
                       launchUrl(Uri(scheme: 'tel', path: nomor));
                     },
                     icon: AppIcon(Ik.phone,
@@ -273,17 +276,11 @@ class _FormDaruratState extends ConsumerState<FormDarurat> {
 
   @override
   Widget build(BuildContext context) {
-    final double bawah = MediaQuery.viewInsetsOf(context).bottom;
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-          AppSpacing.screen, 0, AppSpacing.screen, bawah + 20),
-      child: SingleChildScrollView(
+    return SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const SectionHeader(title: 'Apa yang terjadi?'),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -299,7 +296,7 @@ class _FormDaruratState extends ConsumerState<FormDarurat> {
                     ),
                     onSelected: (bool v) {
                       if (!v) return;
-                      HapticFeedback.selectionClick();
+                      Haptics.ringan();
                       setState(() => _jenis = j);
                     },
                   ),
@@ -349,8 +346,7 @@ class _FormDaruratState extends ConsumerState<FormDarurat> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _submit() async {

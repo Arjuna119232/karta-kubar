@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -19,6 +18,7 @@ import '../../../shared/widgets/stat_tile.dart';
 import '../../kegiatan/domain/kegiatan.dart';
 import '../../shell/data/app_tabs.dart';
 import '../../../shared/widgets/cover_pilih.dart';
+import '../../../shared/widgets/haptics.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -145,7 +145,7 @@ class _KartuDarurat extends StatelessWidget {
                 Text(
                   'Kebakaran, kecelakaan, kekerasan, atau banjir di RW 05.',
                   style: context.text.bodySmall
-                      ?.copyWith(color: const Color(0xFFFFD9D9)),
+                      ?.copyWith(color: AppColors.onErrorSoft),
                 ),
               ],
             ),
@@ -184,7 +184,7 @@ class _Greeting extends StatelessWidget {
           icon: Ik.bell,
           showDot: true,
           onTap: () {
-            HapticFeedback.selectionClick();
+            Haptics.ringan();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Belum ada notifikasi baru')),
             );
@@ -194,9 +194,9 @@ class _Greeting extends StatelessWidget {
         Container(
           width: 46,
           height: 46,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: <Color>[Color(0xFF1B5E20), Color(0xFF2E7D32)],
+              colors: context.semantic.heroGradient,
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -455,7 +455,7 @@ class _QuickActions extends ConsumerWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(18),
                   onTap: () {
-                    HapticFeedback.selectionClick();
+                    Haptics.ringan();
                     it.onTap();
                   },
                   child: Padding(

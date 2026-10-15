@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_icon.dart';
 
 /// Jenis keadaan darurat di Kuningan Barat.
@@ -63,9 +64,9 @@ extension StatusDaruratX on StatusDarurat {
       };
 
   Color get warna => switch (this) {
-        StatusDarurat.terkirim => const Color(0xFFD32F2F),
-        StatusDarurat.ditangani => const Color(0xFFB26A00),
-        StatusDarurat.selesai => const Color(0xFF2E7D32),
+        StatusDarurat.terkirim => AppColors.error,
+        StatusDarurat.ditangani => AppColors.warning,
+        StatusDarurat.selesai => AppColors.success,
       };
 
   static StatusDarurat fromDb(String? v) => StatusDarurat.values.firstWhere(

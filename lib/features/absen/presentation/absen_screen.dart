@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -15,6 +14,8 @@ import '../domain/kehadiran.dart';
 import '../../../shared/widgets/app_icon.dart';
 
 import '../../kegiatan/domain/kegiatan.dart';
+import '../../../shared/widgets/haptics.dart';
+import '../../../shared/widgets/app_sheet.dart';
 
 class AbsenScreen extends ConsumerStatefulWidget {
   const AbsenScreen({super.key});
@@ -126,17 +127,20 @@ class _AbsenScreenState extends ConsumerState<AbsenScreen> {
   }
 
   void _bukaScanner(BuildContext context, AbsenNotifier ctrl) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (BuildContext c) => _ScannerSheet(ctrl: ctrl),
+    AppSheet.tampilkan<void>(
+      context,
+      judul: 'Pindai QR kegiatan',
+      subjudul: 'Kehadiran tercatat otomatis setelah QR terbaca',
+      ikon: Ik.qrScan,
+      gulir: false,
+      isi: _ScannerSheet(ctrl: ctrl),
     );
   }
 
   void _catat(
       BuildContext context, AbsenNotifier ctrl, Kegiatan a) {
     final bool ok = ctrl.catat(a, StatusKehadiran.hadir);
-    HapticFeedback.mediumImpact();
+    Haptics.sedang();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(ok
@@ -184,7 +188,7 @@ class _ScannerCard extends StatelessWidget {
           const SizedBox(height: 18),
           FilledButton.icon(
             onPressed: () {
-              HapticFeedback.selectionClick();
+              Haptics.ringan();
               onScan();
             },
             icon: const AppIcon(Ik.camera, size: 20),
@@ -223,67 +227,58 @@ class _ScannerSheetState extends ConsumerState<_ScannerSheet> {
   Widget build(BuildContext context) {
     final String? judul = _hasil;
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 8,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 28,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          if (judul == null) ...<Widget>[
-            _Viewfinder(busy: _memindai),
-            const SizedBox(height: 18),
-            Text('Memindai kode QR...',
-                textAlign: TextAlign.center,
-                style: context.text.titleMedium),
-            const SizedBox(height: 6),
-            Text(
-              'Demo: kamera tidak diaktifkan. Payload QR yang terbaca ditampilkan di bawah.',
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        if (judul == null) ...<Widget>[
+          _Viewfinder(busy: _memindai),
+          const SizedBox(height: 18),
+          Text('Memindai kode QR...',
               textAlign: TextAlign.center,
-              style: context.text.bodySmall
-                  ?.copyWith(color: context.semantic.textSecondary),
-            ),
-          ] else ...<Widget>[
-            _HasilCard(judul: judul, ctrl: widget.ctrl),
-          ],
-          const SizedBox(height: 20),
-          if (judul == null)
-            OutlinedButton(
-              onPressed: _memindai ? null : _mulai,
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(50),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.button)),
-              ),
-              child: const Text('Pindai sekarang'),
-            )
-          else
-            FilledButton.icon(
-              onPressed: () {
-                widget.ctrl.catat(
-                  _cocok(judul!),
-                  StatusKehadiran.hadir,
-                  pada: DateTime.now(),
-                );
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Kehadiran tercatat: $judul')),
-                );
-              },
-              icon: const AppIcon(Ik.check, size: 20),
-              label: const Text('Ya, saya hadir'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.button)),
-              ),
-            ),
+              style: context.text.titleMedium),
+          const SizedBox(height: 6),
+          Text(
+            'Demo: kamera tidak diaktifkan. Payload QR yang terbaca ditampilkan di bawah.',
+            textAlign: TextAlign.center,
+            style: context.text.bodySmall
+                ?.copyWith(color: context.semantic.textSecondary),
+          ),
+        ] else ...<Widget>[
+          _HasilCard(judul: judul, ctrl: widget.ctrl),
         ],
-      ),
+        const SizedBox(height: 20),
+        if (judul == null)
+          OutlinedButton(
+            onPressed: _memindai ? null : _mulai,
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(50),
+            ),
+            child: const Text('Pindai sekarang'),
+          )
+        else
+          FilledButton.icon(
+            onPressed: () {
+              final ScaffoldMessengerState pesan =
+                  ScaffoldMessenger.of(context);
+              widget.ctrl.catat(
+                _cocok(judul),
+                StatusKehadiran.hadir,
+                pada: DateTime.now(),
+              );
+              Haptics.sukses();
+              Navigator.of(context).pop();
+              pesan.showSnackBar(
+                SnackBar(content: Text('Kehadiran tercatat: $judul')),
+              );
+            },
+            icon: const AppIcon(Ik.check, size: 20),
+            label: const Text('Ya, saya hadir'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+            ),
+          ),
+      ],
     );
   }
 
@@ -302,7 +297,7 @@ class _ScannerSheetState extends ConsumerState<_ScannerSheet> {
 
   Future<void> _mulai() async {
     setState(() => _memindai = true);
-    HapticFeedback.selectionClick();
+    Haptics.ringan();
     await Future<void>.delayed(const Duration(milliseconds: 1400));
     if (!mounted) return;
     final List<Kegiatan> semua =
@@ -316,7 +311,7 @@ class _ScannerSheetState extends ConsumerState<_ScannerSheet> {
       orElse: () => semua.first,
     );
     final String? parsed = parseAbsenPayload(absenPayload(target));
-    HapticFeedback.mediumImpact();
+    Haptics.sedang();
     setState(() {
       _memindai = false;
       _hasil = parsed ?? target.judul;
@@ -343,7 +338,10 @@ class _Viewfinder extends StatelessWidget {
             ? Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  const CircularProgressIndicator(),
+                  CircularProgressIndicator(
+                    strokeWidth: 3,
+                    color: context.colors.primary,
+                  ),
                   const SizedBox(height: 14),
                   Text('Mendekode...', style: context.text.bodyMedium),
                 ],
@@ -454,31 +452,30 @@ class _RiwayatTile extends StatelessWidget {
       };
 
   void _gantiStatus(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (BuildContext c) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 4, 24, 12),
-              child: Text('Ubah status kehadiran', style: c.text.titleMedium),
+    AppSheet.tampilkan<void>(
+      context,
+      judul: 'Ubah status kehadiran',
+      subjudul: item.kegiatan,
+      ikon: Ik.edit,
+      gulir: false,
+      isi: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          for (final StatusKehadiran s in StatusKehadiran.values)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: AppIcon(Ik.dot, color: s.color, size: 14),
+              title: Text(s.label),
+              trailing: item.status == s
+                  ? AppIcon(Ik.check, color: s.color)
+                  : null,
+              onTap: () {
+                Haptics.ringan();
+                ctrl.ubahStatus(item.id, s);
+                Navigator.of(context).pop();
+              },
             ),
-            for (final StatusKehadiran s in StatusKehadiran.values)
-              ListTile(
-                leading: AppIcon(Ik.dot, color: s.color, size: 14),
-                title: Text(s.label),
-                trailing: item.status == s
-                    ? AppIcon(Ik.check, color: s.color)
-                    : null,
-                onTap: () {
-                  ctrl.ubahStatus(item.id, s);
-                  Navigator.of(context).pop();
-                },
-              ),
-            const SizedBox(height: 8),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -588,11 +585,11 @@ class _PanelPenyelenggara extends StatelessWidget {
                   backgroundColor: Colors.white,
                   eyeStyle: const QrEyeStyle(
                     eyeShape: QrEyeShape.square,
-                    color: Color(0xFF1B5E20),
+                    color: AppColors.primary,
                   ),
                   dataModuleStyle: const QrDataModuleStyle(
                     dataModuleShape: QrDataModuleShape.square,
-                    color: Color(0xFF1A1A1A),
+                    color: AppColors.onSecondary,
                   ),
                 ),
               ),

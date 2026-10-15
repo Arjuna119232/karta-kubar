@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/session.dart';
@@ -10,10 +9,11 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/fade_slide_in.dart';
 import '../../../shared/widgets/primary_button.dart';
-import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/status_views.dart';
 import '../data/aspirasi_state.dart';
 import '../domain/aspirasi.dart';
+import '../../../shared/widgets/haptics.dart';
+import '../../../shared/widgets/app_sheet.dart';
 
 /// Papan FISH warga: kirim aspirations / laporan, lalu pantau penanganannya.
 class AspirasiScreen extends ConsumerStatefulWidget {
@@ -70,7 +70,7 @@ class _AspirasiScreenState extends ConsumerState<AspirasiScreen> {
               _FilterBar(
                 aktif: _filter,
                 onPilih: (StatusAspirasi? v) {
-                  HapticFeedback.selectionClick();
+                  Haptics.ringan();
                   setState(() => _filter = v);
                 },
               ),
@@ -107,12 +107,14 @@ class _AspirasiScreenState extends ConsumerState<AspirasiScreen> {
 
   Future<void> _bukaForm(BuildContext context, Session session) async {
     final AuthUser? user = session.user;
-    HapticFeedback.mediumImpact();
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (BuildContext _) => FormFish(
+    Haptics.sedang();
+    await AppSheet.tampilkan<void>(
+      context,
+      judul: 'Kirim FISH',
+      subjudul: 'Forum Informasi & Suara Hati warga',
+      ikon: Ik.chat,
+      gulir: false,
+      isi: FormFish(
         pengirim: user?.name ?? 'Warga KUNBAR',
         rt: user?.rt,
         rw: user?.rw,
@@ -520,19 +522,13 @@ class _FormFishState extends ConsumerState<FormFish> {
 
   @override
   Widget build(BuildContext context) {
-    final double bawah = MediaQuery.viewInsetsOf(context).bottom;
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-          AppSpacing.screen, 0, AppSpacing.screen, bawah + 20),
-      child: Form(
+    return Form(
         key: _formKey,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const SectionHeader(title: 'Kirim FISH'),
               Text(
                 'Aspirasi, laporan, atau pengaduan. Oleh ${widget.pengirim}'
                 '${widget.rt == null ? '' : ' (RT ${widget.rt})'}.',
@@ -559,7 +555,7 @@ class _FormFishState extends ConsumerState<FormFish> {
                       ),
                       onSelected: (bool v) {
                         if (!v) return;
-                        HapticFeedback.selectionClick();
+                        Haptics.ringan();
                         setState(() => _kategori = k);
                       },
                     ),
@@ -622,8 +618,7 @@ class _FormFishState extends ConsumerState<FormFish> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _submit() async {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -19,6 +18,8 @@ import '../../aspirasi/data/aspirasi_state.dart';
 import '../../aspirasi/domain/aspirasi.dart';
 import '../../aspirasi/presentation/aspirasi_screen.dart';
 import '../../shell/data/app_tabs.dart';
+import '../../../shared/widgets/haptics.dart';
+import '../../../shared/widgets/app_dialog.dart';
 
 /// Panel kendali untuk pengurus / RT / RW / kelurahan.
 ///
@@ -122,7 +123,7 @@ class PengurusScreen extends ConsumerWidget {
     }
 
 
-    HapticFeedback.mediumImpact();
+    Haptics.sedang();
     final Hasil<Aspirasi> h = await ref
         .read(aspirasiProvider.notifier)
         .ubahStatus(a.id, baru, catatan: catatan);
@@ -143,47 +144,38 @@ class PengurusScreen extends ConsumerWidget {
     StatusAspirasi baru,
   ) {
     final TextEditingController c = TextEditingController();
-    return showDialog<String>(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text('Tandai ${baru.label}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              '"${a.judul}"',
-              style: Theme.of(dialogContext).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: c,
-              autofocus: true,
-              minLines: 2,
-              maxLines: 4,
-              maxLength: 240,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Catatan untuk warga (opsional)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
+    return AppDialog.tampilkan<String>(
+      context,
+      judul: 'Tandai ${baru.label}',
+      pesan: '"${a.judul}"',
+      ikon: Ik.edit,
+      isi: TextField(
+        controller: c,
+        autofocus: true,
+        minLines: 2,
+        maxLines: 4,
+        maxLength: 240,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: const InputDecoration(
+          labelText: 'Catatan untuk warga (opsional)',
         ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final String isi = c.text.trim();
-              Navigator.of(dialogContext).pop(isi);
-            },
-            child: const Text('Simpan'),
-          ),
-        ],
       ),
+      aksi: (BuildContext ctx, void Function() tutup) => <Widget>[
+        TextButton(
+          onPressed: () {
+            Haptics.ringan();
+            tutup();
+          },
+          child: const Text('Batal'),
+        ),
+        FilledButton(
+          onPressed: () {
+            Haptics.sedang();
+            Navigator.of(ctx).pop(c.text.trim());
+          },
+          child: const Text('Simpan'),
+        ),
+      ],
     ).whenComplete(c.dispose);
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
 /// Status kehadiran anggota pada satu kegiatan.
 enum StatusKehadiran { hadir, izin, alpha }
 
@@ -11,9 +12,9 @@ extension StatusKehadiranX on StatusKehadiran {
       };
 
   Color get color => switch (this) {
-        StatusKehadiran.hadir => const Color(0xFF1B7A43),
-        StatusKehadiran.izin => const Color(0xFFB26A00),
-        StatusKehadiran.alpha => const Color(0xFFD32F2F),
+        StatusKehadiran.hadir => AppColors.success,
+        StatusKehadiran.izin => AppColors.warning,
+        StatusKehadiran.alpha => AppColors.error,
       };
 }
 

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/session.dart';
@@ -7,6 +6,7 @@ import '../../../core/auth/user_role.dart';
 import '../../../core/providers.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../data/app_tabs.dart';
+import '../../../shared/widgets/haptics.dart';
 
 /// Kerangka utama. Bottom navigation ditentukan oleh role yang sedang aktif.
 class AppShell extends ConsumerWidget {
@@ -44,7 +44,7 @@ class AppShell extends ConsumerWidget {
         ],
         onDestinationSelected: (int i) {
           if (i >= tabs.length) return;
-          if (i != aman) HapticFeedback.selectionClick();
+          if (i != aman) Haptics.ringan();
           ref.read(navigationIndexProvider.notifier).state = i;
         },
       ),

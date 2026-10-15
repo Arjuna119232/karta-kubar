@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -10,10 +9,11 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/fade_slide_in.dart';
-import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/status_views.dart';
 import '../data/umkm_repository.dart';
 import '../domain/umkm.dart';
+import '../../../shared/widgets/haptics.dart';
+import '../../../shared/widgets/app_sheet.dart';
 
 /// Katalog UMKM warga: lihat semua, ajukan usaha baru.
 class UmkmScreen extends ConsumerStatefulWidget {
@@ -60,7 +60,7 @@ class _UmkmScreenState extends ConsumerState<UmkmScreen> {
               _Filter(
                 aktif: _filter,
                 onPilih: (KategoriUmkm? v) {
-                  HapticFeedback.selectionClick();
+                  Haptics.ringan();
                   setState(() => _filter = v);
                 },
               ),
@@ -96,12 +96,14 @@ class _UmkmScreenState extends ConsumerState<UmkmScreen> {
   }
 
   void _bukaForm(Session session) {
-    HapticFeedback.mediumImpact();
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (BuildContext _) => const FormUmkm(),
+    Haptics.sedang();
+    AppSheet.tampilkan<void>(
+      context,
+      judul: 'Daftarkan UMKM',
+      subjudul: 'Isi data usaha, pengurus akan memverifikasi',
+      ikon: Ik.handHeart,
+      gulir: false,
+      isi: const FormUmkm(),
     );
   }
 }
@@ -322,7 +324,7 @@ class _KartuUmkm extends StatelessWidget {
   }
 
   void _telepon(BuildContext context, String nomor) {
-    HapticFeedback.selectionClick();
+    Haptics.ringan();
     launchUrl(Uri(scheme: 'tel', path: nomor));
   }
 }
@@ -358,19 +360,13 @@ class _FormUmkmState extends ConsumerState<FormUmkm> {
 
   @override
   Widget build(BuildContext context) {
-    final double bawah = MediaQuery.viewInsetsOf(context).bottom;
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-          AppSpacing.screen, 0, AppSpacing.screen, bawah + 20),
-      child: Form(
+    return Form(
         key: _formKey,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const SectionHeader(title: 'Ajukan Usaha'),
               Text(
                 'Setelah diajukan, pengurus akan memverifikasi. Usaha belum '
                 'bertanda centang sampai disetujui.',
@@ -503,8 +499,7 @@ class _FormUmkmState extends ConsumerState<FormUmkm> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _submit() async {

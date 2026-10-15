@@ -36,6 +36,17 @@ class AppColors {
   static const Color success = Color(0xFF2E7D32);
   static const Color warning = Color(0xFFB26A00);
 
+  /// Abu netral untuk status yang tidak punya warna sendiri
+  /// (ditolak / tamu / topik 'lain').
+  static const Color muted = Color(0xFF6A6A72);
+
+  /// Teks di atas permukaan [error] yang terisi penuh. Putih penuh terlalu
+  /// silau untuk banner darurat sepanjang paragraf.
+  static const Color onErrorSoft = Color(0xFFFFD9D9);
+
+  /// Hijau paling gelap: ujung bawah gradasi hero di tema gelap.
+  static const Color primaryDeep = Color(0xFF123815);
+
   static const Color bgLight = Color(0xFFF6F7F9);
   static const Color cardLight = Color(0xFFFFFFFF);
   static const Color textPrimaryLight = Color(0xFF1A1A1A);
@@ -74,7 +85,7 @@ class AppSemantic extends ThemeExtension<AppSemantic> {
     textSecondary: AppColors.textSecondaryLight,
     success: AppColors.success,
     warning: AppColors.warning,
-    heroGradient: <Color>[Color(0xFF1B5E20), Color(0xFF2E7D32)],
+    heroGradient: <Color>[AppColors.primary, AppColors.success],
   );
 
   static const AppSemantic dark = AppSemantic(
@@ -83,7 +94,7 @@ class AppSemantic extends ThemeExtension<AppSemantic> {
     textSecondary: AppColors.textSecondaryDark,
     success: AppColors.success,
     warning: AppColors.warning,
-    heroGradient: <Color>[Color(0xFF123815), Color(0xFF1B5E20)],
+    heroGradient: <Color>[AppColors.primaryDeep, AppColors.primary],
   );
 
   @override

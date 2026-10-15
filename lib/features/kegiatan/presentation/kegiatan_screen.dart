@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/data/data_providers.dart';
@@ -11,6 +10,8 @@ import '../../../shared/widgets/status_views.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../domain/kegiatan.dart';
 import '../../../shared/widgets/cover_pilih.dart';
+import '../../../shared/widgets/haptics.dart';
+import '../../../shared/widgets/app_sheet.dart';
 
 /// Layar kegiatan. Data lewat repository (`kegiatanProvider`), bukan data demo.
 class KegiatanScreen extends ConsumerStatefulWidget {
@@ -152,7 +153,7 @@ class _CategoryChip extends StatelessWidget {
       label: Text(label),
       selected: selected,
       onSelected: (_) {
-        HapticFeedback.selectionClick();
+        Haptics.ringan();
         onTap();
       },
       showCheckmark: false,
@@ -238,62 +239,63 @@ class _ActivityCard extends StatelessWidget {
   }
 
   void _showDetail(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (BuildContext c) {
-        final Color cat = warnaKategori(activity.kategori);
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 4, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              SizedBox(
-                height: 130,
-                width: double.infinity,
-                child: AppCover(coverKategori(activity.kategori), radius: 18),
-              ),
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: cat.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(activity.kategori,
-                    style: c.text.labelSmall?.copyWith(color: cat)),
-              ),
-              const SizedBox(height: 12),
-              Text(activity.judul, style: c.text.headlineSmall),
-              const SizedBox(height: 16),
-              _MetaRow(
-                icon: Ik.calendar,
-                text: DateId.hariTanggal(activity.tanggal),
-              ),
-              const SizedBox(height: 8),
-              _MetaRow(icon: Ik.place, text: activity.lokasi),
-              const SizedBox(height: 8),
-              _MetaRow(
-                icon: activity.mendatang
-                    ? Ik.clock
-                    : Ik.checkCircle,
-                text: activity.mendatang
-                    ? DateId.hitungMundur(activity.tanggal)
-                    : 'Kegiatan sudah selesai',
-              ),
-              const SizedBox(height: 20),
-              Text(
-                activity.mendatang
-                    ? 'Tandai kehadiran kamu lewat menu Absen di Beranda saat kegiatan berlangsung.'
-                    : 'Terima kasih untuk partisipasi kamu pada kegiatan ini.',
-                style: c.text.bodyMedium
-                    ?.copyWith(color: c.semantic.textSecondary),
-              ),
-            ],
+    Haptics.ringan();
+    AppSheet.tampilkan<void>(
+      context,
+      gambar: AppCover(coverKategori(activity.kategori), radius: 0),
+      judul: activity.judul,
+      subjudul: DateId.hariTanggal(activity.tanggal),
+      gulir: true,
+      isi: _RincianKegiatan(activity: activity),
+    );
+  }
+}
+
+/// Isi kartu rincian kegiatan: label kategori, baris meta, dan penutup.
+class _RincianKegiatan extends StatelessWidget {
+  const _RincianKegiatan({required this.activity});
+
+  final Kegiatan activity;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color cat = warnaKategori(activity.kategori);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: cat.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(999),
           ),
-        );
-      },
+          child: Text(activity.kategori,
+              style: context.text.labelSmall?.copyWith(color: cat)),
+        ),
+        const SizedBox(height: 16),
+        _MetaRow(
+          icon: Ik.calendar,
+          text: DateId.hariTanggal(activity.tanggal),
+        ),
+        const SizedBox(height: 8),
+        _MetaRow(icon: Ik.place, text: activity.lokasi),
+        const SizedBox(height: 8),
+        _MetaRow(
+          icon: activity.mendatang ? Ik.clock : Ik.checkCircle,
+          text: activity.mendatang
+              ? DateId.hitungMundur(activity.tanggal)
+              : 'Kegiatan sudah selesai',
+        ),
+        const SizedBox(height: 20),
+        Text(
+          activity.mendatang
+              ? 'Tandai kehadiran kamu lewat menu Absen di Beranda saat kegiatan berlangsung.'
+              : 'Terima kasih untuk partisipasi kamu pada kegiatan ini.',
+          style: context.text.bodyMedium
+              ?.copyWith(color: context.semantic.textSecondary),
+        ),
+      ],
     );
   }
 }

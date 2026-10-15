@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 import '../../shared/widgets/app_icon.dart';
 
 /// Lima level akses KUNBAR Connect. Hierarkis: angka lebih besar = lebih tinggi.
@@ -47,11 +48,11 @@ extension UserRoleX on UserRole {
       };
 
   Color get warna => switch (this) {
-        UserRole.guest => const Color(0xFF6A6A72),
-        UserRole.warga => const Color(0xFF1B5E20),
-        UserRole.anggota => const Color(0xFF0D47A1),
-        UserRole.pengurus => const Color(0xFFB26A00),
-        UserRole.admin => const Color(0xFFE91E63),
+        UserRole.guest => AppColors.muted,
+        UserRole.warga => AppColors.primary,
+        UserRole.anggota => AppColors.accent,
+        UserRole.pengurus => AppColors.warning,
+        UserRole.admin => AppColors.social,
       };
 
   /// Ringkasan hak akses — dipakai di layar profil & dokumentasi.

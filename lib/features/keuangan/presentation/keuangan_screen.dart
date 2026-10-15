@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/app_icon.dart';
+import '../../../shared/widgets/status_views.dart';
 import '../domain/keuangan.dart';
 
 /// Layar keuangan. Data SELALU lewat repository (`iuranProvider`), bukan
@@ -276,10 +277,7 @@ class _IuranCard extends StatelessWidget {
     return AppCard(
       padding: EdgeInsets.zero,
       child: iuran.when(
-        loading: () => const Padding(
-          padding: EdgeInsets.symmetric(vertical: 28),
-          child: Center(child: CircularProgressIndicator()),
-        ),
+        loading: () => const _IuranSkeleton(),
         error: (Object e, StackTrace st) => Padding(
           padding: const EdgeInsets.all(20),
           child: Text('Iuran belum bisa dimuat: $e',
@@ -427,6 +425,46 @@ class _TransparansiCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+/// Kerangka baris iuran saat data masih dimuat — bentuknya meniru baris asli
+/// (lingkaran status + dua baris teks) supaya tidak ada lompatan tata letak
+/// ketika data benar-benar tiba.
+class _IuranSkeleton extends StatelessWidget {
+  const _IuranSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return AppShimmer(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: <Widget>[
+            for (int i = 0; i < 3; i++) ...<Widget>[
+              if (i > 0) const SizedBox(height: AppSpacing.md),
+              Row(
+                children: <Widget>[
+                  const AppSkeleton(height: 36, width: 36, radius: 18),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const <Widget>[
+                        AppSkeleton(height: 12, width: 128, radius: 6),
+                        SizedBox(height: AppSpacing.xs),
+                        AppSkeleton(height: 10, radius: 5),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
