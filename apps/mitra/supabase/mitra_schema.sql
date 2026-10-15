@@ -363,6 +363,45 @@ create policy pesan_update on public.messages for update to authenticated
   using (true) with check (true);
 
 -- ---------------------------------------------------------------------
+-- 9d. Chat rooms: satu ruang percakapan per pasangan mitra + warga.
+--    .messages tetap terkait order (order_id) supaya mudah ditelusuri.
+--     Catatan: tabel "mitra_jasa" dan "users" tidak pernah ada; yang dipakai
+--     adalah auth.users dan profiles.role = 'mitra'.
+-- ---------------------------------------------------------------------
+create table if not exists public.chat_rooms (
+  id uuid primary key default gen_random_uuid(),
+  mitra_id uuid not null references auth.users (id) on delete cascade,
+  warga_id uuid references auth.users (id) on delete set null,
+  order_id uuid references public.orders (id) on delete set null,
+  order_jenis text check (order_jenis in ('jastip', 'ojek')),
+  last_message text,
+  last_message_at timestamptz,
+  unread_mitra int not null default 0,
+  unread_warga int not null default 0,
+  is_archived boolean not null default false,
+  created_at timestamptz not null default now(),
+  unique (mitra_id, order_id)
+);
+create index if not exists idx_rooms_mitra on public.chat_rooms (mitra_id, last_message_at desc);
+
+alter table public.messages add column if not exists room_id uuid
+  references public.chat_rooms (id) on delete cascade;
+
+alter table public.chat_rooms enable row level security;
+
+drop policy if exists rooms_read on public.chat_rooms;
+create policy rooms_read on public.chat_rooms for select to authenticated
+  using (mitra_id = auth.uid() or warga_id = auth.uid());
+
+drop policy if exists rooms_insert on public.chat_rooms;
+create policy rooms_insert on public.chat_rooms for insert to authenticated
+  with check (mitra_id = auth.uid());
+
+drop policy if exists rooms_update on public.chat_rooms;
+create policy rooms_update on public.chat_rooms for update to authenticated
+  using (mitra_id = auth.uid()) with check (mitra_id = auth.uid());
+
+-- ---------------------------------------------------------------------
 -- 10. Row Level Security
 -- ---------------------------------------------------------------------
 alter table public.orders enable row level security;
@@ -463,6 +502,9 @@ begin
   exception when duplicate_object then null; end;
   begin
     alter publication supabase_realtime add table public.notifikasi_mitra;
+  exception when duplicate_object then null; end;
+  begin
+    alter publication supabase_realtime add table public.chat_rooms;
   exception when duplicate_object then null; end;
 end $$;
 

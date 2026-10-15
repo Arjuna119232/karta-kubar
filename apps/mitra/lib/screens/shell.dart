@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'account_screen.dart';
 import 'chat_list_screen.dart';
 import 'pendapatan_screen.dart';
+import '../state/app_state.dart';
 import 'home_screen.dart';
 import 'orders_screen.dart';
 
@@ -20,6 +22,7 @@ class _ShellState extends State<Shell> {
 
   @override
   Widget build(BuildContext context) {
+    final belum = context.watch<AppState>().unreadTotal();
     return Scaffold(
       body: IndexedStack(
         index: _i,
@@ -46,8 +49,16 @@ class _ShellState extends State<Shell> {
             label: 'Pendapatan',
           ),
           NavigationDestination(
-            icon: Icon(Icons.chat_bubble_outline_rounded),
-            selectedIcon: Icon(Icons.chat_bubble_rounded),
+            icon: Badge(
+              isLabelVisible: belum > 0,
+              label: Text('$belum'),
+              child: const Icon(Icons.chat_bubble_outline_rounded),
+            ),
+            selectedIcon: Badge(
+              isLabelVisible: belum > 0,
+              label: Text('$belum'),
+              child: const Icon(Icons.chat_bubble_rounded),
+            ),
             label: 'Chat',
           ),
           NavigationDestination(

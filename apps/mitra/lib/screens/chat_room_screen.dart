@@ -29,6 +29,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final _scroll = ScrollController();
   Pesan? _balas;
   String _cari = '';
+  int _tampil = 30; // jumlah pesan yang dirender (load more naik ke atas)
+  bool _bannerBuka = true;
 
   @override
   void initState() {
@@ -92,6 +94,19 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     _keBawah();
   }
 
+  Future<void> _laporkan(BuildContext c, AppState s, Pesan p) async {
+    final alasan = await showDialog<String>(
+      context: c,
+      builder: (d) => _DialogLaporan(pesan: p),
+    );
+    if (alasan == null || alasan.isEmpty || !mounted) return;
+    final err = await s.lapor(widget.order, alasan);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(err ?? 'Laporan terkirim ke admin KUNBAR',
+            style: const TextStyle(fontSize: 16))));
+  }
+
   Future<void> _kirimFoto(AppState s) async {
     final path = await s.pilihFoto();
     if (!mounted || path == null) return;
@@ -108,9 +123,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   Widget build(BuildContext context) {
     final s = context.watch<AppState>();
     final pesan = s.pesanUntuk(widget.order.id);
-    final tampil = _cari.isEmpty
+    final disaring = _cari.isEmpty
         ? pesan
         : pesan.where((p) => p.isi.toLowerCase().contains(_cari.toLowerCase())).toList();
+    // Tampilkan N pesan terbaru (urut kronologis); sisanya lewat "muat lebih banyak".
+    final tampil = disaring.length <= _tampil
+        ? disaring
+        : disaring.sublist(disaring.length - _tampil);
     final online = s.aktifOrderIds.contains(widget.order.id);
 
     return Scaffold(
@@ -166,7 +185,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     builder: (_, snap) => Text(
                       snap.data == true
                           ? 'sedang menulis...'
-                          : (online ? 'Online' : 'Order ${widget.order.statusLabel}'),
+                          : (online
+                              ? 'Online'
+                              : 'Terakhir dilihat ${waktuRelatif(s.pesanTerakhir(widget.order.id)?.waktu)}'),
                       style: const TextStyle(fontSize: 12),
                     ),
                   ),
@@ -196,20 +217,50 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               } else if (v == 'arsip') {
                 s.arsipkan(widget.order.id);
                 Navigator.pop(context);
+              } else if (v == 'blokir') {
+                s.blokirWarga(widget.order, !s.terblokir(widget.order));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(s.terblokir(widget.order)
+                        ? 'Warga diblokir. Pesannya tidak muncul lagi di daftar.'
+                        : 'Blokir dibuka.',
+                        style: const TextStyle(fontSize: 15))));
+              } else if (v == 'laporkan') {
+                Navigator.pop(context);
+                _laporkan(context, s, Pesan(
+                  id: '-',
+                  orderId: widget.order.id,
+                  isi: widget.order.customerName,
+                  waktu: DateTime.now(),
+                  mine: false,
+                ));
               }
             },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'order', child: Text('Lihat order')),
-              PopupMenuItem(value: 'peta', child: Text('Lihat peta')),
-              PopupMenuItem(value: 'profil', child: Text('Profil warga')),
-              PopupMenuItem(value: 'arsip', child: Text('Arsipkan chat')),
+            itemBuilder: (_) => [
+              const PopupMenuItem(value: 'order', child: Text('Lihat order')),
+              const PopupMenuItem(value: 'peta', child: Text('Lihat peta')),
+              const PopupMenuItem(value: 'profil', child: Text('Profil warga')),
+              const PopupMenuItem(value: 'arsip', child: Text('Arsipkan chat')),
+              const PopupMenuDivider(),
+              const PopupMenuItem(value: 'laporkan', child: Text('Laporkan warga')),
+              PopupMenuItem(
+                value: 'blokir',
+                child: Text(s.terblokir(widget.order)
+                    ? 'Buka blokir warga'
+                    : 'Blokir warga'),
+              ),
             ],
           ),
         ],
       ),
       body: Column(
         children: [
-          _BannerOrder(order: widget.order),
+          _BannerOrder(
+            order: widget.order,
+            buka: _bannerBuka,
+            onUbah: () => setState(() => _bannerBuka = !_bannerBuka),
+            onLihatOrder: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => OrderDetailScreen(order: widget.order))),
+          ),
           _CariPesan(
             onUbah: (v) => setState(() => _cari = v),
             onTutup: () => setState(() => _cari = ''),
@@ -226,20 +277,70 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   )
                 : StreamBuilder<bool>(
                     stream: s.repo.mengetik(widget.order.id),
-                    builder: (_, snap) => ListView.builder(
-                      controller: _scroll,
-                      padding: const EdgeInsets.all(12),
-                      itemCount: tampil.length + (snap.data == true ? 1 : 0),
-                      itemBuilder: (_, i) {
-                        if (i >= tampil.length) return const _Mengetik();
-                        return _Gelembung(
-                          pesan: tampil[i],
-                          nama: widget.order.customerName,
-                          onBalas: (p) => setState(() => _balas = p),
-                          onHapus: (p) => s.hapusPesan(widget.order.id, p.id),
-                        );
-                      },
-                    ),
+                    builder: (_, snap) {
+                      final adaTyping = snap.data == true;
+                      final baris = <Object>[];
+                      String? hari;
+                      for (final p in tampil) {
+                        final h = kelompokTanggal(p.waktu);
+                        if (h != hari) {
+                          hari = h;
+                          baris.add('PEMBATAS:$h');
+                        }
+                        baris.add(p);
+                      }
+                      final adaLagi = pesan.length > _tampil;
+                      final geser = adaLagi ? 1 : 0;
+                      return ListView.builder(
+                        controller: _scroll,
+                        padding: const EdgeInsets.all(12),
+                        itemCount: baris.length + (adaTyping ? 1 : 0),
+                        itemBuilder: (_, i) {
+                          if (adaLagi && i == 0) {
+                            return Center(
+                              child: TextButton.icon(
+                                onPressed: () => setState(() => _tampil += 30),
+                                icon: const Icon(Icons.expand_less_rounded, size: 18),
+                                label: Text(
+                                    'Muat ${(pesan.length - _tampil).clamp(0, 999)} pesan lama'),
+                              ),
+                            );
+                          }
+                          final idx = i - geser;
+                          if (idx < 0) return const SizedBox.shrink();
+                          if (idx >= baris.length) return const _Mengetik();
+                          final item = baris[idx];
+                          if (item is String) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              child: Center(
+                                child: Text(
+                                  item.substring(9),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black45,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          final pesanIni = item as Pesan;
+                          return _Gelembung(
+                            pesan: pesanIni,
+                            nama: widget.order.customerName,
+                            showAvatar: !pesanIni.mine,
+                            onBalas: (x) => setState(() => _balas = x),
+                            onTeruskan: (x) => setState(() {
+                              _input.text = x.isi;
+                              _balas = x;
+                            }),
+                            onLaporkan: () => _laporkan(context, s, pesanIni),
+                            onHapus: (x) => s.hapusPesan(widget.order.id, x.id),
+                          );
+                        },
+                      );
+                    },
                   ),
           ),
           _TemplateCepat(
@@ -296,8 +397,17 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 }
 
 class _BannerOrder extends StatelessWidget {
-  const _BannerOrder({required this.order});
+  const _BannerOrder({
+    required this.order,
+    required this.buka,
+    required this.onUbah,
+    required this.onLihatOrder,
+  });
+
   final Order order;
+  final bool buka;
+  final VoidCallback onUbah;
+  final VoidCallback onLihatOrder;
 
   @override
   Widget build(BuildContext context) {
@@ -308,27 +418,53 @@ class _BannerOrder extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         onTap: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => OrderDetailScreen(order: order))),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              order.type == 'jastip' ? Icons.shopping_bag_rounded : Icons.two_wheeler_rounded,
-              color: AppColors.primary,
+            Row(
+              children: [
+                Icon(
+                  order.type == 'jastip'
+                      ? Icons.shopping_bag_rounded
+                      : Icons.two_wheeler_rounded,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Order ${order.typeLabel} - ${order.statusLabel}',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w800, fontSize: 14)),
+                      if (buka)
+                        Text(order.dropAddress,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ),
+                if (buka) Text(rp(order.fee),
+                    style: const TextStyle(fontWeight: FontWeight.w800)),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: buka ? 'Sembunyikan' : 'Tampilkan',
+                  onPressed: onUbah,
+                  icon: Icon(buka
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded),
+                ),
+              ],
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Order ${order.typeLabel} - ${order.statusLabel}',
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-                  Text(order.dropAddress,
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12)),
-                ],
+            if (buka) ...[
+              const SizedBox(height: 6),
+              OutlinedButton(
+                onPressed: onLihatOrder,
+                child: const Text('LIHAT ORDER'),
               ),
-            ),
-            Text(rp(order.fee), style: const TextStyle(fontWeight: FontWeight.w800)),
+            ],
           ],
         ),
       ),
@@ -398,11 +534,17 @@ class _Gelembung extends StatelessWidget {
     required this.nama,
     required this.onBalas,
     required this.onHapus,
+    required this.showAvatar,
+    required this.onTeruskan,
+    required this.onLaporkan,
   });
 
   final Pesan pesan;
   final String nama;
+  final bool showAvatar;
   final ValueChanged<Pesan> onBalas;
+  final ValueChanged<Pesan> onTeruskan;
+  final VoidCallback onLaporkan;
   final ValueChanged<Pesan> onHapus;
 
   @override
@@ -453,9 +595,23 @@ class _Gelembung extends StatelessWidget {
       ],
     );
 
-    return Align(
-      alignment: pesan.mine ? Alignment.centerRight : Alignment.centerLeft,
-      child: GestureDetector(
+    return Row(
+      mainAxisAlignment:
+          pesan.mine ? MainAxisAlignment.end : MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        if (showAvatar)
+          Padding(
+            padding: const EdgeInsets.only(right: 6, bottom: 2),
+            child: CircleAvatar(
+              radius: 12,
+              backgroundColor: AppColors.primarySoft,
+              child: Text(nama.isEmpty ? 'W' : nama[0].toUpperCase(),
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+            ),
+          ),
+        Flexible(
+          child: GestureDetector(
         onLongPress: () => _menu(context),
         child: Container(
           constraints: BoxConstraints(
@@ -476,7 +632,9 @@ class _Gelembung extends StatelessWidget {
             child: isi,
           ),
         ),
-      ),
+        ),
+        ),
+      ],
     );
   }
 
@@ -495,6 +653,22 @@ class _Gelembung extends StatelessWidget {
               onTap: () {
                 Navigator.pop(c);
                 onBalas(pesan);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.forward_rounded),
+              title: const Text('Teruskan ke input'),
+              onTap: () {
+                Navigator.pop(c);
+                onTeruskan(pesan);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.report_problem_outlined),
+              title: const Text('Laporkan warga ini'),
+              onTap: () {
+                Navigator.pop(c);
+                onLaporkan();
               },
             ),
             ListTile(
@@ -708,6 +882,55 @@ class _AreaInput extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+/// Dialog isi alasan laporan warga.
+class _DialogLaporan extends StatefulWidget {
+  const _DialogLaporan({required this.pesan});
+  final Pesan pesan;
+
+  @override
+  State<_DialogLaporan> createState() => _DialogLaporanState();
+}
+
+class _DialogLaporanState extends State<_DialogLaporan> {
+  final _teks = TextEditingController();
+
+  @override
+  void dispose() {
+    _teks.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Laporkan warga'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('Pesan: ${widget.pesan.isi}',
+              maxLines: 3, overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _teks,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              labelText: 'Alasan laporan',
+              hintText: 'Contoh: alamat tidak sesuai, jawaban tidak gracious',
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: Colors.red),
+          onPressed: () => Navigator.pop(context, _teks.text.trim()),
+          child: const Text('KIRIM LAPORAN'),
+        ),
+      ],
     );
   }
 }

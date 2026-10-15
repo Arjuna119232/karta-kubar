@@ -102,6 +102,44 @@ class AppState extends ChangeNotifier {
 
   /// Pilih foto dari galeri. Null kalau dibatal atau galeri tidak tersedia.
   Future<String?> pilihFoto() => repo.pilihFoto();
+
+  // ---------- Chat: blokir & laporan ----------
+  Set<String> _blokir = <String>{};
+
+  /// Nama warga yang diblokir mitra (tidak bisa diketuk lagi dari daftar).
+  Set<String> get wargaDiblokir => _blokir;
+
+  bool terblokir(Order o) => _blokir.contains('${o.id}');
+
+  void blokirWarga(Order o, bool blokir) {
+    _blokir = {..._blokir};
+    if (blokir) {
+      _blokir.add(o.id);
+    } else {
+      _blokir.remove(o.id);
+    }
+    _p?.setStringList('chat_blokir', _blokir.toList());
+    notifyListeners();
+  }
+
+  /// Laporan ke admin. Demo: tersimpan di perangkat dan tampil sebagai notifikasi.
+  Future<String?> laporkan(Order o, String alasan) async {
+    try {
+      if (!Config.demo) {
+        await repo.kirimLaporan('chat', o.id, alasan);
+      }
+      _p?.setStringList(
+        'laporan_chat',
+        [...(_p?.getStringList('laporan_chat') ?? []), '${o.id}|${DateTime.now()}|${alasan}'],
+      );
+      return null;
+    } catch (_) {
+      return 'Laporan gagal terkirim. Cek sinyal lalu coba lagi.';
+    }
+  }
+
+  /// Jumlah chat yang perlu dibaca (untuk badge di bottom nav).
+  int unreadTotal() => jumlahBelumDibaca;
   String? error;
   List<Order> incoming = [], history = [];
   List<Rating> ratings = [];
@@ -132,6 +170,7 @@ class AppState extends ChangeNotifier {
     kontakDarurat = _p!.getString('kontak_darurat') ?? '';
     withdrawals = _bacaWithdraw();
     arsip = (_p!.getStringList('chat_arsip') ?? []).toSet();
+    _blokir = (_p!.getStringList('chat_blokir') ?? []).toSet();
     await NotifikasiService.instance
         .init(SharedPrefHolder.dariPref(_p!));
     name = _p!.getString('mitra_nama') ?? name;

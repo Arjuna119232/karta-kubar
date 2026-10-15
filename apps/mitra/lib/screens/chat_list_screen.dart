@@ -20,6 +20,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   final _cari = TextEditingController();
   FilterChat _filter = FilterChat.semua;
   String _kata = '';
+  bool _bukaCari = false;
 
   @override
   void dispose() {
@@ -62,8 +63,19 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chat Warga'),
+        title: Text(_bukaCari ? 'Cari Chat' : 'Chat Warga'),
         actions: [
+          IconButton(
+            tooltip: 'Cari',
+            onPressed: () => setState(() {
+              _bukaCari = !_bukaCari;
+              if (!_bukaCari) {
+                _cari.clear();
+                _kata = '';
+              }
+            }),
+            icon: Icon(_bukaCari ? Icons.close_rounded : Icons.search_rounded),
+          ),
           IconButton(
             tooltip: 'Tandai semua dibaca',
             onPressed: totalBelum == 0 ? null : () => s.tandaiSemuaDibaca(semua),
@@ -77,10 +89,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: TextField(
-              controller: _cari,
+          if (_bukaCari)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: TextField(
+                controller: _cari,
               onChanged: (v) => setState(() => _kata = v),
               decoration: InputDecoration(
                 hintText: 'Cari nama warga...',

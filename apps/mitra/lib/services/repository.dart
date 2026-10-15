@@ -341,6 +341,16 @@ class OrderRepository {
     });
   }
 
+  // ---------- LAPORAN ----------
+  Future<void> kirimLaporan(String jenis, String orderId, String isi) async {
+    if (Config.demo) return;
+    await _sb.from('sos_events').insert({
+      'mitra_id': uid,
+      'order_id': null,
+      'note': 'Laporan $jenis: $isi',
+    });
+  }
+
   // ---------- PENARIKAN SALDO ----------
   Future<void> repoTarik(int jumlah, String metode, String tujuan) async {
     if (Config.demo) return;
