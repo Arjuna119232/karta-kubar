@@ -66,9 +66,7 @@ class AppState extends ChangeNotifier {
     izinBelumDitinjau = _p!.getBool('izin_sheet_v1') != true;
     onboardingBelumDitinjau = _p!.getBool('onboarding_v1') != true;
     kontakDarurat = _p!.getString('kontak_darurat') ?? '';
-    withdrawals = (_simpan.withdrawals ?? [])
-        .map((e) => Withdraw.fromMap(Map<String, dynamic>.from(e)))
-        .toList();
+    withdrawals = _bacaWithdraw();
     name = _p!.getString('mitra_nama') ?? name;
     if (_p!.getString('mitra_telepon') != null) telepon = _p!.getString('mitra_telepon')!;
     vehicleType = _p!.getString('vtype') ?? 'Motor';
@@ -487,6 +485,18 @@ class AppState extends ChangeNotifier {
       return null;
     } catch (_) {
       return 'Gagal mengirim permintaan. Cek sinyal lalu coba lagi.';
+    }
+  }
+
+  List<Withdraw> _bacaWithdraw() {
+    final raw = _p?.getString('withdrawals');
+    if (raw == null) return [];
+    try {
+      return (jsonDecode(raw) as List)
+          .map((e) => Withdraw.fromMap(Map<String, dynamic>.from(e as Map)))
+          .toList();
+    } catch (_) {
+      return [];
     }
   }
 

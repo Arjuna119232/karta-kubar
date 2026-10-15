@@ -242,7 +242,7 @@ class _TabPeriode extends StatelessWidget {
       style: ButtonStyle(
         visualDensity: VisualDensity.compact,
         shape: WidgetStatePropertyAll(
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.field)),
         ),
       ),
     );
