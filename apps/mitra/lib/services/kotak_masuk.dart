@@ -83,6 +83,20 @@ class NotifikasiMk {
 }
 
 extension NotifikasiMkX on NotifikasiMk {
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'kategori': kategori.name,
+        'prioritas': prioritas.name,
+        'judul': judul,
+        'isi': isi,
+        'cta_label': ctaLabel,
+        'cta_url': ctaUrl,
+        'lampiran_url': lampiranUrl,
+        'dibaca': dibaca,
+        'diarsipkan': diarsipkan,
+        'created_at': waktu.toIso8601String(),
+      };
+
   NotifikasiMk copyWith({bool? dibaca, bool? diarsipkan}) => NotifikasiMk(
         id: id,
         kategori: kategori,
@@ -114,7 +128,7 @@ class NotifikasiService {
   NotifikasiService._();
   static final NotifikasiService instance = NotifikasiService._();
 
-  static final _kunci = 'kotak_masuk_v1';
+  static const _kunci = 'kotak_masuk_v1';
 
   List<NotifikasiMk> _demo = [];
   bool _siap = false;
@@ -206,7 +220,8 @@ class NotifikasiService {
           judul: 'Gathering mitra Gratis KUNBAR',
           isi: 'Ajak semua mitra hadir Minggu, 09:00, diRQ05. Ada sarapan, '
               'diskusi, dan kejutan kecil. Daftar hadir lewat pengurusRQ05.',
-
+          waktu: now.subtract(const Duration(days: 2)),
+        ),
         NotifikasiMk(
           id: 'n5',
           kategori: KategoriNotif.pengumuman,
