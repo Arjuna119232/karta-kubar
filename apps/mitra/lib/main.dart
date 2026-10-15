@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config.dart';
 import 'core/theme.dart';
 import 'screens/izin_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/shell.dart';
 import 'services/notification_service.dart';
@@ -35,7 +36,9 @@ class MitraApp extends StatelessWidget {
       darkTheme: buildTheme(Brightness.dark),
       themeMode: s.themeMode,
       home: s.loggedIn
-          ? (s.izinBelumDitinjau ? const IzinScreen() : const Shell())
+          ? (s.onboardingBelumDitinjau
+              ? const OnboardingScreen()
+              : (s.izinBelumDitinjau ? const IzinScreen() : const Shell()))
           : const LoginScreen(),
     );
   }

@@ -24,10 +24,19 @@ class AppState extends ChangeNotifier {
   /// true = halaman izin belum pernah dibuka (tampil sekali setelah login).
   bool izinBelumDitinjau = false;
 
+  /// true = onboarding cara pakai belum pernah dilihat.
+  bool onboardingBelumDitinjau = true;
+
   /// true = sedang menyiapkan GPS/izin setelah mitra menekan ONLINE.
   /// Tombol tetap responsif, hanya berubah jadi "MENYIAPKAN...".
   bool menyiapkanOnline = false;
+
+  /// Sisa detik sebelum order otomatis ditolak (0 = tidak ada timer).
+  final _tolakOtomatis = <String, Timer>{};
+  static const int detikTolakOtomatis = 30;
   String name = 'Mitra';
+  String telepon = '';
+  String kontakDarurat = '';
   String? error;
   List<Order> incoming = [], history = [];
   List<Rating> ratings = [];
@@ -54,6 +63,10 @@ class AppState extends ChangeNotifier {
     openHour = _p!.getInt('open') ?? 6;
     closeHour = _p!.getInt('close') ?? 22;
     izinBelumDitinjau = _p!.getBool('izin_sheet_v1') != true;
+    onboardingBelumDitinjau = _p!.getBool('onboarding_v1') != true;
+    kontakDarurat = _p!.getString('kontak_darurat') ?? '';
+    name = _p!.getString('mitra_nama') ?? name;
+    if (_p!.getString('mitra_telepon') != null) telepon = _p!.getString('mitra_telepon')!;
     vehicleType = _p!.getString('vtype') ?? 'Motor';
     vehicleModel = _p!.getString('vmodel') ?? '';
     plate = _p!.getString('plate') ?? '';
@@ -110,6 +123,68 @@ class AppState extends ChangeNotifier {
       } catch (_) {}
     }
     await loadAll();
+  }
+
+  // ---------- daftar & onboarding ----------
+  Future<String?> daftar({
+    required String nama,
+    required String email,
+    required String password,
+    required String telepon,
+    required String kendaraan,
+    required String plat,
+  }) async {
+    loading = true;
+    error = null;
+    notifyListeners();
+    try {
+      if (Config.demo) {
+        if (password.length < 6) {
+          error = 'Password minimal 6 karakter';
+        } else {
+          name = nama;
+          vehicleType = kendaraan;
+          plate = plat.toUpperCase();
+          await _p?.setString('mitra_email', email);
+          await _p?.setString('mitra_telepon', telepon);
+          loggedIn = true;
+          await loadAll();
+        }
+      } else {
+        final r = await Supabase.instance.client.auth
+            .signUp(email: email.trim(), password: password);
+        if (r.user == null) {
+          error = 'Pendaftaran gagal. Coba lagi.';
+        } else {
+          await Supabase.instance.client.from('profiles').update({
+            'role': 'mitra',
+            'name': nama,
+            'phone': telepon,
+            'vehicle_type': kendaraan,
+            'plate': plat.toUpperCase(),
+          }).eq('id', r.user!.id);
+          name = nama;
+          vehicleType = kendaraan;
+          plate = plat.toUpperCase();
+          loggedIn = true;
+          onboardingBelumDitinjau = true;
+          await loadAll();
+        }
+      }
+    } on AuthException catch (e) {
+      error = e.message;
+    } catch (e) {
+      error = 'Gagal daftar: $e';
+    }
+    loading = false;
+    notifyListeners();
+    return error;
+  }
+
+  Future<void> tandaiOnboardingDitinjau() async {
+    onboardingBelumDitinjau = false;
+    await _p?.setBool('onboarding_v1', true);
+    notifyListeners();
   }
 
   Future<void> tandaiIzinDitinjau() async {
@@ -208,6 +283,10 @@ class AppState extends ChangeNotifier {
       await _sub?.cancel();
       _sub = null;
       incoming = [];
+      for (final t in _tolakOtomatis.values) {
+        t.cancel();
+      }
+      _tolakOtomatis.clear();
       await _stopLokasi();
       _hentiPemantau();
       await Notifikasi.instance.sembunyikan(JenisNotif.gpsOff);
@@ -233,6 +312,9 @@ class AppState extends ChangeNotifier {
             'Order ${o.typeLabel} baru',
             '${o.customerName} - ${o.distanceKm.toStringAsFixed(1)} km - ${rp(o.fee)}');
       }
+      for (final o in added) {
+        _jadwalTolakOtomatis(o);
+      }
       if (added.isNotEmpty) _notifOrderMasuk();
       _cacheSave();
       notifyListeners();
@@ -252,6 +334,7 @@ class AppState extends ChangeNotifier {
         return 'Order sudah diambil mitra lain';
       }
       active = r;
+      _batalTolakOtomatis(o.id);
       _notifOrderMasuk();
       _syncLocation();
       _cacheSave();
@@ -263,6 +346,7 @@ class AppState extends ChangeNotifier {
   }
 
   void reject(Order o) {
+    _batalTolakOtomatis(o.id);
     _rejected.add(o.id);
     incoming.removeWhere((x) => x.id == o.id);
     _notifOrderMasuk();
@@ -363,6 +447,36 @@ class AppState extends ChangeNotifier {
   // ---------- notifikasi: pemicu otomatis ----------
   Future<void> _notif(JenisNotif j, String judul, String isi) =>
       Notifikasi.instance.tampilkan(j, judul: judul, isi: isi);
+
+  /// Sisa detik sebelum order ini ditolak otomatis.
+  int sisaTolak(Order o) {
+    final sisa = detikTolakOtomatis - DateTime.now().difference(o.createdAt).inSeconds;
+    return sisa < 0 ? 0 : sisa;
+  }
+
+  void _batalTolakOtomatis(String id) {
+    _tolakOtomatis.remove(id)?.cancel();
+  }
+
+  /// Order tidak dibalas dalam 30 detik -> hilang dari daftar (ditolak diam-diam).
+  void _jadwalTolakOtomatis(Order o) {
+    _batalTolakOtomatis(o.id);
+    final awal = sisaTolak(o);
+    _tolakOtomatis[o.id] = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!incoming.any((x) => x.id == o.id)) {
+        t.cancel();
+        _tolakOtomatis.remove(o.id);
+        return;
+      }
+      if (sisaTolak(o) <= 0) {
+        t.cancel();
+        _tolakOtomatis.remove(o.id);
+        reject(o);
+        return;
+      }
+      if (sisaTolak(o) != awal) notifyListeners();
+    });
+  }
 
   /// Order masuk = notifikasi PERSISTEN sampai diterima/ditolak.
   void _notifOrderMasuk() {
@@ -475,6 +589,12 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setKontakDarurat(String v) {
+    kontakDarurat = v;
+    _p?.setString('kontak_darurat', v);
+    notifyListeners();
+  }
+
   void setRadius(double v) {
     radiusKm = v;
     _p?.setDouble('radius', v);
@@ -510,6 +630,10 @@ class AppState extends ChangeNotifier {
   @override
   void dispose() {
     _sub?.cancel();
+    for (final t in _tolakOtomatis.values) {
+      t.cancel();
+    }
+    _tolakOtomatis.clear();
     _hentiPemantau();
     _loc.stop();
     NotificationService.instance.cancelOnlineStatus();

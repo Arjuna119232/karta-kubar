@@ -8,8 +8,27 @@ import '../services/notifikasi.dart';
 import '../state/app_state.dart';
 import 'widgets.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  late final TextEditingController _darurat;
+
+  @override
+  void initState() {
+    super.initState();
+    _darurat = TextEditingController(
+        text: context.read<AppState>().kontakDarurat);
+  }
+
+  @override
+  void dispose() {
+    _darurat.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +50,26 @@ class SettingsScreen extends StatelessWidget {
         const Text('Jam operasional', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         hourPicker('Buka', s.openHour, (v) => s.setHours(v, s.closeHour)),
         hourPicker('Tutup', s.closeHour, (v) => s.setHours(s.openHour, v)),
+        const SizedBox(height: 20),
+        const SizedBox(height: 12),
+        const Text('Kontak darurat', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        TextField(
+          controller: _darurat,
+          keyboardType: TextInputType.phone,
+          decoration: const InputDecoration(hintText: 'Nomor HP yang bisa dihubungi'),
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            onPressed: () {
+              context.read<AppState>().setKontakDarurat(_darurat.text.trim());
+              toast(context, 'Kontak darurat disimpan');
+            },
+            icon: const Icon(Icons.save_outlined),
+            label: const Text('SIMPAN'),
+          ),
+        ),
         const SizedBox(height: 20),
         const Text('Tampilan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),

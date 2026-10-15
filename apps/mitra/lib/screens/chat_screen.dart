@@ -69,9 +69,37 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
         SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Row(children: [
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            SizedBox(
+              height: 46,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                children: [
+                  for (final t in const [
+                    'Saya OTW',
+                    'Sudah di lokasi',
+                    'Mohon tunggu sebentar',
+                    'Barang saya titip di pos',
+                    'Sudah diterima, terima kasih',
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ActionChip(
+                        label: Text(t),
+                        onPressed: () {
+                          _ctl.text = t;
+                          _ctl.selection =
+                              TextSelection.collapsed(offset: t.length);
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Row(children: [
               Expanded(child: TextField(controller: _ctl, style: const TextStyle(fontSize: 17), decoration: const InputDecoration(hintText: 'Tulis pesan...'))),
               const SizedBox(width: 8),
               IconButton.filled(
@@ -84,8 +112,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 },
                 icon: const Icon(Icons.send),
               ),
-            ]),
-          ),
+              ]),
+            ),
+          ]),
         ),
       ]),
     );

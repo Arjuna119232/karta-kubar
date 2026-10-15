@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../core/config.dart';
 import '../state/app_state.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -43,6 +44,13 @@ class _LoginScreenState extends State<LoginScreen> {
             FilledButton(
               onPressed: s.loading ? null : () => s.login(_email.text, _pass.text),
               child: s.loading ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3)) : const Text('MASUK'),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const RegisterScreen()),
+              ),
+              child: const Text('DAFTAR JADI MITRA'),
             ),
           ],
         ),

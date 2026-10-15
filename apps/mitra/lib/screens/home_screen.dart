@@ -112,7 +112,16 @@ Padding(
               for (final o in s.incoming)
                 OrderCard(
                   o,
-                  actions: Row(children: [
+                  actions: Column(children: [
+                    if (s.sisaTolak(o) > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Text(
+                          'Tersisa ${s.sisaTolak(o)} detik sebelum otomatis ditolak',
+                          style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.red),
+                        ),
+                      ),
+                    Row(children: [
                     Expanded(child: OutlinedButton(onPressed: () => s.reject(o), child: const Text('TOLAK'))),
                     const SizedBox(width: 12),
                     Expanded(
@@ -130,6 +139,7 @@ Padding(
                         child: const Text('TERIMA'),
                       ),
                     ),
+                    ]),
                   ]),
                 ),
             ],

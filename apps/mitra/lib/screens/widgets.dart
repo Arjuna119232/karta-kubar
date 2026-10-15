@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../core/format.dart';
 import '../models/models.dart';
@@ -28,6 +29,12 @@ Future<void> confirmSos(BuildContext c) async {
     final m = await c.read<AppState>().sos();
     if (c.mounted) toast(c, m);
   }
+}
+
+/// Telepon darurat: 112 (semua layanan) dan 110 (polisi).
+Future<void> teleponDarurat(BuildContext c, String nomor) async {
+  final ok = await launchUrl(Uri.parse('tel:$nomor'));
+  if (!ok && c.mounted) toast(c, 'Tidak bisa membuka dialer otomatis');
 }
 
 class OrderInfo extends StatelessWidget {

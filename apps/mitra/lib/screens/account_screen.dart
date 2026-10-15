@@ -36,7 +36,19 @@ class AccountScreen extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.warning_amber_rounded, color: Colors.red),
             title: const Text('SOS Darurat', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
+            subtitle: const Text('Kirim lokasi ke admin + appear notifikasi'),
             onTap: () => confirmSos(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.local_phone_outlined, color: Colors.red),
+            title: const Text('Telepon 112 (Darurat)'),
+            subtitle: const Text('112 = ambulans, polisi, pemadam'),
+            onTap: () => teleponDarurat(context, '112'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.local_police_outlined, color: Colors.red),
+            title: const Text('Telepon 110 (Polisi)'),
+            onTap: () => teleponDarurat(context, '110'),
           ),
           const Divider(),
           ListTile(leading: const Icon(Icons.logout), title: const Text('Keluar'), onTap: s.logout),
