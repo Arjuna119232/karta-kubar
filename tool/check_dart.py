@@ -216,6 +216,7 @@ def extension_members(body):
 # ---------------------------------------------------------------- 1. import resolve + 3. reachability
 edges = {f: set() for f in files}
 imports_of = {f: [] for f in files}
+exports_of = {f: set() for f in files}
 
 for f in files:
     # PENTING: cari import di kode ASLI (raw), bukan di `code`.
@@ -229,8 +230,15 @@ for f in files:
         if isinstance(r, tuple):
             bad("IMPORT-RESOLVE", f, f"'{spec}' -> file tidak ada")
             continue
-        imports_of[f].append((r, spec, tail))
-        if kind == "import":
+        if kind == "export":
+            # `export` BUKAN import: simbolnya ikut tersedia untuk peng-import
+            # (transitif), tapi pernyataan export sendiri tidak pernah
+            # "tak terpakai". Dart asli memperlakukan export sebagai bagian
+            # program, jadi ia juga harus jadi edge keterjangkauan.
+            exports_of[f].add(r)
+            edges[f].add(r)
+        else:
+            imports_of[f].append((r, spec, tail))
             edges[f].add(r)
     for _, spec in PART_RE.findall(body):
         r = resolve(spec, f)
@@ -238,6 +246,35 @@ for f in files:
             bad("IMPORT-RESOLVE", f, f"part '{spec}' -> file tidak ada")
         elif r is not None:
             edges[f].add(r)
+
+def provides(f, _seen=None):
+    """Himpunan library yang simbolnya TERLIHAT oleh peng-import `f`.
+
+    `export` bersifat transitif (barrel file), `import` TIDAK pernah
+    meneruskan simbol ke peng-import-nya. Contoh nyata:
+      app_theme.dart  : import app_colors.dart  + export app_spacing.dart
+      layar.dart      : import app_theme.dart
+      -> `AppSpacing` terlihat di layar.dart  (ikut export)   = BOLEH
+      -> `AppColors`  TIDAK terlihat          (hanya import)  = DILARANG
+
+    Kalau batas ini tidak dijaga, cek MISSING-IMPORT jadi buta: import
+    `app_theme.dart` akan dianggap cukup untuk memakai apa pun yang
+    disentuh app_theme.dart, dan bug `undefined name` lolos.
+    """
+    if f in provides_cache:
+        return provides_cache[f]
+    _seen = _seen or set()
+    if f in _seen:
+        return set()
+    _seen = _seen | {f}
+    out = {f}
+    for e in exports_of[f]:
+        out |= provides(e, _seen)
+    provides_cache[f] = out
+    return out
+
+
+provides_cache = {}
 
 entry = LIB / "main.dart"
 if not entry.is_file():
@@ -273,8 +310,9 @@ for f in files:
     # `UserRole` sama sekali tidak disebut.
     ext_owner = {}
     for target, _spec, _tail in imports_of[f]:
-        for member in extension_members(code[target]):
-            ext_owner.setdefault(member, set()).add(target)
+        for tgt in provides(target):
+            for member in extension_members(code[tgt]):
+                ext_owner.setdefault(member, set()).add(target)
 
     for target, spec, tail in imports_of[f]:
         # WAJIB di-reset di dalam loop. Kalau himpunan ini dikumpulkan di luar
@@ -283,7 +321,9 @@ for f in files:
         # akan lolos declared_names untuk SEMUA import lain, termasuk yang
         # benar-benar tidak dipakai. Akibatnya cek UNUSED-IMPORT praktis mati
         # untuk file yang punya akses ke extension.
-        ext_members = extension_members(code[target])
+        ext_members = set()
+        for tgt in provides(target):
+            ext_members |= extension_members(code[tgt])
         alias = re.search(r"\bas\s+([A-Za-z_$][\w$]*)", tail)
         show = re.search(r"\bshow\s+([^;]+)", tail)
         hide = re.search(r"\bhide\s+([^;]+)", tail)
@@ -291,7 +331,9 @@ for f in files:
             if f"{alias.group(1)}." not in used_text:
                 bad("UNUSED-IMPORT", f, f"'{spec}' (prefix {alias.group(1)}. tidak dipakai)")
             continue
-        names = declared_names(code[target])
+        names = set()
+        for tgt in provides(target):
+            names |= declared_names(code[tgt])
         if show:
             cand = {x.strip() for x in show.group(1).split(",") if x.strip()}
         else:
@@ -405,7 +447,11 @@ for name, owners in sorted(symbols.items()):
             continue
         if not pat.search(code[f]):
             continue
-        if src_file in edges[f]:      # sudah di-import
+        # Terlihat kalau di-import LANGSUNG, atau di-export ulang oleh salah
+        # satu import kita (barrel). `edges` tidak dipakai di sini karena
+        # edges juga menelusuri `import` biasa -> akan menganggap semua
+        # yang disentuh app_theme.dart seolah ter-import (cek jadi buta).
+        if any(src_file in provides(t) for t, _s, _t in imports_of[f]):
             continue
         if rel[src_file] in code[f]:  # di-'part' tanpa import
             continue

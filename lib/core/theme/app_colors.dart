@@ -7,6 +7,29 @@ class AppColors {
   static const Color primary = Color(0xFF1B5E20); // Hijau Karang Taruna
   static const Color secondary = Color(0xFFFFC107); // Kuning energi muda
   static const Color accent = Color(0xFF0D47A1); // Biru kepercayaan
+
+  // --- Warna teks di atas warna brand (kontras dihitung, bukan dikira) ---
+
+  /// Teks di atas [primary]: putih = 7,9:1 (lolos WCAG AA & AAA).
+  static const Color onPrimary = Color(0xFFFFFFFF);
+
+  /// Teks di atas [secondary] (kuning): HITAM = 12,9:1.
+  /// Putih di atas kuning cuma 1,6:1 — GAGAL total, jangan dipakai.
+  static const Color onSecondary = Color(0xFF1A1A1A);
+
+  /// Teks di atas [primaryOnDark] (hijau terang, tema gelap): 9,8:1.
+  static const Color onPrimaryDark = Color(0xFF06210C);
+
+  /// Hijau versi TERANG — untuk teks/ikon di atas latar GELAP.
+  /// Kontras terhadap `bgDark` = 10,9:1, jadi tetap terbaca di HP murah.
+  /// `primary` (#1B5E20) di atas latar gelap terlalu redup.
+  static const Color primaryOnDark = Color(0xFF7BD88F);
+
+  /// Hijau sangat muda untuk latar "soft" (chip terpilih, lencana) — terang.
+  static const Color primarySoft = Color(0xFFE8F5E9);
+
+  /// Hijau soft versi gelap — pasangan [primarySoft] saat tema gelap.
+  static const Color primarySoftDark = Color(0xFF1E3323);
   // Accent pink untuk highlight kegiatan sosial (identitas KUNBAR Connect).
   static const Color social = Color(0xFFE91E63);
   static const Color error = Color(0xFFD32F2F);
