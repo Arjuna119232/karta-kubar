@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
-import '../services/rute.dart';
 import '../state/app_state.dart';
 import '../widgets/kit.dart';
 import 'account_screen.dart';
@@ -271,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
         context: context,
         builder: (d) => AlertDialog(
           title: const Text('Matikan ONLINE?'),
-          content: Text(
+          content: const Text(
             'Kamu tidak akan menerima order baru.\n\n'
             'Order yang sedang berjalan tetap bisa diselesaikan.',
           ),
@@ -398,8 +397,8 @@ class _KartuOrderAktif extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+    return const Padding(
+      padding: EdgeInsets.only(bottom: 10),
       child: Kaca(
         onTap: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => OrderDetailScreen(order: order))),
@@ -443,12 +442,12 @@ class _BannerOffline extends StatelessWidget {
   const _BannerOffline();
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
+  Widget build(BuildContext context) => const Padding(
+        padding: EdgeInsets.only(bottom: 10),
         child: Kaca(
           radius: 14,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: const Row(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
             children: [
               Icon(Icons.wifi_off_rounded, size: 18, color: Colors.orange),
               SizedBox(width: 8),

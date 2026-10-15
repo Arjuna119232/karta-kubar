@@ -59,7 +59,7 @@ class OrdersScreen extends StatelessWidget {
                     ),
                 ],
                 if (s.active != null) ...[
-                  _Judul('SEDANG BERJALAN', AppColors.primary),
+                  const _Judul('SEDANG BERJALAN', AppColors.primary),
                   OrderCard(
                     s.active!,
                     onTap: () => Navigator.push(context,

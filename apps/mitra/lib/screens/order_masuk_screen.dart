@@ -35,10 +35,10 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
     super.initState();
     SystemSound.play(SystemSoundType.alert);
     HapticFeedback.heavyImpact();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _rute_());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _ambilRute());
   }
 
-  Future<void> _rute_() async {
+  Future<void> _ambilRute() async {
     if (o.pickupLat == null || o.dropLat == null) return;
     final r = await Rute.ambil(
       o.pickupLat!, o.pickupLng!, o.dropLat!, o.dropLng!,
