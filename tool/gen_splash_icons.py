@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import math
 import re
+import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -345,34 +346,62 @@ def cek_kredit_seragam() -> None:
     print(f"      OK  kredit seragam di semua platform  ({KREDIT!r})")
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    """--verify-only: jangan gambar ulang, hanya periksa aset yang sudah ada.
+
+    Dipakai GitHub Actions. Runner Linux tidak punya font Android
+    (/system/fonts/RobotoFlex-Regular.ttf), jadi ASSET TIDAK BISA digambar
+    ulang di sana. Aset splash memang sudah di-commit; yang dilakukan CI
+    hanya membuktikan aset itu masih muat di mask circle 192dp dan format
+    kreditnya seragam. Menggambar ulang hanya untuk di HP.
+    """
+    argv = list(sys.argv[1:] if argv is None else argv)
+    verify_only = "--verify-only" in argv
+    tak_dikenal = [a for a in argv if a != "--verify-only"]
+    if tak_dikenal:
+        raise SystemExit(f"FAIL: argumen tidak dikenal: {tak_dikenal}")
+
     if not SUMBER.is_file():
         raise SystemExit(f"FAIL: emblem sumber tidak ada: {SUMBER}")
-    if not Path(FONT).is_file():
-        raise SystemExit(f"FAIL: font tidak ada: {FONT}")
 
     print("==> gen_splash_icons")
-    print(f"    mask circle : {CIRCLE_DP:.0f}dp di kotak {KOTAK_DP:.0f}dp")
-    print(f"    jari aman   : {JARI_PX:.1f}px")
+    if verify_only:
+        print("    mode       : --verify-only (aset dicek, tidak digambar ulang)")
+    else:
+        if not Path(FONT).is_file():
+            raise SystemExit(
+                f"FAIL: font tidak ada: {FONT}\n"
+                "      Font ini milik Android, jadi regenerasi hanya bisa di HP.\n"
+                "      Di CI pakai: python3 tool/gen_splash_icons.py --verify-only"
+            )
+        print(f"    mask circle : {CIRCLE_DP:.0f}dp di kotak {KOTAK_DP:.0f}dp")
+        print(f"    jari aman   : {JARI_PX:.1f}px")
 
     # --- ikon: emblem + KUNBAR dalam satu circle ---
-    ikon = buat_ikon_android()
-    ikon.save(KELUAR / "splash_icon.png", "PNG", optimize=True)
-    print(f"    + splash_icon.png  ({KELUAR.joinpath('splash_icon.png').stat().st_size // 1024} KB)")
+    if not verify_only:
+        ikon = buat_ikon_android()
+        ikon.save(KELUAR / "splash_icon.png", "PNG", optimize=True)
+        print(f"    + splash_icon.png  ({KELUAR.joinpath('splash_icon.png').stat().st_size // 1024} KB)")
 
-    # --- branding image (slot paling bawah) ---
-    for nama, img in buat_branding().items():
-        img.save(KELUAR / nama, "PNG", optimize=True)
-    print(f"    + splash_branding_*.png ({len(buat_branding())} density)")
+        # --- branding image (slot paling bawah) ---
+        for nama, img in buat_branding().items():
+            img.save(KELUAR / nama, "PNG", optimize=True)
+        print(f"    + splash_branding_*.png ({len(buat_branding())} density)")
 
-    # --- iOS: satu gambar, semua elemen digabung ---
-    for skala, px in (("1x", 260), ("2x", 520), ("3x", 780)):
-        im = buat_ios(px)
-        nama = "splash_icon_ios.png" if skala == "1x" else f"splash_icon_ios@{skala}.png"
-        im.save(KELUAR / nama, "PNG", optimize=True)
+        # --- iOS: satu gambar, semua elemen digabung ---
+        for skala, px in (("1x", 260), ("2x", 520), ("3x", 780)):
+            im = buat_ios(px)
+            nama = "splash_icon_ios.png" if skala == "1x" else f"splash_icon_ios@{skala}.png"
+            im.save(KELUAR / nama, "PNG", optimize=True)
 
     print("    -- verifikasi --")
     cek_kredit_seragam()
+    for nama in ("splash_icon.png", "splash_branding_hdpi.png",
+                 "splash_branding_xhdpi.png", "splash_branding_xxhdpi.png",
+                 "splash_branding_xxxhdpi.png", "splash_icon_ios.png",
+                 "splash_icon_ios@2x.png", "splash_icon_ios@3x.png"):
+        if not (KELUAR / nama).is_file():
+            raise SystemExit(f"FAIL: aset splash hilang: {nama} (--verify-only tidak menghasilkannya)")
     cek_muat_android("splash_icon.png")
     for dens in (1.5, 2.0, 3.0, 4.0):
         cek_branding(f"splash_branding_{'hdpi' if dens==1.5 else 'xhdpi' if dens==2 else 'xxhdpi' if dens==3 else 'xxxhdpi'}.png", dens)

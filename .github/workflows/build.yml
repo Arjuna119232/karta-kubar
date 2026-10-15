@@ -62,13 +62,16 @@ jobs:
       - name: Apply native splash (Android 12+ Theme.SplashScreen)
         run: python3 tool/patch_splash_android.py
 
-      # Aset splash harus SUDAH ada di repo dan terbukti fitting. Script ini
-      # sekaligus memverifikasi ikon benar-benar muat di mask circle 192dp.
-      # Pillow tidak ada di runner, jadi dipasang di sini (butuh beberapa detik).
+      # Aset splash harus SUDAH ada di repo dan terbukti fitting. Runner Linux
+      # tidak punya font Android (/system/fonts/RobotoFlex-Regular.ttf), jadi
+      # aset TIDAK bisa digambar ulang di sini - yang dicek hanya apakah aset
+      # yang ter-commit masih muat di mask circle 192dp dan format kreditnya
+      # seragam di Android & iOS. Regenerasi hanya dilakukan di HP:
+      #   python3 tool/gen_splash_icons.py
       - name: Verify splash assets fit Android 12 circle mask
         run: |
           python3 -m pip install --quiet --disable-pip-version-check pillow
-          python3 tool/gen_splash_icons.py
+          python3 tool/gen_splash_icons.py --verify-only
 
       - name: Apply release signing
         run: python3 tool/patch_signing.py
