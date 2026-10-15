@@ -12,6 +12,7 @@ import '../models/models.dart';
 import '../services/location_service.dart';
 import '../services/chat.dart';
 import '../services/kotak_masuk.dart';
+import '../services/layanan.dart';
 import '../services/notifikasi.dart';
 import '../services/notification_service.dart';
 import '../services/repository.dart';
@@ -269,6 +270,60 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ---------- JENIS LAYANAN (per layanan) ----------
+  Map<KodeLayanan, PengaturanLayanan> _layanan = {};
+
+  PengaturanLayanan pengaturan(KodeLayanan k) =>
+      _layanan[k] ??
+      PengaturanLayanan(
+        kode: k,
+        aktif: switch (k) {
+          KodeLayanan.jastip => jenisJastip,
+          KodeLayanan.ojek => jenisOjek,
+          KodeLayanan.kurir => jenisKurir,
+        },
+        radiusKm: k.radiusAwal,
+        jamMulai: openHour,
+        jamSelesai: closeHour,
+        feeMinimum: k.feeAwal,
+        autoTerima: false,
+        prioritas: PrioritasLayanan.normal,
+      );
+
+  List<PengaturanLayanan> get daftarPengaturanLayanan =>
+      KodeLayanan.values.map(pengaturan).toList();
+
+  /// Simpan perubahan satu layanan.
+  void simpanPengaturanLayanan(PengaturanLayanan p) {
+    _layanan = {..._layanan, p.kode: p};
+    // kolom lama tetap ikut sinkron supaya Beranda & order konsisten
+    switch (p.kode) {
+      case KodeLayanan.jastip:
+        jenisJastip = p.aktif;
+      case KodeLayanan.ojek:
+        jenisOjek = p.aktif;
+      case KodeLayanan.kurir:
+        jenisKurir = p.aktif;
+    }
+    if (p.kode != KodeLayanan.kurir) radiusKm = p.radiusKm.toDouble();
+    _p?.setStringList(
+      'pengaturan_layanan',
+      _layanan.values.map((e) => jsonEncode(e.toMap())).toList(),
+    );
+    _p?.setBool('sw_${p.kode.name}', p.aktif);
+    notifyListeners();
+  }
+
+  /// Toggle cepat dari daftar utama (tanpa dialog).
+  void setAktifLayanan(KodeLayanan k, bool aktif) =>
+      simpanPengaturanLayanan(pengaturan(k).salin(aktif: aktif));
+
+  /// Statistik nyata satu layanan.
+  StatistikLayanan statistikLayanan(KodeLayanan k) => StatistikLayanan.hitung(
+        history.where((o) => o.type == k.name).toList(),
+        avgRating,
+      );
+
   /// ID mitra sederhana dan stabil (belum dari server).
   String _buatIdMitra() {
     final dasar = '${name.hashCode.abs()}';
@@ -319,6 +374,24 @@ class AppState extends ChangeNotifier {
     jenisJastip = _p!.getBool('sw_jastip') ?? true;
     jenisOjek = _p!.getBool('sw_ojek') ?? true;
     jenisKurir = _p!.getBool('sw_kurir') ?? false;
+    for (final baris in _p!.getStringList('pengaturan_layanan') ?? <String>[]) {
+      try {
+        final m = Map<String, dynamic>.from(jsonDecode(baris) as Map);
+        final k = KodeLayananX.dari(m['kode'] as String?);
+        _layanan[k] = PengaturanLayanan(
+          kode: k,
+          aktif: (m['aktif'] as bool?) ?? true,
+          radiusKm: (m['radius_km'] as num?)?.toInt() ?? k.radiusAwal,
+          jamMulai: (m['jam_mulai'] as num?)?.toInt() ?? 6,
+          jamSelesai: (m['jam_selesai'] as num?)?.toInt() ?? 22,
+          feeMinimum: (m['fee_minimum'] as num?)?.toInt() ?? k.feeAwal,
+          autoTerima: (m['auto_terima'] as bool?) ?? false,
+          prioritas: PrioritasLayananX.dari(m['prioritas'] as String?),
+        );
+      } catch (_) {
+        // data rusak = pakai default, bukan crash
+      }
+    }
     await NotifikasiService.instance
         .init(SharedPrefHolder.dariPref(_p!));
     name = _p!.getString('mitra_nama') ?? name;

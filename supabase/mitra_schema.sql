@@ -477,6 +477,48 @@ create policy review_update on public.review_mitra for update to authenticated
   using (mitra_id = auth.uid()) with check (mitra_id = auth.uid());
 
 -- ---------------------------------------------------------------------
+-- 9f. Pengaturan per jenis layanan (Jastip / Ojek / Kurir)
+--     "mitra_jasa" tidak pernah ada -> pakai auth.users + profiles.role.
+-- ---------------------------------------------------------------------
+create table if not exists public.pengaturan_layanan (
+  id uuid primary key default gen_random_uuid(),
+  mitra_id uuid not null unique references auth.users (id) on delete cascade,
+
+  jastip_aktif boolean default true,
+  jastip_radius_km int default 3,
+  jastip_jam_mulai int default 6,
+  jastip_jam_selesai int default 22,
+  jastip_fee_min int default 5000,
+  jastip_auto_terima boolean default false,
+
+  ojek_aktif boolean default true,
+  ojek_radius_km int default 5,
+  ojek_jam_mulai int default 6,
+  ojek_jam_selesai int default 22,
+  ojek_fee_min int default 8000,
+  ojek_auto_terima boolean default false,
+
+  kurir_aktif boolean default false,
+  kurir_radius_km int default 5,
+  kurir_jam_mulai int default 6,
+  kurir_jam_selesai int default 22,
+  kurir_fee_min int default 10000,
+  kurir_auto_terima boolean default false,
+
+  updated_at timestamptz not null default now()
+);
+
+alter table public.pengaturan_layanan enable row level security;
+
+drop policy if exists layanan_read on public.pengaturan_layanan;
+create policy layanan_read on public.pengaturan_layanan for select to authenticated
+  using (mitra_id = auth.uid());
+
+drop policy if exists layanan_write on public.pengaturan_layanan;
+create policy layanan_write on public.pengaturan_layanan for all to authenticated
+  using (mitra_id = auth.uid()) with check (mitra_id = auth.uid());
+
+-- ---------------------------------------------------------------------
 -- 10. Row Level Security
 -- ---------------------------------------------------------------------
 alter table public.orders enable row level security;
