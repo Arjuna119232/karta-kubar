@@ -53,13 +53,13 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
                         fontSize: 34, fontWeight: FontWeight.w800, color: Color(0xFF1B5E20)),
                   ),
                 ),
-                Positioned(
+                const Positioned(
                   right: 0,
                   bottom: 0,
-                  child: CircleAvatar(
+                  child: const CircleAvatar(
                     radius: 14,
-                    backgroundColor: const Color(0xFF1B5E20),
-                    child: const Icon(Icons.camera_alt_rounded, size: 15, color: Colors.white),
+                    backgroundColor: Color(0xFF1B5E20),
+                    child: Icon(Icons.camera_alt_rounded, size: 15, color: Colors.white),
                   ),
                 ),
               ],

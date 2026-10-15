@@ -38,11 +38,11 @@ class TentangScreen extends StatelessWidget {
                   'dan telepon (menelepon warga).',
               'Izin bisa dicabut kapan saja lewat menu Profil > Izin Aplikasi.',
             ]),
-            SizedBox(height: 24),
-            Center(
+            const SizedBox(height: 24),
+            const Center(
               child: Text(
                 'KUNBAR Mitra - From KATAR KUNBAR',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: 12, color: Color(0xFF757575)),
               ),
             ),
           ],
