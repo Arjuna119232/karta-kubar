@@ -17,7 +17,9 @@ dependencies:
   url_launcher: ^6.3.0
   shared_preferences: ^2.2.3
   provider: ^6.1.2
-  permission_handler: ^13.0.2
+  # 13.x menarik permission_handler_android 14.x yang WAJIB compileSdk 37 (belum ada di
+  # runner GitHub) -> kunci di 12.x (android impl 13.x, compileSdk 35).
+  permission_handler: ^12.0.3
   intl: ^0.19.0
 
 dev_dependencies:

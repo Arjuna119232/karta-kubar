@@ -19,8 +19,6 @@ jobs:
       # Analisa hanya memberi laporan; tidak boleh menggagalkan build.
       - run: flutter analyze --no-fatal-infos
         continue-on-error: true
-      - name: Tampilkan paket yang terpasang
-        run: flutter pub deps --style=compact | head -40
       - name: Build APK (arm64)
         run: >
           flutter build apk --release --target-platform android-arm64
