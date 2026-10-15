@@ -28,6 +28,22 @@ flutter build apk --release \
 APK: `build/app/outputs/flutter-apk/app-release.apk`.
 Atau lewat GitHub: tambah 6 secret di atas, jalankan workflow "Build KUNBAR Mitra APK".
 
+## Izin (v1.3.0)
+12 baris di halaman Izin Aplikasi. 9 bisa lewat dialog Android, 3 harus lewat
+Pengaturan HP (`manual: true` + `petunjuk`): **Tampil di layar kunci**,
+**Jendela baru di latar belakang** (SYSTEM_ALERT_WINDOW), **Berjalan di latar
+belakang** (ignore battery optimizations), dan **Akses data & file**.
+Izin yang wajib ada di manifest tapi tidak bisa diminta dari app:
+`SYSTEM_ALERT_WINDOW`, `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`,
+`USE_FULL_SCREEN_INTENT` -> Navigate ke app-op lewat `openAppSettings()`.
+
+## Tombol ONLINE (v1.3.0)
+`setOnline()` membalik status + `notifyListeners()` **sebelum** kerja berat.
+Jangan `await _startLokasi(...)` di dalamnya: fungsi itu memanggil
+`Geolocator.requestPermission()` yang menunggu user menutup dialog Android,
+sehingga tombol terlihat mati. Pola sekarang: `menyiapkanOnline = true`,
+`_startLokasi(...).whenComplete(...)`, tombol menampilkan spinner "MENYIAPKAN...".
+
 ## Notifikasi (v1.2.0)
 `lib/services/notifikasi.dart` = satu registry 20 notifikasi.
 8 PERSISTEN (`ongoing: true`, tidak bisa di-swipe): Order Masuk, Order Berjalan,

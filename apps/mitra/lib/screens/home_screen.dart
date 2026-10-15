@@ -44,12 +44,21 @@ class HomeScreen extends StatelessWidget {
                 backgroundColor: s.online ? cs.primary : Colors.grey.shade700,
                 textStyle: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
               ),
-              icon: Icon(s.online ? Icons.power_settings_new : Icons.power_off, size: 34),
-              label: Text(s.online ? 'ONLINE' : 'OFFLINE'),
-              onPressed: () async {
-                final err = await s.setOnline(!s.online);
-                if (err != null && context.mounted) toast(context, err);
-              },
+              icon: s.menyiapkanOnline
+                  ? const SizedBox(
+                      width: 34,
+                      height: 34,
+                      child: CircularProgressIndicator(strokeWidth: 4, color: Colors.white))
+                  : Icon(s.online ? Icons.power_settings_new : Icons.power_off, size: 34),
+              label: Text(s.menyiapkanOnline
+                  ? 'MENYIAPKAN...'
+                  : (s.online ? 'ONLINE' : 'OFFLINE')),
+              onPressed: s.menyiapkanOnline
+                  ? null
+                  : () async {
+                      final err = await s.setOnline(!s.online);
+                      if (err != null && context.mounted) toast(context, err);
+                    },
             ),
 Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),

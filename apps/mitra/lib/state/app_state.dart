@@ -23,6 +23,10 @@ class AppState extends ChangeNotifier {
 
   /// true = halaman izin belum pernah dibuka (tampil sekali setelah login).
   bool izinBelumDitinjau = false;
+
+  /// true = sedang menyiapkan GPS/izin setelah mitra menekan ONLINE.
+  /// Tombol tetap responsif, hanya berubah jadi "MENYIAPKAN...".
+  bool menyiapkanOnline = false;
   String name = 'Mitra';
   String? error;
   List<Order> incoming = [], history = [];
@@ -182,13 +186,24 @@ class AppState extends ChangeNotifier {
       return 'Di luar jam operasional ($openHour:00–$closeHour:00). Ubah di Pengaturan.';
     }
     online = v;
+    // PENTING: status dibalik + UI dibangun ulang SEBELUM kerja berat.
+    // Dohulu `await _startLokasi(...)` menahan notifyListeners, dan
+    _startLokasi -> Geolocator.requestPermission() MENUNGGU user menutup dialog
+    // Android. Akibatnya tombol ONLINE terlihat "tidak merespons".
+    menyiapkanOnline = v;
+    notifyListeners();
     try {
       await repo.setOnline(v);
     } catch (_) {}
     if (v) {
-      await _startLokasi(aktifOrder: active != null && active!.isActive);
       _listen();
       _mulaiPemantau();
+      _notifOrderMasuk();
+      // Jangan di-await: boleh memunculkan dialog izin lokasi.
+      _startLokasi(aktifOrder: active != null && active!.isActive).whenComplete(() {
+        menyiapkanOnline = false;
+        notifyListeners();
+      });
     } else {
       await _sub?.cancel();
       _sub = null;
@@ -199,6 +214,7 @@ class AppState extends ChangeNotifier {
       await Notifikasi.instance.sembunyikan(JenisNotif.internetHilang);
       await Notifikasi.instance.sembunyikan(JenisNotif.pengingatIstirahat);
       NotificationService.instance.sembunyikanOrderMasuk();
+      menyiapkanOnline = false;
     }
     notifyListeners();
     return null;

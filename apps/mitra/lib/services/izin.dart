@@ -12,6 +12,7 @@ class ItemIzin {
     required this.ikon,
     required this.izin,
     this.manual = false,
+    this.petunjuk,
   });
 
   final String kunci;
@@ -24,6 +25,9 @@ class ItemIzin {
 
   /// true = izin khusus yang tidak bisa lewat dialog, harus lewat Pengaturan HP.
   final bool manual;
+
+  /// Di mana tombolnya ada di Pengaturan HP (untuk izin manual).
+  final String? petunjuk;
 }
 
 /// Urutan ini juga urutan permintaan ke Android: satu per satu, bukan numpuk.
@@ -83,6 +87,37 @@ const daftarIzin = <ItemIzin>[
     alasan: 'Notifikasi dari perangkat sekitar seperti printer atau Bluetooth.',
     ikon: Icons.bluetooth,
     izin: Permission.bluetoothScan,
+  ),
+  ItemIzin(
+    kunci: 'layarKunci',
+    judul: 'Tampil di layar kunci',
+    alasan: 'Notifikasi order bisa muncul penuh di layar kunci HP.',
+    ikon: Icons.lock_clock_outlined,
+    izin: Permission.notification,
+    manual: true,
+    petunjuk: 'Pengaturan > Aplikasi > KUNBAR Mitra > Notifikasi > '
+        'Tampilkan di layar kunci',
+  ),
+  ItemIzin(
+    kunci: 'jendelaBaru',
+    judul: 'Jendela baru di latar belakang',
+    alasan: 'Boleh membuka jendela kecil di atas aplikasi lain (layar konfirmasi '
+        'order saat sedang menjemput).',
+    ikon: Icons.picture_in_picture_alt_outlined,
+    izin: Permission.systemAlertWindow,
+    manual: true,
+    petunjuk: 'Pengaturan > Aplikasi > KUNBAR Mitra > Akses aplikasi > '
+        'Tampilkan jendela pop-up / jendela baru',
+  ),
+  ItemIzin(
+    kunci: 'latarBelakang',
+    judul: 'Berjalan di latar belakang',
+    alasan: 'Supaya notifikasi ONLINE tidak dimatikan sistem saat HP hemat baterai.',
+    ikon: Icons.battery_saver_outlined,
+    izin: Permission.ignoreBatteryOptimizations,
+    manual: true,
+    petunjuk: 'Pengaturan > Aplikasi > KUNBAR Mitra > Baterai > '
+        'Tanpa pembatasan',
   ),
   ItemIzin(
     kunci: 'data',
