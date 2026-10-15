@@ -42,7 +42,7 @@ class GaleriLokalRepository implements GaleriRepository {
     final Hasil<List<MediaGaleri>> lama = await _baca();
     if (!lama.berhasil) return Hasil<MediaGaleri>.gagal(lama.galat!);
     final bool ok = await _tulis(<MediaGaleri>[m, ...lama.data!]);
-    if (!ok) return Hasil<MediaGaleri>.gagal('Gagal menyimpan galeri.');
+    if (!ok) return Hasil<MediaGaleri>.gagal(const GalatData('Gagal menyimpan galeri.'));
     return Hasil<MediaGaleri>.berhasil(m);
   }
 
@@ -67,7 +67,7 @@ class GaleriLokalRepository implements GaleriRepository {
     // yang tidak pernah tampil lagi.
     if (target != null) await _hapusBerkas(target.pathBerkas);
     final bool ok = await _tulis(sisa);
-    if (!ok) return Hasil<void>.gagal('Gagal menyimpan galeri.');
+    if (!ok) return Hasil<void>.gagal(const GalatData('Gagal menyimpan galeri.'));
     return const Hasil<void>.berhasil(null);
   }
 
@@ -102,7 +102,7 @@ class GaleriLokalRepository implements GaleriRepository {
             .toList(growable: false),
       );
     } catch (e) {
-      return Hasil<List<MediaGaleri>>.gagal('Gagal membaca galeri: $e');
+      return Hasil<List<MediaGaleri>>.gagal(GalatData('Gagal membaca galeri: $e'));
     }
   }
 

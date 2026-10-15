@@ -752,6 +752,20 @@ for f in files:
                 "'Undefined name'). Pindah ke initState()." % (m.group(1), hit.group(1))
             )
 
+# --------------------------------------------- 11c. Hasil.gagal() harus GalatData
+# KELAS BUG NYATA (15 Okt 2026, ketahuan dari CI): `Hasil<T>.gagal('teks')`
+# gagal kompilasi karena parameter bertipe `GalatData?`, BUKAN String.
+# Cek UNDEF-MEMBER tidak menangkapnya (method-nya memang ada), dan `galat` punya
+# alias `Hasil.galat(...)` yang pepperinya sama - jadi pemanggilannya terlihat
+# benar di mata.
+GALAT_STRING = re.compile(r"\bHasil\s*(?:<[^()<>]*>)?\s*\.\s*(?:gagal|galat)\s*\(\s*(['\"])")
+for f in files:
+    for m in GALAT_STRING.finditer(raw[f]):
+        baris = raw[f][:m.start()].count("\n") + 1
+        bad("GALAT-TIPE", f,
+            "Hasil.%s() diberi String di baris %d - parameter bertipe "
+            "`GalatData?`. Bungkus: GalatData('...')" % (m.group(0).split(".")[1].split("(")[0], baris))
+
 # ---------------------------------------------------------------- report
 print("=" * 62)
 print("  KUNBAR Connect - Dart static check")
@@ -770,7 +784,8 @@ if problems:
              "CTOR-UNKNOWN": 3, "ROUTE-UNKNOWN": 4,
              "IMPORT-RESOLVE": 5, "UNUSED-IMPORT": 6, "UNUSED-PRIVATE": 7,
              "UNUSED-PROVIDER": 8, "BRACE": 9, "NON-LATIN": 10, "ASSET": 11,
-             "FIELD-HILANG": 2, "EXT-HILANG": 2, "REF-FIELD-AWAL": 2}
+             "FIELD-HILANG": 2, "EXT-HILANG": 2, "REF-FIELD-AWAL": 2,
+             "GALAT-TIPE": 2}
     for kind, path, msg in sorted(problems, key=lambda p: (order.get(p[0], 9), p[1])):
         print(f"  [{kind}] {path}\n      {msg}")
     sys.exit(1)

@@ -67,9 +67,9 @@ class _KalenderKegiatanState extends State<KalenderKegiatan> {
   Widget build(BuildContext context) {
     final Map<DateTime, List<Kegiatan>> perHari = _perHari;
     final DateTime? terpilih = _dipilih;
-    final List<Kegiatan> hariTerpilih = _terpilih == null
+    final List<Kegiatan> hariTerpilih = terpilih == null
         ? const <Kegiatan>[]
-        : perHari[_terpilih] ?? const <Kegiatan>[];
+        : perHari[terpilih] ?? const <Kegiatan>[];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
