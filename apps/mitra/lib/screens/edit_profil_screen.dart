@@ -41,12 +41,12 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Center(
+          Center(
             child: Stack(
               children: [
                 CircleAvatar(
                   radius: 44,
-                  backgroundColor: Color(0xFFE8F5E9),
+                  backgroundColor: const Color(0xFFE8F5E9),
                   child: Text(
                     (_nama.text.trim().isEmpty ? 'M' : _nama.text.trim()[0]).toUpperCase(),
                     style: const TextStyle(
@@ -58,8 +58,8 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
                   bottom: 0,
                   child: CircleAvatar(
                     radius: 14,
-                    backgroundColor: Color(0xFF1B5E20),
-                    child: Icon(Icons.camera_alt_rounded, size: 15, color: Colors.white),
+                    backgroundColor: const Color(0xFF1B5E20),
+                    child: const Icon(Icons.camera_alt_rounded, size: 15, color: Colors.white),
                   ),
                 ),
               ],
