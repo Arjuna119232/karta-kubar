@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
+
 
 enum KategoriNotif { pengumuman, bonus, tips, event, peringatan, update }
 

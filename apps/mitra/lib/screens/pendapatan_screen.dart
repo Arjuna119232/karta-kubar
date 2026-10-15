@@ -9,7 +9,6 @@ import '../services/pendapatan.dart';
 import '../state/app_state.dart';
 import 'detail_transaksi_screen.dart';
 import 'tarik_saldo_screen.dart';
-import 'widgets.dart';
 
 /// Halaman pendapatan: saldo, periode, grafik, breakdown, riwayat.
 class PendapatanScreen extends StatefulWidget {

@@ -60,7 +60,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     final t = _input.text.trim();
     if (t.isEmpty) return;
     final s = context.read<AppState>();
-    final messenger = ScaffoldMessenger.of(context);
     _input.clear();
     HapticFeedback.selectionClick();
     await s.repo.sendMessage(
@@ -74,6 +73,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   }
 
   Future<void> _kirimLokasi(AppState s) async {
+    final messenger = ScaffoldMessenger.of(context);
     final p = await s.posisiSaya();
     if (!mounted) return;
     if (p == null) {
@@ -231,7 +231,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       padding: const EdgeInsets.all(12),
                       itemCount: tampil.length + (snap.data == true ? 1 : 0),
                       itemBuilder: (_, i) {
-                        if (i >= tampil.length) return _Mengetik();
+                        if (i >= tampil.length) return const _Mengetik();
                         return _Gelembung(
                           pesan: tampil[i],
                           nama: widget.order.customerName,
@@ -437,9 +437,8 @@ class _Gelembung extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(pesan.waktu.hour.toString().padLeft(2, '0') +
-                ':' +
-                pesan.waktu.minute.toString().padLeft(2, '0'),
+            Text('${pesan.waktu.hour.toString().padLeft(2, '0')}:'
+                '${pesan.waktu.minute.toString().padLeft(2, '0')}',
                 style: const TextStyle(fontSize: 10)),
             if (pesan.mine) ...[
               const SizedBox(width: 4),
@@ -586,18 +585,20 @@ class _KartuFoto extends StatelessWidget {
 }
 
 class _Mengetik extends StatelessWidget {
+  const _Mengetik();
+
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+  Widget build(BuildContext context) => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
         child: Row(
           children: [
-            const SizedBox(
+            SizedBox(
               width: 16,
               height: 16,
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
-            const SizedBox(width: 8),
-            Text('Warga sedang menulis...', style: const TextStyle(fontSize: 12)),
+            SizedBox(width: 8),
+            Text('Warga sedang menulis...', style: TextStyle(fontSize: 12)),
           ],
         ),
       );

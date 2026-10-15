@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../state/app_state.dart';
-import 'widgets.dart';
 
 const _bank = ['BCA', 'Mandiri', 'BNI', 'BRI'];
 const _ewallet = ['GoPay', 'OVO', 'DANA', 'ShopeePay'];
