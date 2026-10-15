@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:geolocator/geolocator.dart';
 
 import '../../core/data/hasil.dart';
-import '../models/mitra_jasa.dart';
 import '../models/order.dart';
 import '../models/order_tracking.dart';
 
@@ -231,47 +230,3 @@ class LokasiService {
     return TitikPeta(lat: lat / sah.length, lng: lng / sah.length);
   }
 }
-
-/// Titik tengah wilayah Kuningan Barat, dipakai saat peta belum punya
-/// koordinat apa pun.
-const TitikPeta titikKuninganBarat = TitikPeta(lat: -6.2447, lng: 106.8003);
-
-/// Daftar mitra contoh supaya form ojek punya pilihan sebelum backend nyala.
-///
-/// Diberi label "data contoh" di UI supaya tidak disalaharti sebagai mitra
-/// sungguhan. Backend nyala -> daftar ini tidak dipakai.
-const List<MitraJasa> mitraContoh = <MitraJasa>[
-  MitraJasa(
-    id: 'contoh-1',
-    nama: 'Rizky',
-    nomor: '',
-    peran: PeranMitra.both,
-    status: StatusMitra.menunggu,
-    rating: 4.8,
-    totalOrder: 132,
-    online: true,
-    aktif: true,
-  ),
-  MitraJasa(
-    id: 'contoh-2',
-    nama: 'Dimas',
-    nomor: '',
-    peran: PeranMitra.driver,
-    status: StatusMitra.menunggu,
-    rating: 4.6,
-    totalOrder: 88,
-    online: true,
-    aktif: true,
-  ),
-  MitraJasa(
-    id: 'contoh-3',
-    nama: 'Bayu',
-    nomor: '',
-    peran: PeranMitra.kurir,
-    status: StatusMitra.sibuk,
-    rating: 4.9,
-    totalOrder: 210,
-    online: true,
-    aktif: true,
-  ),
-];

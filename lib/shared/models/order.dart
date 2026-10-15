@@ -199,3 +199,7 @@ String jarakPendek(double km) {
   if (km < 1) return '${(km * 1000).round()} m';
   return '${km.toStringAsFixed(1)} km';
 }
+
+/// Titik tengah wilayah Kuningan Barat, dipakai saat peta belum punya
+/// koordinat apa pun supaya tidak mulai di tengah dunia.
+const TitikPeta titikKuninganBarat = TitikPeta(lat: -6.2447, lng: 106.8003);

@@ -23,6 +23,23 @@ class JastipService extends OrderServiceDasar {
 
   static const JenisOrder jenisOrder = JenisOrder.jastip;
 
+  /// Semua order (jastip + ojek). Dideklarasikan ulang supaya kontraknya
+  /// terlihat jelas di kelas ini, bukan hanya di kelas induk.
+  @override
+  Future<Hasil<List<OrderRingkas>>> orderSaya() => super.orderSaya();
+
+  /// Satu order berdasarkan id.
+  @override
+  Future<Hasil<OrderRingkas>> orderById(String id) => super.orderById(id);
+
+  /// Order yang sedang berjalan.
+  @override
+  Future<Hasil<List<OrderRingkas>>> orderAktif() => super.orderAktif();
+
+  /// Batalkan order warga sendiri.
+  @override
+  Future<Hasil<void>> batal(String id, String alasan) => super.batal(id, alasan);
+
   /// Buat order jastip baru.
   ///
   /// Fee TIDUK dihitung di sini: pemanggil sudah punya [RingkasanTarif] dari

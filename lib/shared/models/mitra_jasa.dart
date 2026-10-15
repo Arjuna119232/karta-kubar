@@ -168,3 +168,44 @@ class MitraJasa {
   @override
   int get hashCode => id.hashCode;
 }
+
+/// Daftar mitra contoh supaya form ojek punya pilihan sebelum backend nyala.
+///
+/// Semuanya diberi nama tanpa tanda "data contoh" di sini; labelnya ditambahkan
+/// di UI supaya tidak disalaharti sebagai mitra sungguhan. Backend hidup ->
+/// repository mengembalikan baris nyata dan daftar ini tidak dipakai.
+const List<MitraJasa> mitraContoh = <MitraJasa>[
+  MitraJasa(
+    id: 'contoh-1',
+    nama: 'Rizky',
+    nomor: '',
+    peran: PeranMitra.both,
+    status: StatusMitra.menunggu,
+    rating: 4.8,
+    totalOrder: 132,
+    online: true,
+    aktif: true,
+  ),
+  MitraJasa(
+    id: 'contoh-2',
+    nama: 'Dimas',
+    nomor: '',
+    peran: PeranMitra.driver,
+    status: StatusMitra.menunggu,
+    rating: 4.6,
+    totalOrder: 88,
+    online: true,
+    aktif: true,
+  ),
+  MitraJasa(
+    id: 'contoh-3',
+    nama: 'Bayu',
+    nomor: '',
+    peran: PeranMitra.kurir,
+    status: StatusMitra.sibuk,
+    rating: 4.9,
+    totalOrder: 210,
+    online: true,
+    aktif: true,
+  ),
+];
