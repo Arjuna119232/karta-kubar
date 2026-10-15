@@ -1,6 +1,6 @@
 # KUNBAR Connect — Cara Membuka & Edit di Acode
 
-Versi: **0.12.1** · Kelurahan Kuningan Barat, Jakarta Selatan
+Versi: **0.12.2** · Kelurahan Kuningan Barat, Jakarta Selatan
 
 Aplikasi warga (Flutter) — **bukan** aplikasi admin. Panel pengurus
 dipindah ke web terpisah.
@@ -9,7 +9,7 @@ dipindah ke web terpisah.
 
 ## 1. Cara buka di Acode
 
-1. **Ekstrak** `KUNBAR-Connect-v0.12.1-source.zip` ke folder di HP, misal
+1. **Ekstrak** `KUNBAR-Connect-v0.12.2-source.zip` ke folder di HP, misal
    `/storage/emulated/0/Acode/kunbar/`.
 2. Acode → **Open Folder** → pilih folder **yang berisi `pubspec.yaml`**
    (bukan folder di dalam zip).
@@ -131,6 +131,7 @@ Tiap `context.go('/x')` harus punya rute di `lib/core/router.dart`.
 | 0.11.0 | Katalog UMKM + Lapor darurat + perbaikan aksi cepat |
 | 0.12.0 | Empat tombol kosong jadi fitur nyata (edit profil, notifikasi, bantuan) |
 | 0.12.1 | Overhaul tampilan: satu bahasa visual di semua layar, kalender kegiatan, unduh CSV, unggah galeri |
+| 0.12.2 | APK universal + komponen lama dikembalikan (tidak ada yang dipangkas) |
 
 ### Komponen bersama (`lib/shared/widgets/`)
 
@@ -143,6 +144,16 @@ Tiap `context.go('/x')` harus punya rute di `lib/core/router.dart`.
 Jangan pakai `AppDialog`/sheet bawaan Flutter dan jangan langsung menulis
 `Color(0x...)` di layar: warna diambil dari `AppColors`, jarak dari
 `AppSpacing`, bayangan dari `AppShadows`, getaran lewat `Haptics`.
+
+Ada DUA lapis komponen dan keduanya sengaja disimpan:
+- Lapis aktif: `app_card`, `app_dialogs`, `primary_button`, `status_views`,
+  `shimmer_box`, `loading_dots`, `animated_list_item`, `section_header`, dll.
+- Pustaka cadangan: `app_surface`, `app_sheet`, `app_dialog`, `glass_card`,
+  `modern_card`, `animated_button`, `haptics` — **jangan dihapus**. Daftar
+  resminya ada di `tool/keep_unused.txt`.
+
+**Jangan memangkas apa pun di proyek ini.** Kalau sebuah file terasa tidak
+dipakai, daftarkan di `tool/keep_unused.txt`, jangan `git rm`.
 
 Dependency penting:
 - `url_launcher ^6.3.1` — **jangan** naikkan ke 6.3.3, butuh Dart `^3.11`

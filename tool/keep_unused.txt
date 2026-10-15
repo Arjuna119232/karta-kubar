@@ -1,0 +1,31 @@
+# Komponen yang sengaja DISIMPAN aunque belum dipakai satu pun layar.
+#
+# KEPUTUSAN USER (16 Okt 2026): "jangan ada yang di pangkas sekarang segala
+# apapun apk dalam proyek kunbar, tak apa ukurannya besar yang penting
+# terbaik, sempurna dan modern".
+#
+# Jadi file di bawah TIDAK dihapus. File ini hanya notifies ke
+# `tool/check_dart.py` bahwa DEAD-FILE di sini itu disengaja, bukan kelalaian,
+# sehingga build tidak tertahan.
+#
+# PENTING: file yang disebut di sini tetap WAJIB bisa dikompilasi. Dart hanya
+# mengompilasi file yang terjangkau dari `lib/main.dart`, jadi file di daftar
+# ini tidak diuji build - sudah diperiksa satu per satu saat dipulihkan.
+# Jalankan `flutter analyze` atau build kecil kalau salah satunya nanti dipakai.
+#
+# Daftar pustaka komponen yang masih ada di repo, siap dipakai:
+# - lib/shared/widgets/app_surface.dart   -> AppSurface (permukaan + bayangan)
+# - lib/shared/widgets/app_sheet.dart     -> AppSheet (bottom sheet lengkap)
+# - lib/shared/widgets/app_dialog.dart    -> AppDialog (dialog konfirmasi/catatan)
+# - lib/shared/widgets/glass_card.dart    -> GlassCard (kaca semi transparan)
+# - lib/shared/widgets/modern_card.dart   -> ModernCard (kartu + AnimatedButton)
+# - lib/shared/widgets/animated_button.dart -> AnimatedButton (tekan-geser)
+# - lib/shared/widgets/haptics.dart       -> Haptics (ringan/sedang/kuat/gagal)
+
+lib/shared/widgets/app_surface.dart
+lib/shared/widgets/app_sheet.dart
+lib/shared/widgets/app_dialog.dart
+lib/shared/widgets/glass_card.dart
+lib/shared/widgets/modern_card.dart
+lib/shared/widgets/animated_button.dart
+lib/shared/widgets/haptics.dart

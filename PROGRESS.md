@@ -3,7 +3,7 @@
 Berkas ini supaya sesi baru bisa melanjutkan tanpa membaca ulang semua riwayat.
 
 **Terakhir diperbarui:** 16 Okt 2026
-**Versi aplikasi:** 0.12.1+23 (build 20 = 0.7.0 sudah DIRUSAK, jangan dipakai sebagai acuan)
+**Versi aplikasi:** 0.12.2+24 (build 20 = 0.7.0 sudah DIRUSAK, jangan dipakai sebagai acuan)
 
 ---
 
@@ -107,9 +107,23 @@ state galat), `shimmer_box`, `loading_dots`, `animated_list_item`,
 dipusatkan di `lib/core/theme/` (`app_colors`, `app_spacing`, `app_shadows`,
 `app_typography`, `app_assets`) dan getaran di `lib/core/utils/haptics.dart`.
 
-Widget yang dulu ada (`app_surface`, `app_sheet`, `app_dialog`,
-`glass_card`, `modern_card`, `animated_button`) sudah dihapus karena tidak
-dipakai satu layar pun.
+### Komponen yang disimpan tapi belum dipakai
+
+`AppSurface`, `AppSheet`, `AppDialog`, `GlassCard`, `ModernCard`,
+`AnimatedButton`, dan `Haptics` (versi lama) **TIDAK dihapus**. User: jangan
+ada yang dipangkas, ukuran APK tidak jadi pertimbangan. Semuanya dikembalikan
+dan diperbaiki supaya tetap bisa dikompilasi, lalu didaftarkan di
+`tool/keep_unused.txt` supaya `tool/check_dart.py` menandai mereka sebagai
+CATATAN, bukan MASALAH.
+
+Daftar lengkap ada di `tool/keep_unused.txt`. Kalau nanti salah satu dipakai,
+hapus barisnya supaya daftarnya tetap jujur.
+
+### APK universal
+
+Default build sekarang **universal** (arm64-v8a + armeabi-v7a + x86_64):
+satu berkas bisa dipasang di HP mana pun, emulator, dan Chromebook. Pilih
+`arm64` hanya kalau sedang mengejar APK paling kecil.
 
 ### Belum dikerjakan (sengaja)
 

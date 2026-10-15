@@ -811,6 +811,34 @@ for paket,astic in sorted(paket_dipakai.items()):
         "build gagal dengan 'Undefined name'. %d file memakainya, contoh: %s"
         % (paket, len(astic), ", ".join(sorted(p.name for p in list(astic)[:3]))))
 
+# -------------------------------- 12. komponen yang sengaja disimpan tapi belum dipakai
+# KEPUTUSAN USER (16 Okt 2026): "jangan ada yang dipangkas sekarang segala
+# apapun apk dalam proyek kunbar, tak apa ukurannya besar yang important
+# terbaik, sempurna dan modern". Jadi komponen yang tidak terpakai TIDAK
+# dihapus; hanya dicatat di `tool/keep_unused.txt` supaya DEAD-FILE di sana
+# jadi CATATAN, bukan MASALAH yang memblokir build.
+#
+# File di daftar itu tetap wajib bisa dikompilasi - Dart tidak mengompilasi
+# file yang tidak terjangkau dari main.dart, jadi build tidak akan menangkap
+# kerusakan di dalamnya.
+KEEP = ROOT / "tool" / "keep_unused.txt"
+disimap = set()
+if KEEP.exists():
+    for baris in KEEP.read_text(encoding="utf-8").splitlines():
+        b = baris.strip()
+        if b and not b.startswith("#"):
+            disimap.add(b)
+
+if disimap:
+    tetap_problem = [p for p in problems if p[0] == "DEAD-FILE" and p[1] in disimap]
+    problems = [p for p in problems if p not in tetap_problem]
+    for _, path, _ in tetap_problem:
+        note("disimpan sengaja (tool/keep_unused.txt), belum dipakai: %s" % path)
+    for p in sorted(disimap):
+        if not any(x[1] == p for x in tetap_problem):
+            note("tool/keep_unused.txt mendaftarkan %s tapi file itu tidak mati - "
+                 "hapus daftarnya supaya daftarnya jujur" % p)
+
 # ---------------------------------------------------------------- report
 print("=" * 62)
 print("  KUNBAR Connect - Dart static check")

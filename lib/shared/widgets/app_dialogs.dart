@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_motion.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/utils/haptics.dart';
 import 'app_icon.dart';
@@ -134,7 +135,7 @@ class AppDialog {
       barrierDismissible: true,
       barrierLabel: 'Tutup',
       barrierColor: AppColors.black.withValues(alpha: 0.45),
-      transitionDuration: const Duration(milliseconds: 260),
+      transitionDuration: AppMotion.normal,
       pageBuilder: (BuildContext ctx, _, __) => SafeArea(child: isi(ctx)),
       transitionBuilder: (BuildContext ctx, Animation<double> a, _, Widget c) {
         final Animation<double> k =

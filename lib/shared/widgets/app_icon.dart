@@ -1,3 +1,4 @@
+import '../../core/theme/app_assets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -88,7 +89,7 @@ class AppIcon extends StatelessWidget {
     final Color c =
         color ?? tema.color ?? Theme.of(context).colorScheme.onSurface;
     return SvgPicture.asset(
-      'assets/icons/${ik.name}${aktif ? '_a' : ''}.svg',
+      AppAssets.ikon('${ik.name}${aktif ? '_a' : ''}'),
       width: s,
       height: s,
       colorFilter: ColorFilter.mode(c, BlendMode.srcIn),
@@ -115,7 +116,7 @@ class AppIllustration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SvgPicture.asset(
-      'assets/ilustrasi/$nama.svg',
+      AppAssets.ilustrasi(nama),
       width: width,
       height: height,
       fit: fit,
@@ -142,7 +143,7 @@ class AppCover extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Widget gambar = SvgPicture.asset(
-      'assets/ilustrasi/$nama.svg',
+      AppAssets.ilustrasi(nama),
       width: width,
       height: height,
       fit: BoxFit.cover,

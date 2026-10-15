@@ -1,19 +1,15 @@
-### KUNBAR Connect v0.12.1
+### KUNBAR Connect v0.12.2
 
-Tampilan diseragamkan ke satu bahasa visual baru di semua layar.
+Satu berkas APK untuk semua perangkat.
 
-**Tampilan baru**
-- Beranda: header besar dengan sapaan, kartu aksi cepat dua baris, kartu bergaya baru
-- Kegiatan, Keuangan, Galeri, Aspirasi, UMKM, Darurat, Absen, dan Profil memakai komponen bersama yang sama
-- State kosong tampil dengan ilustrasi bergerak pelan, bukan teks polos
-- Mode gelap dan terang mengikuti tema HP
+**Yang berubah**
+- APK sekarang universal: arm64-v8a, armeabi-v7a, dan x86_64 dalam satu
+  berkas, jadi bisa dipasang di HP mana pun, emulator, dan Chromebook
+- Tidak ada lagi komponen yang dipangkas dari proyek
+- Pustaka komponen yang dulu tidak terpakai dikembalikan dan sudah bisa
+  dikompilasi lagi
 
-**Tombol yang sebelumnya kosong**
-- Ikon kalender di Kegiatan membuka kalender bulan bertanda pada hari ada acara
-- Tombol Unduh di Keuangan membuat laporan kas CSV, bisa disalin atau dibagikan
-- Ikon foto di Galeri mengunggah foto kegiatan dan menyimpannya di perangkat
-- Edit profil, Notifikasi, dan Bantuan di Profil jadi layar sungguhan
-
-**Yang dibersihkan**
-- Navigasi dalam memakai tombol push, jadi tombol back HP kembali ke halaman sebelumnya
-- Kode mati dan widget yang tidak dipakai di mana pun sudah dihapus
+**Cara pakai**
+- Di Acode: ekstrak `KUNBAR-Connect-v0.12.2-source.zip`, pilih folder yang
+  berisi `pubspec.yaml`, lalu Run
+- Kalau ingin APK paling kecil saat menguji, pilih input `abi=arm64`

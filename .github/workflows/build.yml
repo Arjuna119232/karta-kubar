@@ -11,10 +11,10 @@ on:
         options: ['true', 'false']
         default: 'true'
       abi:
-        description: 'Arsitektur CPU untuk APK. arm64 saja = APK paling kecil (~18 MB).'
+        description: 'Arsitektur CPU untuk APK. universal = semua HP, emulator, dan Chromebook bisa pasang (ukuran lebih besar, itu tidak masalah).'
         type: choice
-        options: ['arm64', 'universal']
-        default: 'arm64'
+        options: ['universal', 'arm64']
+        default: 'universal'
       release:
         description: 'Bikin draft release + AAB? Pilih "no" kalau cuma mau tahu kompilasinya lolos.'
         type: choice
@@ -103,20 +103,20 @@ jobs:
       - name: Analyze (non-blocking)
         run: flutter analyze || true
 
-      # APK hanya untuk arm64 (semua HP Android modern). ABI lain (x86_64,
-      # armeabi-v7a) menambah ~35 MB tanpa perlu - emulator x86 dan HP
-      # sangat lama bisa pakai AAB / build manual dengan --target-platform.
+      # Default = universal (arm64-v8a + armeabi-v7a + x86_64). KEPUTUSAN USER
+      # 16 Okt 2026: ukuran APK tidak jadi pertimbangan; yang penting satu
+      # berkas bisa dipasang di HP mana pun, emulator, dan Chromebook.
+      - name: Build release APK (universal)
+        if: github.event.inputs.abi != 'arm64'
+        run: |
+          flutter build apk --release \
+            --dart-define=KUNBAR_DEMO=${{ github.event.inputs.demo || 'true' }}
+
       - name: Build release APK (arm64 only)
-        if: github.event.inputs.abi != 'universal'
+        if: github.event.inputs.abi == 'arm64'
         run: |
           flutter build apk --release \
             --target-platform android-arm64 \
-            --dart-define=KUNBAR_DEMO=${{ github.event.inputs.demo || 'true' }}
-
-      - name: Build release APK (universal)
-        if: github.event.inputs.abi == 'universal'
-        run: |
-          flutter build apk --release \
             --dart-define=KUNBAR_DEMO=${{ github.event.inputs.demo || 'true' }}
 
       # Play Store mewajibkan AAB (bukan APK) untuk aplikasi baru. AAB selalu
