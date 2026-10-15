@@ -11,7 +11,7 @@ import '../state/app_state.dart';
 import '../widgets/kit.dart';
 import 'account_screen.dart';
 import 'orders_screen.dart';
-import 'earnings_screen.dart';
+import 'pendapatan_screen.dart';
 import 'jadwal_screen.dart';
 import 'order_detail_screen.dart';
 import 'order_masuk_screen.dart';
@@ -204,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         warna: const Color(0xFF1565C0),
                         judul: 'Pendapatan',
                         subjudul: rp(s.todayEarnings),
-                        onTekan: () => _ke(context, const EarningsScreen()),
+                        onTekan: () => _ke(context, const PendapatanScreen(dapatTombolKembali: true)),
                       ),
                     ),
                     const SizedBox(width: 10),

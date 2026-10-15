@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'account_screen.dart';
 import 'chat_list_screen.dart';
-import 'earnings_screen.dart';
+import 'pendapatan_screen.dart';
 import 'home_screen.dart';
 import 'orders_screen.dart';
 
@@ -25,7 +25,7 @@ class _ShellState extends State<Shell> {
         index: _i,
         children: const [
           HomeScreen(),
-          EarningsScreen(),
+          PendapatanScreen(),
           ChatListScreen(),
           OrdersScreen(),
           AccountScreen(),

@@ -258,6 +258,59 @@ create trigger trg_rating_refresh after insert or update on public.ratings
   for each row execute function public.refresh_rating();
 
 -- ---------------------------------------------------------------------
+-- 9b. Penghasilan & penarikan saldo (halaman Pendapatan)
+--     Catatan: tabel memakai auth.users, bukan tabel "mitra_jasa" - tabel itu
+--     tidak pernah ada di skema KUNBAR. Role 'mitra' hidup di profiles.role.
+-- ---------------------------------------------------------------------
+create table if not exists public.penghasilan_mitra (
+  id uuid primary key default gen_random_uuid(),
+  mitra_id uuid not null references auth.users (id) on delete cascade,
+  order_id uuid references public.orders (id) on delete set null,
+  order_jenis text check (order_jenis in ('jastip', 'ojek')),
+  jumlah bigint not null default 0,
+  fee_platform bigint not null default 0,
+  status text not null default 'pending'
+    check (status in ('pending', 'approved', 'rejected')),
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_penghasilan_mitra
+  on public.penghasilan_mitra (mitra_id, created_at desc);
+
+create table if not exists public.withdraw_mitra (
+  id uuid primary key default gen_random_uuid(),
+  mitra_id uuid not null references auth.users (id) on delete cascade,
+  jumlah bigint not null check (jumlah > 0),
+  fee bigint not null default 2500,
+  metode text not null check (metode in ('bank', 'ewallet')),
+  tujuan text not null,
+  status text not null default 'pending'
+    check (status in ('pending', 'approved', 'rejected', 'paid')),
+  created_at timestamptz not null default now(),
+  processed_at timestamptz
+);
+create index if not exists idx_withdraw_mitra
+  on public.withdraw_mitra (mitra_id, created_at desc);
+
+alter table public.penghasilan_mitra enable row level security;
+alter table public.withdraw_mitra enable row level security;
+
+drop policy if exists penghasilan_read on public.penghasilan_mitra;
+create policy penghasilan_read on public.penghasilan_mitra for select to authenticated
+  using (mitra_id = auth.uid());
+
+drop policy if exists penghasilan_insert on public.penghasilan_mitra;
+create policy penghasilan_insert on public.penghasilan_mitra for insert to authenticated
+  with check (mitra_id = auth.uid());
+
+drop policy if exists withdraw_read2 on public.withdraw_mitra;
+create policy withdraw_read2 on public.withdraw_mitra for select to authenticated
+  using (mitra_id = auth.uid());
+
+drop policy if exists withdraw_insert2 on public.withdraw_mitra;
+create policy withdraw_insert2 on public.withdraw_mitra for insert to authenticated
+  with check (mitra_id = auth.uid());
+
+-- ---------------------------------------------------------------------
 -- 10. Row Level Security
 -- ---------------------------------------------------------------------
 alter table public.orders enable row level security;

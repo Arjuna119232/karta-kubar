@@ -139,3 +139,58 @@ class WalletTx {
   final DateTime createdAt;
   const WalletTx(this.amount, this.kind, this.note, this.createdAt);
 }
+
+/// Permintaan tarik saldo. Statusnya diputuskan admin di web panel.
+enum StatusWithdraw { pending, disetujui, ditolak, dibayar }
+
+class Withdraw {
+  final String id;
+  final int jumlah;
+
+  /// 'bank' atau 'ewallet'
+  final String metode;
+
+  /// Nomor rekening / nomor HP tujuan
+  final String tujuan;
+  final StatusWithdraw status;
+  final DateTime createdAt;
+
+  const Withdraw({
+    required this.id,
+    required this.jumlah,
+    required this.metode,
+    required this.tujuan,
+    required this.status,
+    required this.createdAt,
+  });
+
+  String get statusLabel => switch (status) {
+        StatusWithdraw.pending => 'Menunggu diproses',
+        StatusWithdraw.disetujui => 'Disetujui admin',
+        StatusWithdraw.ditolak => 'Ditolak',
+        StatusWithdraw.dibayar => 'Sudah dibayar',
+      };
+
+  String get metodeLabel => metode == 'bank' ? 'Transfer bank' : 'E-wallet';
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'jumlah': jumlah,
+        'metode': metode,
+        'tujuan': tujuan,
+        'status': status.name,
+        'created_at': createdAt.toIso8601String(),
+      };
+
+  static Withdraw fromMap(Map<String, dynamic> m) => Withdraw(
+        id: '${m['id']}',
+        jumlah: (m['jumlah'] as num?)?.toInt() ?? 0,
+        metode: (m['metode'] ?? 'bank').toString(),
+        tujuan: (m['tujuan'] ?? '').toString(),
+        status: StatusWithdraw.values.firstWhere(
+          (s) => s.name == '${m['status']}',
+          orElse: () => StatusWithdraw.pending,
+        ),
+        createdAt: DateTime.tryParse('${m['created_at']}') ?? DateTime.now(),
+      );
+}

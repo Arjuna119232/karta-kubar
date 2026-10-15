@@ -220,6 +220,18 @@ class OrderRepository {
     await _sb.from('messages').insert({'order_id': orderId, 'sender_id': uid, 'body': body});
   }
 
+  // ---------- PENARIKAN SALDO ----------
+  Future<void> repoTarik(int jumlah, String metode, String tujuan) async {
+    if (Config.demo) return;
+    await _sb.from('withdrawals').insert({
+      'mitra_id': uid,
+      'amount': jumlah,
+      'metode': metode,
+      'tujuan': tujuan,
+      'status': 'pending',
+    });
+  }
+
   // ---------- RATING & DOMPET ----------
   Future<List<Rating>> ratings() async {
     if (Config.demo) {

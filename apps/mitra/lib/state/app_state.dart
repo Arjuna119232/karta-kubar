@@ -37,6 +37,7 @@ class AppState extends ChangeNotifier {
   String name = 'Mitra';
   String telepon = '';
   String kontakDarurat = '';
+  List<Withdraw> withdrawals = [];
   String? error;
   List<Order> incoming = [], history = [];
   List<Rating> ratings = [];
@@ -65,6 +66,9 @@ class AppState extends ChangeNotifier {
     izinBelumDitinjau = _p!.getBool('izin_sheet_v1') != true;
     onboardingBelumDitinjau = _p!.getBool('onboarding_v1') != true;
     kontakDarurat = _p!.getString('kontak_darurat') ?? '';
+    withdrawals = (_simpan.withdrawals ?? [])
+        .map((e) => Withdraw.fromMap(Map<String, dynamic>.from(e)))
+        .toList();
     name = _p!.getString('mitra_nama') ?? name;
     if (_p!.getString('mitra_telepon') != null) telepon = _p!.getString('mitra_telepon')!;
     vehicleType = _p!.getString('vtype') ?? 'Motor';
@@ -444,6 +448,54 @@ class AppState extends ChangeNotifier {
       history.where((o) => o.isDone && !o.doneAt.toLocal().isBefore(from)).toList();
   int earned(DateTime from) => doneSince(from).fold(0, (s, o) => s + o.fee);
   int get todayEarnings => earned(_today);
+
+  /// Saldo aktif = semua order selesai dikurangi penarikan yang sudah diproses.
+  int get saldoAktif {
+    final ditarik = withdrawals
+        .where((w) => w.status == StatusWithdraw.dibayar ||
+            w.status == StatusWithdraw.disetujui)
+        .fold<int>(0, (a, w) => a + w.jumlah);
+    final bruto = doneSince(DateTime(2020)).fold<int>(0, (a, o) => a + o.fee);
+    return bruto - ditarik;
+  }
+
+  /// Kirim permintaan tarik saldo. Demo = tersimpan di perangkat; kalau Supabase
+  /// aktif, baris masuk ke tabel `withdrawals` untuk diproses admin.
+  Future<String?> mintaTarik({
+    required int jumlah,
+    required String metode,
+    required String tujuan,
+  }) async {
+    if (jumlah <= 0) return 'Nominal harus lebih dari nol';
+    if (tujuan.trim().length < 6) return 'Nomor tujuan terlalu pendek';
+    if (jumlah > saldoAktif) return 'Nominal melebihi saldo aktif';
+    try {
+      if (!Config.demo) {
+        await repo.repoTarik(jumlah, metode, tujuan.trim());
+      }
+      final w = Withdraw(
+        id: 'w-${DateTime.now().millisecondsSinceEpoch}',
+        jumlah: jumlah,
+        metode: metode,
+        tujuan: tujuan.trim(),
+        status: StatusWithdraw.pending,
+        createdAt: DateTime.now(),
+      );
+      withdrawals = [w, ...withdrawals];
+      _simpanTarik();
+      notifyListeners();
+      return null;
+    } catch (_) {
+      return 'Gagal mengirim permintaan. Cek sinyal lalu coba lagi.';
+    }
+  }
+
+  void _simpanTarik() {
+    _p?.setString(
+      'withdrawals',
+      jsonEncode(withdrawals.map((w) => w.toMap()).toList()),
+    );
+  }
 
   /// Target harian mitra (bisa diubah di Jadwal nanti); dipakai untuk progres.
   static const int targetHarian = 75000;
