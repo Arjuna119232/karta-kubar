@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart'
+    show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -59,9 +61,11 @@ class AppTheme {
           lansia ? VisualDensity.comfortable : VisualDensity.standard,
       materialTapTargetSize: MaterialTapTargetSize.padded,
       iconTheme: IconThemeData(size: lansia ? 28 : 24),
+      // Android memakai transisi maju Material 3 (bukan slide iOS) supaya
+      // backs gesture Android tetap terasa native; iOS memakai gaya Cupertino.
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
-          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
           TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
         },
       ),
