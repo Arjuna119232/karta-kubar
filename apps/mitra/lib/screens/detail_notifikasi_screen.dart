@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../core/theme.dart';
 import '../services/kotak_masuk.dart';
-import 'widgets.dart';
 
 /// Detail notifikasi: kategori, waktu, isi lengkap, tombol aksi.
 class DetailNotifikasiScreen extends StatelessWidget {

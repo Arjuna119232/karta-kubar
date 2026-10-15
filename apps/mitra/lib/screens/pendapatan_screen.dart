@@ -7,7 +7,6 @@ import '../core/format.dart';
 import '../core/theme.dart';
 import '../services/pendapatan.dart';
 import '../state/app_state.dart';
-import '../widgets/kit.dart';
 import 'detail_transaksi_screen.dart';
 import 'tarik_saldo_screen.dart';
 import 'widgets.dart';

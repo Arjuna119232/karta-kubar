@@ -60,6 +60,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     final t = _input.text.trim();
     if (t.isEmpty) return;
     final s = context.read<AppState>();
+    final messenger = ScaffoldMessenger.of(context);
     _input.clear();
     HapticFeedback.selectionClick();
     await s.repo.sendMessage(
@@ -76,7 +77,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     final p = await s.posisiSaya();
     if (!mounted) return;
     if (p == null) {
-      toast(context, 'Lokasi belum bisa diambil. Izinkan lokasi dulu.');
+      messenger.showSnackBar(const SnackBar(
+          content: Text('Lokasi belum bisa diambil. Izinkan lokasi dulu.',
+              style: TextStyle(fontSize: 16))));
       return;
     }
     await s.repo.sendMessage(

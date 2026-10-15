@@ -1,9 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
-
-import '../core/config.dart';
-import '../core/theme.dart';
 
 enum KategoriNotif { pengumuman, bonus, tips, event, peringatan, update }
 
@@ -82,6 +78,22 @@ class NotifikasiMk {
   final String? lampiranUrl;
   final bool dibaca;
   final bool diarsipkan;
+}
+
+extension NotifikasiMkX on NotifikasiMk {
+  NotifikasiMk copyWith({bool? dibaca, bool? diarsipkan}) => NotifikasiMk(
+        id: id,
+        kategori: kategori,
+        prioritas: prioritas,
+        judul: judul,
+        isi: isi,
+        waktu: waktu,
+        ctaLabel: ctaLabel,
+        ctaUrl: ctaUrl,
+        lampiranUrl: lampiranUrl,
+        dibaca: dibaca ?? this.dibaca,
+        diarsipkan: diarsipkan ?? this.diarsipkan,
+      );
 }
 
 enum FilterKotak { semua, penting, belumDibaca }
@@ -191,7 +203,7 @@ class NotifikasiService {
           prioritas: PrioritasNotif.normal,
           judul: 'Gathering mitra Gratis KUNBAR',
           isi: 'Ajak semua mitra hadir Minggu, 09:00, diRQ05. Ada sarapan, '
-              '-discussion, danMODIF {
+              'diskusi, dan kejutan kecil. Daftar hadir lewat pengurusRQ05.',
 
         NotifikasiMk(
           id: 'n5',

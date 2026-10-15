@@ -146,19 +146,23 @@ class _TarikSaldoScreenState extends State<TarikSaldoScreen> {
                 : () async {
                     HapticFeedback.mediumImpact();
                     setState(() => _kirim = true);
-                    final err = await context.read<AppState>().mintaTarik(
-                          jumlah: _nominal,
-                          metode: _jenis,
-                          tujuan: '$_tujuanLabel ${_nomor.text.trim()}',
-                        );
+                    final s = context.read<AppState>();
+                    final messenger = ScaffoldMessenger.of(context);
+                    final navigator = Navigator.of(context);
+                    final err = await s.mintaTarik(
+                      jumlah: _nominal,
+                      metode: _jenis,
+                      tujuan: '$_tujuanLabel ${_nomor.text.trim()}',
+                    );
                     if (!mounted) return;
                     setState(() => _kirim = false);
                     if (err != null) {
-                      toast(context, err);
+                      messenger.showSnackBar(
+                          SnackBar(content: Text(err, style: const TextStyle(fontSize: 16))));
                       return;
                     }
                     await showDialog<void>(
-                      context: context,
+                      context: navigator.context,
                       builder: (c) => AlertDialog(
                         title: const Text('Permintaan terkirim'),
                         content: Text(
@@ -172,7 +176,7 @@ class _TarikSaldoScreenState extends State<TarikSaldoScreen> {
                         ],
                       ),
                     );
-                    if (mounted) Navigator.pop(context);
+                    if (mounted) navigator.pop();
                   },
             child: _kirim
                 ? const SizedBox(

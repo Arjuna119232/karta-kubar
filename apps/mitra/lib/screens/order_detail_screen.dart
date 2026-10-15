@@ -5,7 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/format.dart';
 import '../models/models.dart';
 import '../state/app_state.dart';
-import 'chat_screen.dart';
+import 'chat_room_screen.dart';
 import 'peta_screen.dart';
 import 'widgets.dart';
 
@@ -55,7 +55,7 @@ class OrderDetailScreen extends StatelessWidget {
             const SizedBox(height: 12),
             Row(children: [
               Expanded(child: OutlinedButton.icon(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(order: o))),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChatRoomScreen(order: o))),
                 icon: const Icon(Icons.chat),
                 label: const Text('CHAT'),
               )),

@@ -10,6 +10,7 @@ import '../core/config.dart';
 import '../core/format.dart';
 import '../models/models.dart';
 import '../services/location_service.dart';
+import '../services/chat.dart';
 import '../services/kotak_masuk.dart';
 import '../services/notifikasi.dart';
 import '../services/notification_service.dart';

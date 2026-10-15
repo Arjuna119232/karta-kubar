@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../services/pendapatan.dart';
-import '../state/app_state.dart';
-import 'widgets.dart';
 
 /// Detail satu baris transaksi (order selesai atau penarikan saldo).
 class DetailTransaksiScreen extends StatelessWidget {
