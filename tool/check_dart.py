@@ -558,6 +558,45 @@ for f in files:
             f"{', '.join(sorted(CTORS[nama])) or '(nama constructor saja)'} -> compile error")
 
 
+# ------------------------------------------- 13. FIELD KELAS UNTUK PARAM this.X
+# Bug NYATA yang lolos semua cek lama dan hanya ketahuan saat CI compile:
+#
+#   const _Chip({required this.selected, ...});
+#   final String label;          <-- field `selected` TIDAK pernah ditulis
+#   ... color: selected ? ...    <-- pemakaiannya ada
+#
+# Gejalanya 4 baris error "The getter 'selected' isn't defined for type
+# '_Chip'". Akar masalahnya satu baris deklarasi yang lupa. Cek ini menutup
+# kelas bug itu: setiap `this.X` di constructor WAJIB punya field/getter X.
+# Indentasi 2 spasi = anggota kelas. Method di dalam kelas selalu indentasi
+# lebih dalam, jadi variabel lokal di dalam method tidak ikut terhitung.
+FIELD_DECL_RE = re.compile(
+    r"^\s{0,2}(?:late\s+)?(?:final|const|var)\s+[^;={}]*?\b(\w+)\s*(?:;|=)",
+    re.MULTILINE,
+)
+GETTER_RE = re.compile(r"\bget\s+(\w+)")
+for f in files:
+    for m in re.finditer(r"\bclass\s+(\w+)\b", raw[f]):
+        nama = m.group(1)
+        blk = _body_kelas(raw[f], nama)
+        if not blk:
+            continue
+        # Hanya parameter constructor. `: this.gagal(e)` di constructor
+        # pengalihan bukan field, jadi harus DILEWATI (diakhiri `(`).
+        dipakai = set(re.findall(r"\bthis\.(\w+)\s*[,)]", blk))
+        if not dipakai:
+            continue
+        punya = set(FIELD_DECL_RE.findall(blk)) | set(GETTER_RE.findall(blk))
+        # setter / field tanpa tipe (`int x;` ditulis sebagai `final int x;`
+        # sudah tertangkap; `late bool x;` juga) + field dari superclass tidak
+        # terlihat, jadi cukup laporkan yang jelas-jelas hilang.
+        for nama_field in sorted(dipakai - punya):
+            baris = raw[f][: raw[f].index(blk) + blk[: blk.index(nama_field)].count("\n")].count("\n") + 1
+            bad("FIELD-HILANG", f,
+                f"constructor {nama} memakai `this.{nama_field}` tapi field/getter "
+                f"`{nama_field}` tidak dideklarasikan -> compile error")
+
+
 # ---------------------------------------------------------------- report
 print("=" * 62)
 print("  KUNBAR Connect - Dart static check")
@@ -575,7 +614,8 @@ if problems:
     order = {"DEAD-FILE": 0, "MISSING-IMPORT": 1, "UNDEF-MEMBER": 2,
              "CTOR-UNKNOWN": 3, "ROUTE-UNKNOWN": 4,
              "IMPORT-RESOLVE": 5, "UNUSED-IMPORT": 6, "UNUSED-PRIVATE": 7,
-             "UNUSED-PROVIDER": 8, "BRACE": 9, "NON-LATIN": 10, "ASSET": 11}
+             "UNUSED-PROVIDER": 8, "BRACE": 9, "NON-LATIN": 10, "ASSET": 11,
+             "FIELD-HILANG": 2}
     for kind, path, msg in sorted(problems, key=lambda p: (order.get(p[0], 9), p[1])):
         print(f"  [{kind}] {path}\n      {msg}")
     sys.exit(1)

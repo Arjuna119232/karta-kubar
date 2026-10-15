@@ -30,7 +30,7 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 | 7 | README + PROGRESS.md | ✅ | `0580097` |
 | 8 | Splash native Android 12+ + iOS `UILaunchScreen` (logo + warna solid, tanpa frame putih) | ✅ | `c100e61` |
 | 9 | Nama lengkap "KUNBAR CONNECT" + kredit "from Katar KunBar" seragam di Android & iOS | ✅ | `09cb8df`, `a41e283`, `3c12216` |
-| 10 | FISH warga (kirim + pantau status) + Panel Pengurus (antrean + aksi status) | ✅ | (commit ini) |
+| 10 | FISH warga (kirim + pantau status) + Pengurus (antrean + aksi status) | ✅ | (commit ini) |
 
 ### Fitur yang sudah ada dan jalan
 
@@ -142,6 +142,9 @@ grep -rn "Lokal\." lib/features/*/presentation/   # harus kosong
    Ambil dari repository lewat `ringkasanBerandaProvider`.
 10. **Pakai `ScaffoldMessenger` yang diambil SEBELUM `Navigator.pop()`.**
     Setelah sheet ditutup, `context` sudah tidak terpasang.
+11. **`required this.x` tanpa `final bool x;` = compile error.** Nimanya ketahuan
+    hanya saat CI compile (v0.10.0 build pertama gagal 4 baris error).
+    `tool/check_dart.py` punya cek `FIELD-HILANG` untuk itu.
 
 ---
 

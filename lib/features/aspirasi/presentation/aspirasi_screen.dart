@@ -241,6 +241,7 @@ class _Chip extends StatelessWidget {
   });
 
   final String label;
+  final bool selected;
   final Color warna;
   final VoidCallback onTap;
 
