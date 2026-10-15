@@ -402,6 +402,81 @@ create policy rooms_update on public.chat_rooms for update to authenticated
   using (mitra_id = auth.uid()) with check (mitra_id = auth.uid());
 
 -- ---------------------------------------------------------------------
+-- 9e. Profil mitra: lencana, pengaturan, ulasan
+--     Catatan: "mitra_jasa" dan tabel "users" tidak pernah ada di skema KUNBAR.
+--     Mitra = auth.users dengan profiles.role = 'mitra'.
+-- ---------------------------------------------------------------------
+create table if not exists public.lencana_mitra (
+  id uuid primary key default gen_random_uuid(),
+  mitra_id uuid not null references auth.users (id) on delete cascade,
+  jenis text not null,
+  judul text not null,
+  icon text,
+  count int not null default 0,
+  unlocked_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (mitra_id, jenis)
+);
+
+create table if not exists public.pengaturan_mitra (
+  id uuid primary key default gen_random_uuid(),
+  mitra_id uuid not null unique references auth.users (id) on delete cascade,
+  radius_max int default 5,
+  jam_operasional_start int default 6,
+  jam_operasional_end int default 22,
+  jenis_jastip boolean default true,
+  jenis_ojek boolean default true,
+  jenis_kurir boolean default false,
+  getar_sentuh boolean default true,
+  getar_order boolean default true,
+  suara_notifikasi boolean default true,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.review_mitra (
+  id uuid primary key default gen_random_uuid(),
+  mitra_id uuid not null references auth.users (id) on delete cascade,
+  warga_id uuid references auth.users (id) on delete set null,
+  order_id uuid references public.orders (id) on delete set null,
+  rating int not null check (rating between 1 and 5),
+  komentar text default '',
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_review_mitra
+  on public.review_mitra (mitra_id, created_at desc);
+
+alter table public.lencana_mitra enable row level security;
+alter table public.pengaturan_mitra enable row level security;
+alter table public.review_mitra enable row level security;
+
+drop policy if exists lencana_read on public.lencana_mitra;
+create policy lencana_read on public.lencana_mitra for select to authenticated
+  using (mitra_id = auth.uid());
+
+drop policy if exists pengaturan_read on public.pengaturan_mitra;
+create policy pengaturan_read on public.pengaturan_mitra for select to authenticated
+  using (mitra_id = auth.uid());
+
+drop policy if exists pengaturan_write on public.pengaturan_mitra;
+create policy pengaturan_write on public.pengaturan_mitra for insert to authenticated
+  with check (mitra_id = auth.uid());
+
+drop policy if exists pengaturan_update on public.pengaturan_mitra;
+create policy pengaturan_update on public.pengaturan_mitra for update to authenticated
+  using (mitra_id = auth.uid()) with check (mitra_id = auth.uid());
+
+drop policy if exists review_read on public.review_mitra;
+create policy review_read on public.review_mitra for select to authenticated using (true);
+
+drop policy if exists review_insert on public.review_mitra;
+create policy review_insert on public.review_mitra for insert to authenticated
+  with check (warga_id = auth.uid());
+
+drop policy if exists review_update on public.review_mitra;
+create policy review_update on public.review_mitra for update to authenticated
+  using (mitra_id = auth.uid()) with check (mitra_id = auth.uid());
+
+-- ---------------------------------------------------------------------
 -- 10. Row Level Security
 -- ---------------------------------------------------------------------
 alter table public.orders enable row level security;

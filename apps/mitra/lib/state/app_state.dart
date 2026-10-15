@@ -140,6 +140,142 @@ class AppState extends ChangeNotifier {
 
   /// Jumlah chat yang perlu dibaca (untuk badge di bottom nav).
   int unreadTotal() => jumlahBelumDibaca;
+
+  // ---------- PROFIL ----------
+  String idMitra = 'KUNBAR-00000';
+  String email = '';
+  String alamat = '';
+  bool terverifikasi = false;
+
+  bool getarSentuh = true;
+  bool getarOrder = true;
+  bool suaraNotifikasi = true;
+  bool modeLansia = false;
+  bool jenisJastip = true;
+  bool jenisOjek = true;
+  bool jenisKurir = false;
+
+  /// Skala teks global (mode Extensive = angka lebih besar).
+  double textSkala = 1.0;
+
+  int get totalOrder => history.where((o) => o.isDone).length;
+
+  /// Poin gamifikasi: 10 per order + 5 per poin rating.
+  int get poin => totalOrder * 10 + (avgRating * 5).round();
+
+  String get level {
+    if (totalOrder >= 100) return 'Platinum';
+    if (totalOrder >= 50) return 'Gold';
+    if (totalOrder >= 20) return 'Silver';
+    return 'Bronze';
+  }
+
+  int get ambangLevelBerikutnya {
+    switch (level) {
+      case 'Bronze':
+        return 20;
+      case 'Silver':
+        return 50;
+      case 'Gold':
+        return 100;
+      default:
+        return totalOrder;
+    }
+  }
+
+  int get totalPesan =>
+      repo.snapshotPesanSemua().fold<int>(0, (a, l) => a + l.length);
+
+  /// Jumlah hari target harian tercapai (dihitung dari order selesai).
+  int get hariTercapai {
+    final perHari = <String, int>{};
+    for (final o in history.where((o) => o.isDone)) {
+      final d = o.doneAt.toLocal();
+      perHari.update(
+        '${d.year}-${d.month}-${d.day}',
+        (v) => v + o.fee,
+        ifAbsent: () => o.fee,
+      );
+    }
+    return perHari.values.where((v) => v >= AppState.targetHarian).length;
+  }
+
+  /// Jumlah hari mitra mengerjakan order (proxy "rajin online").
+  int get hariOnline {
+    final hari = <String>{};
+    for (final o in history.where((o) => o.isDone)) {
+      final d = o.doneAt.toLocal();
+      hari.add('${d.year}-${d.month}-${d.day}');
+    }
+    return hari.length;
+  }
+
+  List<Lencana> get lencana => [
+        Lencana(kode: 'order_10', judul: 'Mulai Jalan',
+            ikon: Icons.pedal_bike_rounded, terbuka: totalOrder >= 10,
+            jumlah: totalOrder),
+        Lencana(kode: 'order_100', judul: 'Seratus Order',
+            ikon: Icons.emoji_events_rounded, terbuka: totalOrder >= 100,
+            jumlah: totalOrder),
+        Lencana(kode: 'rating_49', judul: 'Rating 4.9+',
+            ikon: Icons.star_rounded, terbuka: avgRating >= 4.9,
+            jumlah: ratings.length),
+        Lencana(kode: 'rajin', judul: 'Rajib Online',
+            ikon: Icons.bolt_rounded, terbuka: hariOnline >= 3,
+            jumlah: hariOnline),
+        Lencana(kode: 'ramah', judul: 'Ramah Warga',
+            ikon: Icons.chat_bubble_rounded, terbuka: totalPesan >= 5,
+            jumlah: totalPesan),
+        Lencana(kode: 'target', judul: 'Target Tercapai',
+            ikon: Icons.track_changes_rounded, terbuka: hariTercapai >= 1,
+            jumlah: hariTercapai),
+      ];
+
+  void simpanProfil({String? namaBaru, String? teleponBaru, String? alamatBaru}) {
+    if (namaBaru != null && namaBaru.trim().isNotEmpty) {
+      name = namaBaru.trim();
+      _p?.setString('mitra_nama', name);
+    }
+    if (teleponBaru != null) {
+      telepon = teleponBaru.trim();
+      _p?.setString('mitra_telepon', telepon);
+    }
+    if (alamatBaru != null) {
+      alamat = alamatBaru.trim();
+      _p?.setString('mitra_alamat', alamat);
+    }
+    notifyListeners();
+  }
+
+  void setToggle(String kunci, bool nilai) {
+    switch (kunci) {
+      case 'getarSentuh':
+        getarSentuh = nilai;
+      case 'getarOrder':
+        getarOrder = nilai;
+      case 'suara':
+        suaraNotifikasi = nilai;
+      case 'lansia':
+        modeLansia = nilai;
+        textSkala = nilai ? 1.2 : 1.0;
+      case 'jastip':
+        jenisJastip = nilai;
+      case 'ojek':
+        jenisOjek = nilai;
+      case 'kurir':
+        jenisKurir = nilai;
+    }
+    _p?.setBool('sw_$kunci', nilai);
+    notifyListeners();
+  }
+
+  /// ID mitra sederhana dan stabil (belum dari server).
+  String _buatIdMitra() {
+    final dasar = '${name.hashCode.abs()}';
+    final id = 'KUNBAR-${dasar.substring(0, dasar.length > 5 ? 5 : dasar.length)}';
+    _p?.setString('mitra_id', id);
+    return id;
+  }
   String? error;
   List<Order> incoming = [], history = [];
   List<Rating> ratings = [];
@@ -171,6 +307,18 @@ class AppState extends ChangeNotifier {
     withdrawals = _bacaWithdraw();
     arsip = (_p!.getStringList('chat_arsip') ?? []).toSet();
     _blokir = (_p!.getStringList('chat_blokir') ?? []).toSet();
+    idMitra = _p!.getString('mitra_id') ?? _buatIdMitra();
+    email = _p!.getString('mitra_email') ?? '';
+    alamat = _p!.getString('mitra_alamat') ?? '';
+    terverifikasi = _p!.getBool('mitra_verified') ?? false;
+    getarSentuh = _p!.getBool('sw_getarSentuh') ?? true;
+    getarOrder = _p!.getBool('sw_getarOrder') ?? true;
+    suaraNotifikasi = _p!.getBool('sw_suara') ?? true;
+    modeLansia = _p!.getBool('sw_lansia') ?? false;
+    textSkala = modeLansia ? 1.2 : 1.0;
+    jenisJastip = _p!.getBool('sw_jastip') ?? true;
+    jenisOjek = _p!.getBool('sw_ojek') ?? true;
+    jenisKurir = _p!.getBool('sw_kurir') ?? false;
     await NotifikasiService.instance
         .init(SharedPrefHolder.dariPref(_p!));
     name = _p!.getString('mitra_nama') ?? name;

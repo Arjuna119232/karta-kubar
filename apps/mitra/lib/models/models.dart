@@ -194,3 +194,30 @@ class Withdraw {
         createdAt: DateTime.tryParse('${m['created_at']}') ?? DateTime.now(),
       );
 }
+
+/// Lencana gamifikasi mitra. Terbuka dihitung dari data nyata, bukan karangan.
+class Lencana {
+  const Lencana({
+    required this.kode,
+    required this.judul,
+    required this.ikon,
+    required this.terbuka,
+    required this.jumlah,
+  });
+
+  final String kode;
+  final String judul;
+  final int ikon;
+  final bool terbuka;
+  final int jumlah;
+
+  String get syaratTerbuka => switch (kode) {
+        'order_10' => '10 order selesai',
+        'order_100' => '100 order selesai',
+        'rating_49' => 'rating 4.9 atau lebih',
+        'rajin' => 'online 3 hari',
+        'ramah' => 'balas warga 5 kali',
+        'target' => 'capai target harian 1x',
+        _ => '-',
+      };
+}

@@ -6,7 +6,6 @@ import 'chat_list_screen.dart';
 import 'pendapatan_screen.dart';
 import '../state/app_state.dart';
 import 'home_screen.dart';
-import 'orders_screen.dart';
 
 /// Kerangka 5 tab. Tab Beranda berisi peta, tab lain halaman biasa.
 class Shell extends StatefulWidget {
@@ -30,7 +29,6 @@ class _ShellState extends State<Shell> {
           HomeScreen(),
           PendapatanScreen(),
           ChatListScreen(),
-          OrdersScreen(),
           AccountScreen(),
         ],
       ),
@@ -60,11 +58,6 @@ class _ShellState extends State<Shell> {
               child: const Icon(Icons.chat_bubble_rounded),
             ),
             label: 'Chat',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long_rounded),
-            label: 'Order',
           ),
           const NavigationDestination(
             icon: Icon(Icons.person_outline_rounded),

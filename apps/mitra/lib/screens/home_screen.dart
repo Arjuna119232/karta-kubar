@@ -13,7 +13,6 @@ import '../widgets/kit.dart';
 import 'account_screen.dart';
 import 'orders_screen.dart';
 import 'pendapatan_screen.dart';
-import 'jadwal_screen.dart';
 import 'order_detail_screen.dart';
 import 'kotak_masuk_screen.dart';
 import 'order_masuk_screen.dart';
@@ -212,21 +211,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: KotakAksi(
-                        ikon: Icons.event_note_rounded,
+                        ikon: Icons.inbox_rounded,
                         warna: const Color(0xFF6A1B9A),
-                        judul: 'Jadwal',
-                        subjudul: 'agenda',
-                        onTekan: () => _ke(context, const JadwalScreen()),
+                        judul: 'Kotak',
+                        subjudul: 'info admin',
+                        onTekan: () => _ke(context, const KotakMasukScreen()),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: KotakAksi(
-                        ikon: Icons.settings_rounded,
+                        ikon: Icons.person_rounded,
                         warna: const Color(0xFF00695C),
-                        judul: 'Atur',
+                        judul: 'Profil',
                         subjudul: s.vehicleType,
-                        onTekan: () => _ke(context, const AccountScreen()),
+                        onTekan: () => _ke(context, const AccountScreen(dapatTombolKembali: true)),
                       ),
                     ),
                   ],

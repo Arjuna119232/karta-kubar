@@ -213,6 +213,10 @@ class OrderRepository {
   /// Snapshot pesan saat ini (dipakai list & state, tanpa await stream).
   List<Pesan> snapshotPesan(String orderId) => List.of(_demoChat[orderId] ?? []);
 
+  /// Semua pesan di semua order (dipakai lencana "Ramah Warga").
+  List<List<Pesan>> snapshotPesanSemua() =>
+      _demoChat.entries.map((e) => List<Pesan>.of(e.value)).toList();
+
   void hapusPesanDemo(String orderId, String pesanId) {
     final l = _demoChat[orderId];
     if (l == null) return;
