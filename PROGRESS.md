@@ -32,6 +32,47 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 | 9 | Nama lengkap "KUNBAR CONNECT" + kredit "from Katar KunBar" seragam di Android & iOS | ✅ | `09cb8df`, `a41e283`, `3c12216` |
 | 10 | FISH warga (kirim + pantau status) + Pengurus (antrean + aksi status) | ✅ | (commit ini) |
 
+### Status 15 fitur APK (dicek dari kode, bukan dari daftar)
+
+| # | Fitur | Status | Kenyataan |
+|---|---|---|---|
+| 1 | Berita & pengumuman | ✅ | Pengumuman di beranda, berita di Galeri |
+| 2 | Agenda kegiatan | ✅ | Layar Kegiatan + filter kategori |
+| 3 | Galeri | ✅ | Berita + sampul |
+| 4 | UMKM warga | ❌ | Skema tabel sudah ada, layar belum |
+| 5 | Peta wilayah | ❌ | Butuh tile OpenStreetMap (gratis, tanpa API key) |
+| 6 | Aspirasi & pengaduan | ✅ | Papan FISH + filter status + form kirim |
+| 7 | Lapor darurat | ❌ | Skema tabel sudah ada, layar belum |
+| 8 | Forum warga | ❌ | Skema `forum_topik` + `forum_balasan` sudah ada |
+| 9 | Booking fasilitas | ❌ | Skema `fasilitas` + `booking` sudah ada |
+| 10 | Donasi | ❌ | Skema ada. **Butuh Midtrans** (akun merchant) untuk uang sungguhan |
+| 11 | Absensi kegiatan | ✅ | QR + riwayat, khusus anggota |
+| 12 | Kartu anggota digital | ⚠️ | Kartu sudah ada, **QR-nya masih gambar tiruan** (belum bisa discan) |
+| 13 | Chat | ❌ | Skema `pesan` ada. Butuh login Supabase Auth + Realtime |
+| 14 | Profil | ✅ | Kartu anggota, hak akses, menu |
+| 15 | Pengaturan | ⚠️ | Tema, mode Lansia, status backend jalan. Edit profil / Notifikasi / Bantuan masih "segera hadir" |
+
+**Angka: 8 jadi, 2 setengah, 5 belum.** Tidak ada fitur yang ditandai selesai
+padahal baru kerangka.
+
+### 16 fitur Panel Pengurus (web)
+
+Belum ada. Semuanya masuk ke satu web console berbasis Node tanpa dependency,
+sumber data sama dengan APK (Supabase).
+
+Prioritasnya: verifikasi warga, moderasi FISH, broadcast pengumuman, rekap
+kas, laporan, kelola role, audit log, export CSV/PDF.
+
+### Yang TIDAK bisa dibuat tanpa akun/kredensial lain
+
+| Fitur | Yang dibutuhkan |
+|---|---|
+| Donasi sungguhan | Akun merchant Midtrans + kunci API |
+| Push notification | Project Firebase (FCM) |
+| Broadcast WhatsApp | Akun WhatsApp Business + template disetujui |
+| Verifikasi NIK otomatis | **Tidak ada API publik.** Cuma verifikasi manual + OCR KTP |
+| Peta | OpenStreetMap (gratis, tanpa kunci) — sudah jadi pilihan |
+
 ### Fitur yang sudah ada dan jalan
 
 - Splash **native** (Android `Theme.SplashScreen` + iOS `UILaunchScreen`) →

@@ -286,3 +286,248 @@ create policy aspirations_ubah on public.aspirasi
 -- Dari app, role hanya bisa naik lewat panel web yang memakai service_role,
 -- atau lewat perintah SQL di atas.
 -- ============================================================================
+-- ============================================================================
+-- 8. TABEL UNTUK 8 FITUR APK YANG BELUM ADA
+-- ----------------------------------------------------------------------------
+-- Ditambahkan sekaligus supaya sekali Run SQL sudah mencakup SELURUH fitur
+-- warga di aplikasi. Semua aman dijalankan ulang.
+--
+-- Catatan jujur soal apa yang TIDAK bisa lewat database:
+--   - Peta wilayah butuh tile peta (OpenStreetMap, gratis tanpa API key),
+--     bukan kolom database.
+--   - Donasi butuh payment gateway (Midtrans) = akun merchant + kunci API.
+--     Tabel ini hanya menyimpan CATATAN donasi dan statusnya; uangnya tetap
+--     bergerak lewat rekening/QRIS di luar aplikasi.
+--   - Push notification butuh FCM (project Firebase).
+--   - WhatsApp butuh akun WhatsApp Business.
+-- ============================================================================
+
+-- ---------------------------------------------------------------- 8.1 UMKM --
+create table if not exists public.umkm (
+  id            uuid primary key default gen_random_uuid(),
+  nama          text not null,
+  kategori      text not null default 'makanan'
+                  check (kategori in ('makanan', 'minuman', 'fesyen', 'jasa',
+                                      'kerajinan', 'lain')),
+  deskripsi     text not null default '',
+  alamat        text not null default '',
+  no_telepon    text,
+  jam_buka      text,
+  foto_url      text,
+  pemilik_id    uuid references public.profiles (id) on delete set null,
+  diverifikasi  boolean not null default false,
+  catatan_pengurus text,
+  dibuat        timestamptz not null default now()
+);
+create index if not exists idx_umkm_kategori on public.umkm (kategori);
+
+-- ---------------------------------------------------------------- 8.2 Darurat
+create table if not exists public.darurat (
+  id          uuid primary key default gen_random_uuid(),
+  jenis       text not null check (jenis in ('kebakaran', 'kecelakaan',
+                                              'kekerasan', 'banjir',
+                                              'listrik_mati', 'lain')),
+  lokasi      text not null default '',
+  keterangan  text not null default '',
+  nomor_darurat text,
+  pengirim_id uuid references public.profiles (id) on delete set null,
+  pengirim    text not null default '',
+  status      text not null default 'terkirim'
+                check (status in ('terkirim', 'ditangani', 'selesai')),
+  dibuat      timestamptz not null default now(),
+  ditangani   timestamptz
+);
+create index if not exists idx_darurat_dibuat on public.darurat (dibuat desc);
+
+-- ---------------------------------------------------------------- 8.3 Forum
+create table if not exists public.forum_topik (
+  id          uuid primary key default gen_random_uuid(),
+  judul       text not null,
+  isi         text not null default '',
+  kategori    text not null default 'umum',
+  penulis_id  uuid references public.profiles (id) on delete set null,
+  penulis     text not null default '',
+  terkunci    boolean not null default false,
+  dihapus     boolean not null default false,
+  dibuat      timestamptz not null default now()
+);
+create index if not exists idx_forum_dibuat on public.forum_topik (dibuat desc);
+
+create table if not exists public.forum_balasan (
+  id          uuid primary key default gen_random_uuid(),
+  topik_id    uuid not null references public.forum_topik (id) on delete cascade,
+  penulis_id  uuid references public.profiles (id) on delete set null,
+  penulis     text not null default '',
+  isi         text not null,
+  dihapus     boolean not null default false,
+  dibuat      timestamptz not null default now()
+);
+create index if not exists idx_balasan_topik on public.forum_balasan (topik_id);
+
+-- ---------------------------------------------------------------- 8.4 Booking
+create table if not exists public.fasilitas (
+  id          uuid primary key default gen_random_uuid(),
+  nama        text not null,
+  deskripsi   text not null default '',
+  lokasi      text not null default '',
+  maks_jam    integer not null default 3,
+  aktif       boolean not null default true
+);
+
+create table if not exists public.booking (
+  id          uuid primary key default gen_random_uuid(),
+  fasilitas_id uuid not null references public.fasilitas (id) on delete cascade,
+  pemesan_id  uuid references public.profiles (id) on delete set null,
+  pemesan     text not null default '',
+  tanggal     date not null,
+  jam_mulai   time not null,
+  jam_selesai time not null,
+  keperluan   text not null default '',
+  status      text not null default 'menunggu'
+                check (status in ('menunggu', 'disetujui', 'ditolak')),
+  dibuat      timestamptz not null default now()
+);
+create index if not exists idx_booking_tanggal on public.booking (tanggal);
+
+-- ---------------------------------------------------------------- 8.5 Donasi
+create table if not exists public.donasi (
+  id          uuid primary key default gen_random_uuid(),
+  nama_donateur text not null default '',
+  nominal     integer not null default 0,
+  metode      text not null default 'manual'
+                check (metode in ('manual', 'qris', 'transfer')),
+  catatan     text not null default '',
+  bukti_url   text,
+  diverifikasi boolean not null default false,
+  dibuat      timestamptz not null default now()
+);
+create index if not exists idx_donasi_dibuat on public.donasi (dibuat desc);
+
+-- ---------------------------------------------------------------- 8.6 Chat
+create table if not exists public.pesan (
+  id          uuid primary key default gen_random_uuid(),
+  pengirim_id uuid references public.profiles (id) on delete cascade,
+  penerima_id uuid not null references public.profiles (id) on delete cascade,
+  isi         text not null,
+  dibaca      boolean not null default false,
+  dibuat      timestamptz not null default now()
+);
+create index if not exists idx_pesan_obrol on public.pesan (pengirim_id, penerima_id, dibuat);
+create index if not exists idx_pesan_penerima on public.pesan (penerima_id, dibaca);
+
+-- ============================================================================
+-- 9. RLS UNTUK TABEL BARU
+-- Catatan: moderasi dilakukan is done in the web panel using service_role, so
+-- policies here stay deliberately simple.
+-- ============================================================================
+alter table public.umkm         enable row level security;
+alter table public.darurat      enable row level security;
+alter table public.forum_topik  enable row level security;
+alter table public.forum_balasan enable row level security;
+alter table public.fasilitas    enable row level security;
+alter table public.booking      enable row level security;
+alter table public.donasi       enable row level security;
+alter table public.pesan        enable row level security;
+
+-- UMKM: semua orang bisa baca; hanya pemilik baris itu dan pengelola yang bisa mengubah.
+drop policy if exists umkm_baca on public.umkm;
+create policy umkm_baca on public.umkm for select using (true);
+
+drop policy if exists umkm_tulis on public.umkm;
+create policy umkm_tulis on public.umkm for all
+  using (auth.uid() = pemilik_id or public.bisa_kelola(auth.uid()))
+  with check (auth.uid() = pemilik_id or public.bisa_kelola(auth.uid()));
+
+-- Darurat: semua pengguna login boleh melapor; ubah hanya pengelola.
+drop policy if exists darurat_baca on public.darurat;
+create policy darurat_baca on public.darurat for select using (auth.uid() is not null);
+
+drop policy if exists darurat_kirim on public.darurat;
+create policy darurat_kirim on public.darurat for insert to authenticated
+  with check (auth.uid() is not null and status = 'terkirim'
+              and (pengirim_id is null or pengirim_id = auth.uid()));
+
+drop policy if exists darurat_kelola on public.darurat;
+create policy darurat_kelola on public.darurat for update
+  using (public.bisa_kelola(auth.uid())) with check (public.bisa_kelola(auth.uid()));
+
+-- Forum: baca semua login, tulis milik sendiri, moderasi oleh pengelola.
+drop policy if exists topik_baca on public.forum_topik;
+create policy topik_baca on public.forum_topik for select using (auth.uid() is not null);
+
+drop policy if exists topik_tulis on public.forum_topik;
+create policy topik_tulis on public.forum_topik for all
+  using (auth.uid() = penulis_id or public.bisa_kelola(auth.uid()))
+  with check (auth.uid() = penulis_id or public.bisa_kelola(auth.uid()));
+
+drop policy if exists balasan_baca on public.forum_balasan;
+create policy balasan_baca on public.forum_balasan for select using (auth.uid() is not null);
+
+drop policy if exists balasan_tulis on public.forum_balasan;
+create policy balasan_tulis on public.forum_balasan for insert to authenticated
+  with check (auth.uid() = penulis_id or public.bisa_kelola(auth.uid()));
+
+-- Booking: semua login bisa melihat; membuat hanya untuk dirinya sendiri.
+drop policy if exists fasilitas_baca on public.fasilitas;
+create policy fasilitas_baca on public.fasilitas for select using (true);
+
+drop policy if exists booking_baca on public.booking;
+create policy booking_baca on public.booking for select
+  using (auth.uid() = pemesan_id or public.bisa_kelola(auth.uid()));
+
+drop policy if exists booking_kirim on public.booking;
+create policy booking_kirim on public.booking for insert to authenticated
+  with check (auth.uid() = pemesan_id and status = 'menunggu');
+
+drop policy if exists booking_kelola on public.booking;
+create policy booking_kelola on public.booking for update
+  using (public.bisa_kelola(auth.uid())) with check (public.bisa_kelola(auth.uid()));
+
+-- Donasi: hanya pengelola yang boleh menulis. Donatur menambah lewat server.
+drop policy if exists donasi_baca on public.donasi;
+create policy donasi_baca on public.donasi for select using (true);
+
+drop policy if exists donasi_kelola on public.donasi;
+create policy donasi_kelola on public.donasi for all
+  using (public.bisa_kelola(auth.uid())) with check (public.bisa_kelola(auth.uid()));
+
+-- Chat: hanya boleh membaca percakapan sendiri.
+drop policy if exists pesan_baca on public.pesan;
+create policy pesan_baca on public.pesan for select
+  using (auth.uid() = pengirim_id or auth.uid() = penerima_id);
+
+drop policy if exists pesan_kirim on public.pesan;
+create policy pesan_kirim on public.pesan for insert to authenticated
+  with check (auth.uid() = pengirim_id);
+
+-- Notifikasi lewat Supabase Realtime memakai kredensial proyek
+-- (bukan anon key), jadi tabel ini tidak perlu policy.
+
+-- ============================================================================
+-- 10. REAL-TIME (chat & papan FISH)
+-- Supabase Realtime mengaktifkan tabel ini lewat Publication.
+-- ============================================================================
+do $$
+begin
+  if not exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    create publication supabase_realtime;
+  end if;
+exception when others then
+  -- Publication sudah ada / tidak boleh dibuat: abaikan, chat tetap jalan
+  -- hanya perlu refresh manual.
+  null;
+end $$;
+
+-- ============================================================================
+-- 11. KONTEN AWAL (biar aplikasi tidak kosong saat pertama dibuka)
+-- ============================================================================
+-- Pakai `where not exists` supaya aman dijalankan ulang: kalau judulnya sudah
+-- ada, baris ini tidak menambah duplikat.
+insert into public.kegiatan (judul, kategori, lokasi, mendatang)
+select v.judul, v.kategori, v.lokasi, v.mendatang
+from (values
+  ('Kerja Bakti Lingkungan Bulanan', 'Sosial',   'Balai RW 05',    true),
+  ('Senam Pagi Bersama',              'Olahraga', 'Lapangan RW 05', true),
+  ('Rapat Evaluasi hidrat Bulanan', 'Sosial',   'Balai RW 05',    false)
+) as v(judul, kategori, lokasi, mendatang)
+where not exists (select 1 from public.kegiatan k where k.judul = v.judul);
