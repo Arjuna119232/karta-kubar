@@ -23,6 +23,7 @@ SANDARAN UKURAN (dari developer.android.com "Splash screen dimensions")
 from __future__ import annotations
 
 import math
+import re
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -38,6 +39,11 @@ PUTIH = (255, 255, 255)
 # --- teks yang diminta ---
 WORDMARK = "KUNBAR"
 KREDIT = "from Katar KunBar"
+# Varian yang SELALU salah (format lama / kapital). Dipakai cek_kredit_seragam
+# untuk menangkap kredit yang ditulis ulang secara harfiah di salah satu
+# platform - bug yang build tetap hijau tapi tampil beda di Android vs iOS.
+_VARIAN_LARANG = ("From KATAR KUNBAR", "FROM KATAR KUNBAR", "From Katar KunBar",
+                  "KATAR KUNBAR", "from KATAR KUNBAR")
 
 FONT = "/system/fonts/RobotoFlex-Regular.ttf"
 
@@ -233,35 +239,41 @@ def buat_branding() -> dict[str, Image.Image]:
 
 # --------------------------------------------------------------- iOS
 def buat_ios(px: int) -> Image.Image:
-    """Lockup untuk UILaunchScreen: emblem + KUNBAR + CONNECT + From KATAR KUNBAR.
+    """Lockup untuk UILaunchScreen: emblem + KUNBAR + CONNECT + kredit.
 
     iOS tidak punya slot terpisah: UILaunchScreen hanya boleh UIColorName +
     UIImageName, dan gambar SELALU dipusatkan - tidak ada cara menaruh
     kredit di paling bawah layar. Jadi semuanya jadi satu gambar.
+
+    Kredit memakai KONSTANTA yang sama dengan slot branding Android
+    (`KREDIT`): satu baris, huruf besar-kecil, bobot Light, putih transparan.
+    Jangan menulis string kredit secara harfiah di sini - dua platform yang
+    menampilkan format kredit berbeda adalah bug yang tidak terlihat di build.
     """
     emblem = Image.open(SUMBER).convert("RGBA")
     sisi = px * 3                      # kanvas besar lalu di-crop ke tengah
     r_embl = round(px * 0.19)
     fs1 = round(px * 0.105)
     fs2 = round(px * 0.050)
-    fs3 = round(px * 0.044)
+    fs3 = round(px * 0.058)
     gap = round(px * 0.055)
 
     kanvas = Image.new("RGBA", (sisi, sisi), (0, 0, 0, 0))
     rows = [
-        (WORDMARK, fs1, fs1 * 0.12),
-        ("CONNECT", fs2, fs2 * 0.28),
-        ("From KATAR KUNBAR", fs3, fs3 * 0.06),
+        (WORDMARK, fs1, fs1 * 0.12, "Bold", 255),
+        ("CONNECT", fs2, fs2 * 0.28, "Bold", 255),
+        (KREDIT, fs3, fs3 * 0.02, "Light", 158),
     ]
-    hs = [_tinggi_teks(t, f, k) for t, f, k in rows]
+    hs = [_tinggi_teks(t, f, k) for t, f, k, _, _ in rows]
     tinggi = 2 * r_embl + sum(hs) + gap * (len(rows) + 1)
     y = (sisi - tinggi) / 2.0
     cy = y + r_embl
     tempel(kanvas, muat(emblem, r_embl), sisi / 2, cy)
     y += 2 * r_embl
-    for i, (teks, fs, tr) in enumerate(rows):
+    for i, (teks, fs, tr, bobot, alpha) in enumerate(rows):
         y += gap + hs[i] / 2
-        teks_tracking(kanvas, teks, sisi / 2, y, fs, PUTIH, tracking=tr)
+        teks_tracking(kanvas, teks, sisi / 2, y, fs, PUTIH,
+                      tracking=tr, bobot=bobot, alpha=alpha)
         y += hs[i] / 2
     return kanvas.crop((px, px, px * 2, px * 2))
 
@@ -300,6 +312,39 @@ def cek_branding(nama: str, dens: float) -> None:
           f"{im.size[0] / dens:.0f}x{im.size[1] / dens:.0f}dp  teks {isi:.0f}%")
 
 
+def cek_kredit_seragam() -> None:
+    """Kredit harus melewati KONSTANTA KREDIT di setiap platform.
+
+    Yang dicari adalah KESALAHAN KODE, bukan hasil gambar: string kredit lama
+    yang masih tertinggal di salah satu platform. Build tetap hijau, tapi
+    Android dan iOS menampilkan format berbeda.
+
+    Blok _VARIAN_LARANG dihapus dari sumber sebelum discan. Kalau tidak,
+    ceknya akan supplant dirinya sendiri. Memfilter per baris juga salah:
+    blok yang ditulis 2 baris akan membuat cek gagal terus-menerus.
+    """
+    src = Path(__file__).read_text(encoding="utf-8")
+    badan = re.sub(r"_VARIAN_LARANG\s*=.*?\)\s*\n", "", src, flags=re.S)
+    # Sanity check: penghapusan HARUS membuat sumber jadi lebih pendek.
+    # (Mencari nama variabel di teks sisa tidak bisa dipakai - nama itu
+    #  sendiri muncul di komentar dan pesan error fungsi ini.)
+    if len(badan) >= len(src):
+        raise SystemExit("FAIL: blok _VARIAN_LARANG tidak terhapus, cek jadi tidak berarti")
+    for v in _VARIAN_LARANG:
+        if v in badan:
+            raise SystemExit(
+                f'FAIL: kredit ditulis harfiah sebagai "{v}". '
+                f"Pakai konstanta KREDIT supaya Android & iOS sama."
+            )
+    dipakai = badan.count("KREDIT")
+    if dipakai < 3:      # definisi + Android branding + iOS lockup
+        raise SystemExit(
+            f"FAIL: konstanta KREDIT cuma dipakai {dipakai}x. "
+            "Android (slot branding) dan iOS (lockup) harus memakainya."
+        )
+    print(f"      OK  kredit seragam di semua platform  ({KREDIT!r})")
+
+
 def main() -> int:
     if not SUMBER.is_file():
         raise SystemExit(f"FAIL: emblem sumber tidak ada: {SUMBER}")
@@ -327,6 +372,7 @@ def main() -> int:
         im.save(KELUAR / nama, "PNG", optimize=True)
 
     print("    -- verifikasi --")
+    cek_kredit_seragam()
     cek_muat_android("splash_icon.png")
     for dens in (1.5, 2.0, 3.0, 4.0):
         cek_branding(f"splash_branding_{'hdpi' if dens==1.5 else 'xhdpi' if dens==2 else 'xxhdpi' if dens==3 else 'xxxhdpi'}.png", dens)

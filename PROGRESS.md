@@ -2,8 +2,8 @@
 
 Berkas ini supaya sesi baru bisa melanjutkan tanpa membaca ulang semua riwayat.
 
-**Terakhir diperbarui:** 14 Okt 2026
-**Versi aplikasi:** 0.7.0+13 (build 20 sudah DIRUSAK, jangan dipakai sebagai acuan)
+**Terakhir diperbarui:** 15 Okt 2026
+**Versi aplikasi:** 0.9.4+19 (build 20 = 0.7.0 sudah DIRUSAK, jangan dipakai sebagai acuan)
 
 ---
 
@@ -27,7 +27,9 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 | 5 | Struktur `{data,domain,presentation}` per fitur | ✅ | `0580097` |
 | 5a | Pembersihan karakter non-Latin + alat cek repo-wide | ✅ | `8ba3a2d` |
 | 6 | Build APK arm64 (~18 MB) + AAB + dokumen signing | ✅ | `9f0e8e3` |
-| 7 | README + PROGRESS.md | ✅ | (commit ini) |
+| 7 | README + PROGRESS.md | ✅ | `0580097` |
+| 8 | Splash native Android 12+ + iOS `UILaunchScreen` (logo + warna solid, tanpa frame putih) | ✅ | `c100e61` |
+| 9 | Nama lengkap "KUNBAR CONNECT" + kredit "from Katar KunBar" seragam di Android & iOS | ✅ | `09cb8df`, (commit ini) |
 
 ### Fitur yang sudah ada dan jalan
 
