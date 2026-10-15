@@ -6,6 +6,7 @@ import '../core/format.dart';
 import '../models/models.dart';
 import '../state/app_state.dart';
 import 'chat_screen.dart';
+import 'peta_screen.dart';
 import 'widgets.dart';
 
 class OrderDetailScreen extends StatelessWidget {
@@ -45,6 +46,12 @@ class OrderDetailScreen extends StatelessWidget {
             const Row(children: [Icon(Icons.my_location, size: 18), SizedBox(width: 8), Expanded(child: Text('Lokasi Anda dibagikan ke warga selama order aktif'))]),
             const SizedBox(height: 20),
             OutlinedButton.icon(onPressed: () => _navigate(context, o), icon: const Icon(Icons.navigation, size: 28), label: const Text('NAVIGASI')),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PetaScreen(order: o))),
+              icon: const Icon(Icons.map_outlined, size: 28),
+              label: const Text('LIHAT PETA'),
+            ),
             const SizedBox(height: 12),
             Row(children: [
               Expanded(child: OutlinedButton.icon(
