@@ -44,6 +44,8 @@ class HomeScreen extends ConsumerWidget {
           const SizedBox(height: 18),
           const FadeSlideIn(index: 2, child: _StatistikBeranda()),
           const SizedBox(height: 22),
+          const _KartuDarurat(),
+          const SizedBox(height: 22),
           const SectionHeader(title: 'Aksi Cepat'),
           const FadeSlideIn(index: 3, child: _QuickActions()),
           const SizedBox(height: 22),
@@ -111,6 +113,46 @@ class _StatistikBeranda extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Kartu "Lapor Darurat". Ditaruh di atas aksi cepat karena ini satu-satunya
+/// tombol yang tidak boleh tergali: warna merah, tinggi, dan.copywriting-nya
+/// langsung jelas tanpa perlu ditebak.
+class _KartuDarurat extends StatelessWidget {
+  const _KartuDarurat();
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      onTap: () => context.go('/darurat'),
+      color: AppColors.error,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+      child: Row(
+        children: <Widget>[
+          const AppIcon(Ik.megaphone, size: 30, color: Colors.white),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Lapor Darurat',
+                  style: context.text.titleMedium?.copyWith(color: Colors.white),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Kebakaran, kecelakaan, kekerasan, atau banjir di RW 05.',
+                  style: context.text.bodySmall
+                      ?.copyWith(color: const Color(0xFFFFD9D9)),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right, color: Colors.white),
+        ],
+      ),
     );
   }
 }
@@ -384,45 +426,61 @@ class _QuickActions extends ConsumerWidget {
           () => context.go('/absen')),
       _QuickItem(Ik.wallet, 'Iuran', AppColors.accent, () => _keTab(ref, 'Kas')),
       _QuickItem(Ik.chat, 'Aspirasi', AppColors.warning, () => context.go('/aspirasi')),
+      _QuickItem(Ik.handHeart, 'UMKM', AppColors.social, () => context.go('/umkm')),
       _QuickItem(Ik.gallery, 'Galeri', AppColors.success,
           () => _keTab(ref, role.bisa(UserRole.anggota) ? 'Kas' : 'Galeri')),
     ];
 
-    return Row(
-      children: <Widget>[
-        for (final _QuickItem it in items)
-          Expanded(
-            child: InkWell(
-              borderRadius: BorderRadius.circular(18),
-              onTap: () {
-                HapticFeedback.selectionClick();
-                it.onTap();
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Column(
-                  children: <Widget>[
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: it.tint.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: AppIcon(it.icon, color: it.tint, size: 26),
+    // BUKAN `Row` dengan 5 `Expanded`: di layar 360 dp tiap kolom tinggal
+    // ~66 dp, sehingga nama tombol seperti "Aspirasi" terpotong atau meluber.
+    // `Wrap` + lebar item yang dihitung dari lebar layar selalu aman, dan
+    // otomatis jadi 2 baris kalau tombolnya bertambah.
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints c) {
+        const double jarak = 8;
+        final double lebarItem = (c.maxWidth - jarak * 3) / 4;
+        return Wrap(
+          spacing: jarak,
+          runSpacing: jarak,
+          children: <Widget>[
+            for (final _QuickItem it in items)
+              SizedBox(
+                width: lebarItem,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(18),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    it.onTap();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Column(
+                      children: <Widget>[
+                        Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: it.tint.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(17),
+                          ),
+                          child: AppIcon(it.icon, color: it.tint, size: 24),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          it.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.text.bodySmall
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      it.label,
-                      style: context.text.bodySmall
-                          ?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-      ],
+          ],
+        );
+      },
     );
   }
 

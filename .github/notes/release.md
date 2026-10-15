@@ -1,25 +1,22 @@
-### KUNBAR Connect v0.10.0
+### KUNBAR Connect v0.11.0
 
-Warga bisa mengirim FISH, pengurus punya panel kendali.
+Dua fitur warga baru.
 
-**Papan Aspirasi & Laporan**
-- Tombol Aspirasi di beranda sekarang membuka papan FISH, bukan "segera hadir"
-- Form kirim: topik, judul, dan cerita detail, divalidasi sebelum disimpan
-- Laporan yang terkirim benar-benar tersimpan di perangkat dan tetap ada saat aplikasi ditutup
-- Filter status: Baru, Diproses, Selesai, Ditolak
+**UMKM warga**
+- Katalog usaha warga dengan filter kategori
+- Ajukan usaha baru lewat tombol di layar katalog
+- Tombol hubungi langsung ke WhatsApp penjual
+- Tandai centang hanya untuk usaha yang sudah diverifikasi pengurus
 
-**Panel Pengurus**
-- Menu Panel Pengurus di halaman Profil, terbuka untuk pengurus, RT, RW, dan admin
-- Antrean FISH yang perlu tindakan, diurutkan dari yang paling baru
-- Tandai Diproses, Selesai, atau Ditolak, dengan catatan untuk warga
-- Pintasan ke sesi absensi dan agenda
+**Lapor darurat**
+- Satu tombol merah besar di paling atas beranda
+- Nomor darurat resmi: 112, 119, 110, 115 - bisa langsung ditelepon
+- Pilih jenis kejadian, isi lokasi, dan keterangan
+- Riwayat laporan beserta status penanganannya
 
 **Yang diperbaiki**
-- Tombol Iuran dan Galeri di beranda sekarang menuju tab yang benar untuk semua level akses
-- Angka anggota dan kegiatan di beranda diambil dari data, bukan angka yang ditulis mati
-- Tiga baris FISH bawaan diberi label "data contoh" supaya tidak disangka laporan asli
-- Pemeriksa kode: method `peta` dan `indeksTab` sempat salah dibaca sehingga melaporkan compile error palsu
+- Aksi cepat beranda jadi 4 kolom yang membungkus, tidak meluber di layar sempit
 
-**Catatan**
-- Panel pengurus masih memakai data di perangkat. Supabase butuh proyek nyata dan aturan RLS.
-- Baris "data contoh" tidak ikut tersimpan, jadi begitu warga mengirim laporan asli, yang terlihat hanya laporan asli.
+**Belum ada**
+- Peta wilayah, forum warga, booking fasilitas, donasi, dan chat
+- Verifikasi NIK otomatis tidak mungkin tanpa API publik

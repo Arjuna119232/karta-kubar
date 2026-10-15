@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/absen/presentation/absen_screen.dart';
 import '../features/aspirasi/presentation/aspirasi_screen.dart';
+import '../features/darurat/presentation/darurat_screen.dart';
 import '../features/auth/presentation/auth_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/pengurus/presentation/pengurus_screen.dart';
 import '../features/shell/presentation/app_shell.dart';
+import '../features/umkm/presentation/umkm_screen.dart';
 import 'auth/session.dart';
 import 'auth/user_role.dart';
 import 'boot.dart';
@@ -168,6 +170,22 @@ GoRouter buatRouter(LokasiAwal awal) => GoRouter(
           child: AspirasiScreen(),
         ),
       ),
+    ),
+    GoRoute(
+      path: '/umkm',
+      pageBuilder: (_, GoRouterState s) => _halaman(
+        s,
+        const RoleGate(
+          minimal: UserRole.guest,
+          child: UmkmScreen(),
+        ),
+      ),
+    ),
+    // Lapor darurat. Tanpa RoleGate: tamu pun harus bisa menekan tombol
+    // merah saat keadaan nyata. Formnya tetap butuh session.
+    GoRoute(
+      path: '/darurat',
+      pageBuilder: (_, GoRouterState s) => _halaman(s, const DaruratScreen()),
     ),
     // Panel kendali pengurus: antrean FISH + sesi absensi.
     GoRoute(

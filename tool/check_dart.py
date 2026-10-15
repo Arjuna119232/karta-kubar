@@ -581,9 +581,13 @@ for f in files:
         blk = _body_kelas(raw[f], nama)
         if not blk:
             continue
-        # Hanya parameter constructor. `: this.gagal(e)` di constructor
-        # pengalihan bukan field, jadi harus DILEWATI (diakhiri `(`).
-        dipakai = set(re.findall(r"\bthis\.(\w+)\s*[,)]", blk))
+        # Hanya parameter constructor. Parameter punya 3 bentuk:
+        #   `this.x,`   (wajib, lalu koma)      -> `[,]`
+        #   `this.x)`   (wajib, akhir kurung)   -> `[)]`
+        #   `this.x = 0` (opsional, ada default)-> `[=]`
+        # Yang TIDAK boleh ikut: `: this.gagal(e)` di constructor
+        # pengalihan, karena diakhiri `(` dan itu bukan field.
+        dipakai = set(re.findall(r"\bthis\.(\w+)\s*[,)=]", blk))
         if not dipakai:
             continue
         punya = set(FIELD_DECL_RE.findall(blk)) | set(GETTER_RE.findall(blk))

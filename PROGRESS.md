@@ -3,7 +3,7 @@
 Berkas ini supaya sesi baru bisa melanjutkan tanpa membaca ulang semua riwayat.
 
 **Terakhir diperbarui:** 15 Okt 2026
-**Versi aplikasi:** 0.10.0+20 (build 20 = 0.7.0 sudah DIRUSAK, jangan dipakai sebagai acuan)
+**Versi aplikasi:** 0.11.0+21 (build 20 = 0.7.0 sudah DIRUSAK, jangan dipakai sebagai acuan)
 
 ---
 
@@ -19,6 +19,7 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 
 | # | Tahap | Status | Commit |
 |---|---|---|---|
+| 11 | UMKM warga + Lapor darurat | ✅ | (commit ini) |
 | 0 | Fondasi: tema M3, ikon, router, build CI | ✅ | `c3d6bb3`, `1440406` |
 | 1 | ~~`SplashScreen` + `onFinished`~~ (diganti splash native 15 Okt) | ✅ | `f512dca` |
 | 2 | `OnbArt` (aspirasi, komunitas, terhubung) untuk 3 sampul | ✅ | `f512dca` |
@@ -39,10 +40,10 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 | 1 | Berita & pengumuman | ✅ | Pengumuman di beranda, berita di Galeri |
 | 2 | Agenda kegiatan | ✅ | Layar Kegiatan + filter kategori |
 | 3 | Galeri | ✅ | Berita + sampul |
-| 4 | UMKM warga | ❌ | Skema tabel sudah ada, layar belum |
+| 4 | UMKM warga | ✅ | Katalog + filter kategori + form pengajuan (v0.11.0) |
 | 5 | Peta wilayah | ❌ | Butuh tile OpenStreetMap (gratis, tanpa API key) |
 | 6 | Aspirasi & pengaduan | ✅ | Papan FISH + filter status + form kirim |
-| 7 | Lapor darurat | ❌ | Skema tabel sudah ada, layar belum |
+| 7 | Lapor darurat | ✅ | Tombol merah + nomor 112/119/110/115 + riwayat status (v0.11.0) |
 | 8 | Forum warga | ❌ | Skema `forum_topik` + `forum_balasan` sudah ada |
 | 9 | Booking fasilitas | ❌ | Skema `fasilitas` + `booking` sudah ada |
 | 10 | Donasi | ❌ | Skema ada. **Butuh Midtrans** (akun merchant) untuk uang sungguhan |
@@ -52,7 +53,7 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 | 14 | Profil | ✅ | Kartu anggota, hak akses, menu |
 | 15 | Pengaturan | ⚠️ | Tema, mode Lansia, status backend jalan. Edit profil / Notifikasi / Bantuan masih "segera hadir" |
 
-**Angka: 8 jadi, 2 setengah, 5 belum.** Tidak ada fitur yang ditandai selesai
+**Angka: 10 jadi, 2 setengah, 3 belum.** Tidak ada fitur yang ditandai selesai
 padahal baru kerangka.
 
 ### 16 fitur Panel Pengurus (web)

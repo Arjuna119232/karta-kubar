@@ -566,6 +566,18 @@ class _MenuUmum extends ConsumerWidget {
               onTap: () => context.go('/aspirasi'),
             ),
           ],
+          Divider(height: 1, color: context.semantic.line),
+          _Baris(
+            icon: Ik.handHeart,
+            label: 'UMKM warga',
+            onTap: () => context.go('/umkm'),
+          ),
+          Divider(height: 1, color: context.semantic.line),
+          _Baris(
+            icon: Ik.megaphone,
+            label: 'Lapor darurat',
+            onTap: () => context.go('/darurat'),
+          ),
           if (role.bisa(UserRole.pengurus)) ...<Widget>[
             Divider(height: 1, color: context.semantic.line),
             _Baris(
