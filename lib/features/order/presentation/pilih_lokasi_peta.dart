@@ -73,7 +73,7 @@ class _PilihLokasiPetaScreenState extends State<PilihLokasiPetaScreen> {
 
   TitikPeta _tengah = titikKuninganBarat;
   AnyCameraPosition _kamera = AnyCameraPosition(
-    target: AnyLatLng(-6.2500, 106.7230),
+    target: AnyLatLng(-6.2365, 106.8219),
     zoom: 16,
   );
   String _alamatTeks = '';

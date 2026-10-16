@@ -143,7 +143,7 @@ class _MitraUsahaPetaScreenState extends ConsumerState<MitraUsahaPetaScreen> {
   }
 
   static AnyLatLng _pusat(List<MitraUsaha> data) {
-    if (data.isEmpty) return const AnyLatLng(-6.2500, 106.8230);
+    if (data.isEmpty) return const AnyLatLng(-6.2365, 106.8219);
     double lat = 0;
     double lng = 0;
     for (final MitraUsaha m in data) {
