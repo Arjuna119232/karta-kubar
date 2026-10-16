@@ -302,7 +302,7 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
     Haptics.success();
     await ref.read(orderProvider.notifier).tambah(hasil.data!);
     if (!mounted) return;
-    context.push('/order/tracking/${hasil.data!.jenis.name}:${hasil.data!.id}');
+    context.push('/order/tracking/${hasil.data!.jenis.name}/${hasil.data!.id}');
   }
 
   void _Snak(String pesan, {bool galat = false}) {

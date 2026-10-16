@@ -155,12 +155,12 @@ final Provider<List<OrderRingkas>> orderAktifProvider =
 
 /// Satu order, di-poll supaya layar tracking selalu segar.
 ///
-/// [id] dibawa sebagai `"<jenis>:<uuid>"` (contoh `jastip:local-123`) supaya
+/// [kunci] dibawa sebagai `"<jenis>|<uuid>"` (contoh `jastip|local-123`) supaya
 /// satu provider melayani jastip dan ojek tanpa parameter kedua.
 final StreamProvider.autoDispose.family<OrderRingkas?, String>
     orderPantauProvider =
     StreamProvider.autoDispose.family<OrderRingkas?, String>((ref, kunci) {
-  final int pisah = kunci.indexOf(':');
+  final int pisah = kunci.indexOf('|');
   final String jenis =
       pisah > 0 ? kunci.substring(0, pisah) : JenisOrder.jastip.name;
   final String idAsli = pisah > 0 ? kunci.substring(pisah + 1) : kunci;
@@ -189,7 +189,7 @@ Future<OrderRingkas?> _pantau(OrderServiceDasar svc, String id) async* {
 final StreamProvider.autoDispose.family<List<TitikPeta>, String>
     trackingTitikProvider =
     StreamProvider.autoDispose.family<List<TitikPeta>, String>((ref, kunci) {
-  final int pisah = kunci.indexOf(':');
+  final int pisah = kunci.indexOf('|');
   final String jenis =
       pisah > 0 ? kunci.substring(0, pisah) : JenisOrder.jastip.name;
   final String idAsli = pisah > 0 ? kunci.substring(pisah + 1) : kunci;

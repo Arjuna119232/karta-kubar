@@ -293,7 +293,7 @@ class _OjekFormScreenState extends ConsumerState<OjekFormScreen> {
     Haptics.success();
     await ref.read(orderProvider.notifier).tambah(hasil.data!);
     if (!mounted) return;
-    context.push('/order/tracking/${hasil.data!.jenis.name}:${hasil.data!.id}');
+    context.push('/order/tracking/${hasil.data!.jenis.name}/${hasil.data!.id}');
   }
 
   void _snak(String pesan, {bool galat = false}) {
@@ -457,18 +457,6 @@ class _SaranTujuanState extends ConsumerState<_SaranTujuan> {
   bool _sibuk = false;
   String _terakhirDicek = '';
 
-  Future<void> _cari(String kueri) async {
-    if (kueri.trim().length < 4 || kueri == _terakhirDicek) return;
-    _terakhirDicek = kueri;
-    setState(() => _sibuk = true);
-    final List<TitikPeta> found =
-        await ref.read(lokasiServiceProvider).cariAlamat(kueri);
-    if (!mounted) return;
-    setState(() {
-      _hasil = found.take(3).toList(growable: false);
-      _sibuk = false;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {

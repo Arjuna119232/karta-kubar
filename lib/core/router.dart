@@ -9,6 +9,12 @@ import '../features/auth/presentation/auth_screen.dart';
 import '../features/galeri/presentation/galeri_screen.dart';
 import '../features/profile/presentation/edit_profil_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
+import '../features/order/presentation/order_detail.dart';
+import '../features/order/presentation/order_form_jastip.dart';
+import '../features/order/presentation/order_form_ojek.dart';
+import '../features/order/presentation/order_history.dart';
+import '../features/order/presentation/order_rating.dart';
+import '../features/order/presentation/order_tracking.dart';
 import '../features/pengurus/presentation/pengurus_screen.dart';
 import '../features/shell/presentation/app_shell.dart';
 import '../features/umkm/presentation/umkm_screen.dart';
@@ -16,6 +22,7 @@ import 'auth/session.dart';
 import 'auth/user_role.dart';
 import 'boot.dart';
 import '../shared/widgets/app_icon.dart';
+import '../shared/models/order.dart';
 import '../shared/widgets/loading_dots.dart';
 
 /// Halaman "kamu belum punya akses" — muncul kalau guard menolak rute.
@@ -210,6 +217,95 @@ GoRouter buatRouter(LokasiAwal awal) => GoRouter(
     GoRoute(
       path: '/bantuan',
       pageBuilder: (_, GoRouterState s) => _halaman(s, const BantuanScreen()),
+    ),
+    // =====================================================================
+    // ORDER: JASTIP & OJEK
+    // ---------------------------------------------------------------------
+    // Semua memakai `RoleGate(minimal: warga)`: tamu bisa melihat fitur,
+    // tapi tidak boleh membuat order yang harus dibayar.
+    // =====================================================================
+    GoRoute(
+      path: '/jastip/form',
+      pageBuilder: (_, GoRouterState s) => _halaman(
+        s,
+        const RoleGate(minimal: UserRole.warga, child: JastipFormScreen()),
+      ),
+    ),
+    GoRoute(
+      path: '/ojek/form',
+      pageBuilder: (_, GoRouterState s) => _halaman(
+        s,
+        const RoleGate(minimal: UserRole.warga, child: OjekFormScreen()),
+      ),
+    ),
+    GoRoute(
+      path: '/jastip/history',
+      pageBuilder: (_, GoRouterState s) => _halaman(
+        s,
+        const RoleGate(
+          minimal: UserRole.warga,
+          child: OrderHistoryScreen(jenisAwal: JenisOrder.jastip),
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/ojek/history',
+      pageBuilder: (_, GoRouterState s) => _halaman(
+        s,
+        const RoleGate(
+          minimal: UserRole.warga,
+          child: OrderHistoryScreen(jenisAwal: JenisOrder.ojek),
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/order/list',
+      pageBuilder: (_, GoRouterState s) => _halaman(
+        s,
+        const RoleGate(minimal: UserRole.warga, child: OrderListScreen()),
+      ),
+    ),
+    // `:jenis` terpisah dari `:id` dengan sengaja. Kalau keduanya digabung
+    // jadi satu parameter dengan tanda titik dua di dalamnya, go_router bisa
+    // salah membaca titik dua kedua sebagai awal parameter baru.
+    GoRoute(
+      path: '/order/tracking/:jenis/:id',
+      pageBuilder: (_, GoRouterState s) => _halaman(
+        s,
+        RoleGate(
+          minimal: UserRole.warga,
+          child: OrderTrackingScreen(
+            jenis: s.pathParameters['jenis'] ?? 'jastip',
+            orderId: s.pathParameters['id'] ?? '',
+          ),
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/order/detail/:jenis/:id',
+      pageBuilder: (_, GoRouterState s) => _halaman(
+        s,
+        RoleGate(
+          minimal: UserRole.warga,
+          child: OrderDetailScreen(
+            jenis: s.pathParameters['jenis'] ?? 'jastip',
+            orderId: s.pathParameters['id'] ?? '',
+          ),
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/order/rating/:jenis/:id',
+      pageBuilder: (_, GoRouterState s) => _halaman(
+        s,
+        RoleGate(
+          minimal: UserRole.warga,
+          child: RatingScreen(
+            jenis: s.pathParameters['jenis'] ?? 'jastip',
+            orderId: s.pathParameters['id'] ?? '',
+          ),
+        ),
+      ),
     ),
     // Panel kendali pengurus: antrean FISH + sesi absensi.
     GoRoute(

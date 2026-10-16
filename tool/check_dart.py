@@ -463,11 +463,32 @@ for name, owners in sorted(symbols.items()):
 router_path = LIB / "core/router.dart"
 if router_path.is_file():
     registered = set(re.findall(r"path:\s*'([^']+)'", raw[router_path]))
+
+    def pola_rute(path):
+        """Ubah `/order/tracking/:jenis/:id` jadi pola yang bisa dicocokkan."""
+        return re.sub(r":[A-Za-z_]\w*", "*", path)
+
+    registered_pola = {pola_rute(p) for p in registered}
+
+    def cocok_rute(target):
+        """Cocokkan target statis dengan daftar rute.
+
+        Path yang mengandung interpolasi (`${...}`) tidak bisa dicocokkan
+        persis, jadi setiap segmen yang berisi `${` dianggap wildcard.
+        """
+        if target in registered:
+            return True
+        if "${" in target:
+            return pola_rute(
+                re.sub(r"\$\{[^}]*\}", "*", target)
+            ) in registered_pola
+        return pola_rute(target) in registered_pola
+
     # WAJIB scan kode ASLI: nama rute adalah string literal, sedangkan `code`
     # sudah mengganti string dengan spasi -> tidak akan pernah ketemu.
     for f in files:
         for target in re.findall(r"context\.(?:go|push|replace|goNamed)\(\s*'([^']+)'", raw[f]):
-            if target.startswith("/") and target not in registered:
+            if target.startswith("/") and not cocok_rute(target):
                 bad("ROUTE-UNKNOWN", f,
                     f"navigasi ke '{target}' tapi rute itu tidak terdaftar di core/router.dart "
                     f"(terdaftar: {', '.join(sorted(registered))}) -> GoException saat runtime")
