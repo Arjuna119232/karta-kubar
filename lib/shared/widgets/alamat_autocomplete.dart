@@ -35,6 +35,7 @@ class AlamatAutocomplete extends ConsumerStatefulWidget {
     required this.onUbah,
     this.validator,
     this.minTeks = 3,
+    this.judulPeta,
   });
 
   final TextEditingController controller;
@@ -50,6 +51,9 @@ class AlamatAutocomplete extends ConsumerStatefulWidget {
 
   /// Panjang minimum sebelum saran dicari.
   final int minTeks;
+
+  /// Judul layar peta. Kalau kosong, pakai [label].
+  final String? judulPeta;
 
   @override
   ConsumerState<AlamatAutocomplete> createState() =>
@@ -122,7 +126,13 @@ class _AlamatAutocompleteState extends ConsumerState<AlamatAutocomplete> {
     _fokus.unfocus();
     setState(() => _saran = const <SaranAlamat>[]);
     final LokasiTerpilih? hasil =
-        await context.push<LokasiTerpilih>('/pilih-lokasi');
+        await context.push<LokasiTerpilih>(
+      '/pilih-lokasi',
+      extra: MintaLokasi(
+        judul: judulPeta ?? label,
+        awal: _terkunci.valid ? _terkunci : null,
+      ),
+    );
     if (!mounted || hasil == null) return;
     setState(() {
       _terkunci = hasil.titik;

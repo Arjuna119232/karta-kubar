@@ -29,6 +29,20 @@ class LokasiTerpilih {
   String get teks => alamat.isNotEmpty ? alamat : titik.teks;
 }
 
+/// Permintaan buka peta dari satu kolom form.
+///
+/// `judul` dipakai sebagai judul layar peta supaya pengguna tahu sedang memilih
+/// jemput, tujuan, lokasi beli, atau alamat antar.
+@immutable
+class MintaLokasi {
+  const MintaLokasi({this.judul = 'Pilih lokasi', this.awal});
+
+  final String judul;
+
+  /// Titik yang dipakai sebagai titik awal peta.
+  final TitikPeta? awal;
+}
+
 /// Pilih titik dengan menggeser peta.
 ///
 /// Penanda ditahan di tengah layar: begitu peta berhenti digeser, koordinat di
@@ -40,7 +54,7 @@ class LokasiTerpilih {
 class PilihLokasiPetaScreen extends StatefulWidget {
   const PilihLokasiPetaScreen({
     super.key,
-    required this.judul,
+    this.judul = 'Pilih lokasi',
     this.awal,
   });
 

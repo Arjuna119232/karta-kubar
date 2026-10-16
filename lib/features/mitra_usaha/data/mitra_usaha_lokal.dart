@@ -13,7 +13,10 @@ import '../domain/mitra_usaha.dart';
 /// jalan yang persis sama, 47 marker akan menumpuk jadi satu bercak dan peta
 /// jadi tidak berguna. Offset memakai golden angle supaya tersebar mengelilingi
 /// jalan, bukan berderet lurus.
-const List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
+///
+/// Daftar ini sengaja bukan `const`: `Kelurahan.dari(...)`memanggil
+/// `firstWhere`, dan fungsi tidak boleh dipanggil dalam ekspresi const.
+final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
   MitraUsaha(
     id: 'm1',
     nama: 'Warung Kelontong Madura',

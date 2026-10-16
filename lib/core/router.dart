@@ -250,8 +250,15 @@ GoRouter buatRouter(LokasiAwal awal) => GoRouter(
     ),
     GoRoute(
       path: '/pilih-lokasi',
-      pageBuilder: (_, GoRouterState s) =>
-          _halaman(s, PilihLokasiPetaScreen(awal: s.extra as TitikPeta?)),
+      pageBuilder: (_, GoRouterState s) {
+        final MintaLokasi minta = s.extra is MintaLokasi
+            ? s.extra as MintaLokasi
+            : const MintaLokasi();
+        return _halaman(
+          s,
+          PilihLokasiPetaScreen(judul: minta.judul, awal: minta.awal),
+        );
+      },
     ),
     GoRoute(
       path: '/jastip/form',
