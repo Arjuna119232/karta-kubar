@@ -173,7 +173,7 @@ final orderPantauProvider =
   return _pantau(svc, bagian.id);
 });
 
-Future<OrderRingkas?> _pantau(OrderServiceDasar svc, String id) async* {
+Stream<OrderRingkas?> _pantau(OrderServiceDasar svc, String id) async* {
   while (true) {
     final Hasil<List<OrderRingkas>> semua = await svc.orderSaya();
     OrderRingkas? ketemu;
@@ -193,8 +193,16 @@ final trackingTitikProvider =
     StreamProvider.autoDispose.family<List<TitikPeta>, String>((ref, kunci) {
   final _Bagian bagian = _pecah(kunci);
   final TrackingLokal store = ref.watch(trackingLokalProvider);
-  return titikUntuk(store, bagian.id, bagian.jenis);
+  return _alurTitik(store, bagian.id, bagian.jenis);
 });
+
+Stream<List<TitikPeta>> _alurTitik(
+  TrackingLokal store,
+  String id,
+  JenisOrder jenis,
+) async* {
+  yield await titikUntuk(store, id, jenis);
+}
 
 class _Bagian {
   const _Bagian(this.jenis, this.id);

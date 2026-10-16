@@ -20,10 +20,10 @@ enum PeranMitra {
       };
 
   /// Bisa menerima order jastip?
-  bool bisaJastip => this != PeranMitra.driver;
+  bool get bisaJastip => this == PeranMitra.kurir || this == PeranMitra.both;
 
   /// Bisa menerima order ojek?
-  bool bisaOjek => this != PeranMitra.kurir;
+  bool get bisaOjek => this == PeranMitra.driver || this == PeranMitra.both;
 }
 
 /// Status ketersediaan mitra, dipakai untuk memilih whom di form order.

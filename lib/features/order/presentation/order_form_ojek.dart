@@ -103,16 +103,6 @@ class _OjekFormScreenState extends ConsumerState<OjekFormScreen> {
                 validator: (String? v) => _wajib(v, 'Lokasi tujuan', min: 3),
               ),
               const SizedBox(height: AppSpacing.md),
-              _SaranTujuan(
-                onPilih: (TitikPeta t, String nama) {
-                  _tujuan.text = nama;
-                  setState(() => _titikTujuan = t);
-                  _hitungUlang();
-                },
-                kataKunci: _tujuan.text,
-                jemput: _titikJemput,
-              ),
-              const SizedBox(height: AppSpacing.md),
               PetaOrder(
                 titik: <TitikPeta>[_titikJemput, _titikTujuan],
                 garis: <TitikPeta>[_titikJemput, _titikTujuan],
@@ -431,66 +421,6 @@ class _TombolLokasiOjek extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Saran alamat dari Photon. Tampil hanya kalau koordinat tujuan belum ada,
-/// supaya warga tetap bisa memilih alamat yang tepat.
-class _SaranTujuan extends ConsumerStatefulWidget {
-  const _SaranTujuan({
-    required this.onPilih,
-    required this.kataKunci,
-    required this.jemput,
-  });
-
-  final void Function(TitikPeta titik, String nama) onPilih;
-  final String kataKunci;
-  final TitikPeta jemput;
-
-  @override
-  ConsumerState<_SaranTujuan> createState() => _SaranTujuanState();
-}
-
-class _SaranTujuanState extends ConsumerState<_SaranTujuan> {
-  List<TitikPeta> _hasil = const <TitikPeta>[];
-  bool _sibuk = false;
-  String _terakhirDicek = '';
-
-
-  @override
-  Widget build(BuildContext context) {
-    if (_sibuk) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      );
-    }
-    if (_hasil.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        for (final TitikPeta t in _hasil)
-          InkWell(
-            onTap: () => widget.onPilih(t, t.teks),
-            borderRadius: BorderRadius.circular(AppRadius.field),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                  vertical: AppSpacing.sm, horizontal: AppSpacing.sm),
-              child: Row(
-                children: <Widget>[
-                  AppIcon(Ik.place, size: 18, color: context.colors.primary),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(t.teks, style: context.text.bodyMedium),
-                  ),
-                  AppIcon(Ik.chevronRight,
-                      size: 16, color: context.semantic.textSecondary),
-                ],
-              ),
-            ),
-          ),
-      ],
     );
   }
 }

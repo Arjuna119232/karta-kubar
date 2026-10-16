@@ -111,7 +111,7 @@ class PetaOrder extends StatelessWidget {
       lat += t.lat;
       lng += t.lng;
     }
-    final double n = titik.length;
+    final double n = titik.length.toDouble();
     if (titik.length == 1) {
       return AnyLatLng(titik.first.lat, titik.first.lng);
     }
@@ -601,13 +601,16 @@ class BarisInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Field widget tidak bisa di-promote oleh null-check di Dart, jadi
+    // nilainya dibaca ke variabel lokal lebih dulu.
+    final Ik? _ikon = ikon;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          if (ikon != null) ...<Widget>[
-            AppIcon(ikon, size: 18, color: context.semantic.textSecondary),
+          if (_ikon != null) ...<Widget>[
+            AppIcon(_ikon, size: 18, color: context.semantic.textSecondary),
             const SizedBox(width: AppSpacing.sm),
           ],
           SizedBox(
