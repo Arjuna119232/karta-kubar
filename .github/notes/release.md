@@ -17,7 +17,7 @@ Tombol yang tadinya kosong sekarang benar-benar bekerja, plus katalog Mitra Usah
 - Katalog warung, pasar, agen gas, dan depot galon di sekitar Kuningan Barat
 - Detail lengkap dengan peta, jam buka, dan barang yang biasa dibeli
 - "Buka di peta" dan "Titip belanja di sini" yang langsung mengisi form jastip
--。Masuk dari Beranda dan menu Profil
+- Masuk dari Beranda dan menu Profil
 
 **Keamanan**
 - Pengalih level akses hanya hidup di mode debug. Sebelumnya bisa dipakai di
