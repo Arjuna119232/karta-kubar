@@ -57,7 +57,7 @@ class ProfileScreen extends ConsumerWidget {
           const SectionHeader(title: 'Sumber data'),
           const _KartuBackend(),
           const SizedBox(height: AppSpacing.gap),
-          if (AppConfig.demoMode) ...<Widget>[
+          if (AppConfig.roleSwitcher) ...<Widget>[
             const _RoleSwitcher(),
             const SizedBox(height: AppSpacing.gap),
           ],
@@ -322,18 +322,13 @@ class _AjukanVerifikasi extends StatelessWidget {
               if (!sudahLogin) {
                 context.go('/auth');
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                        'Form verifikasi NIK sedang dibangun. Nanti diproses pengurus kelurahan.'),
-                  ),
-                );
+                context.push('/edit-profil');
               }
             },
             icon: AppIcon(
                 sudahLogin ? Ik.badge : Ik.login,
                 size: 18),
-            label: Text(sudahLogin ? 'Verifikasi sekarang' : 'Masuk dulu'),
+            label: Text(sudahLogin ? 'Lengkapi data profil' : 'Masuk dulu'),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size.fromHeight(48),
               shape: RoundedRectangleBorder(
@@ -637,6 +632,11 @@ class _MenuUmum extends ConsumerWidget {
             icon: Ik.megaphone,
             label: 'Lapor darurat',
             onTap: () => context.push('/darurat'),
+          ),
+          _Baris(
+            icon: Ik.cart,
+            label: 'Mitra Usaha',
+            onTap: () => context.push('/mitra-usaha'),
           ),
           if (role.bisa(UserRole.pengurus)) ...<Widget>[
             Divider(height: 1, color: context.semantic.line),

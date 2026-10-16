@@ -147,7 +147,10 @@ class _OjekFormScreenState extends ConsumerState<OjekFormScreen> {
               _PilihanMitra(
                 mitra: mitra,
                 terpilih: _mitra,
-                onUbah: (MitraJasa? m) => setState(() => _mitra = m),
+                onUbah: (MitraJasa? m) {
+                  setState(() => _mitra = m);
+                  _hitungUlang();
+                },
               ),
               const SizedBox(height: AppSpacing.section),
               SubOrder('Catatan untuk mitra', ikon: Ik.chat),
@@ -230,7 +233,19 @@ class _OjekFormScreenState extends ConsumerState<OjekFormScreen> {
         ? _titikJemput
         : titikKuninganBarat;
     final TitikPeta akhir = _titikTujuan.valid ? _titikTujuan : asal;
-    final Rute rute = await svc.rute(asal, akhir);
+    final Rute jemputKeTujuan = await svc.rute(asal, akhir);
+    // Total jarak = mitra -> jemput + jemput -> tujuan. Kalau belum memilih
+    // mitra (ditugaskan sistem), hanya jemput -> tujuan yang bisa dihitung.
+    Rute rute = jemputKeTujuan;
+    final MitraJasa? m = _mitra;
+    if (m != null && m.lokasi.valid) {
+      final Rute mitraKeJemput = await svc.rute(m.lokasi, asal);
+      rute = Rute(
+        jarakKm: mitraKeJemput.jarakKm + jemputKeTujuan.jarakKm,
+        durasiMenit: mitraKeJemput.durasiMenit + jemputKeTujuan.durasiMenit,
+        dariServer: mitraKeJemput.dariServer && jemputKeTujuan.dariServer,
+      );
+    }
     if (!mounted) return;
     setState(() {
       _ringkasan = OjekService.hitungTarif(rute);
@@ -324,7 +339,7 @@ class _IntroOjek extends StatelessWidget {
           Expanded(
             child: Text(
               'Ojek komunitas untuk Kuningan Barat dan sekitarnya. '
-              'Tarif dihitung dari jarak, bayar tunai ke mitra setelah sampai.',
+              'Tarif dari total jarak (mitra ke titik jemput + jemput ke tujuan). Bayar tunai ke mitra setelah sampai.',
               style: context.text.bodySmall,
             ),
           ),

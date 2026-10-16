@@ -15,6 +15,18 @@ class AppConfig {
   static const bool demoMode =
       kDebugMode || bool.fromEnvironment('KUNBAR_DEMO', defaultValue: false);
 
+  /// Pengalih level akses (developer tool).
+  ///
+  /// SENGAJA TIDAK ikut [demoMode]. Demo mode ikut nyala di APK rilis supaya
+  /// kode OTP `123456` masih bisa dipakai warga, dan kalau pengalih role juga
+  /// ikut nyala maka siapa pun bisa elevate dirinya jadi Admin lewat halaman
+  /// Profil. Jadi dua hal ini dipisah: kode OTP demo boleh ikut di APK
+  /// rilis, pengalih level akses tidak.
+  ///
+  /// Kalau perlu mengubah role saat menguji, jalankan dari debug/Acode
+  /// (`kDebugMode` selalu true di sana), bukan dari APK rilis.
+  static const bool roleSwitcher = kDebugMode;
+
   /// Bank data yang dipakai aplikasi.
   ///
   /// - `lokal`    : data di perangkat + seed demo. Tanpa internet, tanpa server.

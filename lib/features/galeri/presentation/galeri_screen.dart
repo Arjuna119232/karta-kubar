@@ -21,6 +21,7 @@ import '../../../shared/widgets/cover_pilih.dart';
 import '../../../shared/widgets/animated_list_item.dart';
 import '../data/galeri_state.dart';
 import '../domain/media_galeri.dart';
+import '../../../shared/widgets/berita_sheet.dart';
 
 /// Galeri & berita.
 ///
@@ -421,9 +422,7 @@ class _NewsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Membuka: ${item.judul}')),
-      ),
+      onTap: () => bukaBerita(context, item),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[

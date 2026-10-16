@@ -9,13 +9,13 @@ import '../features/auth/presentation/auth_screen.dart';
 import '../features/galeri/presentation/galeri_screen.dart';
 import '../features/profile/presentation/edit_profil_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
+import '../features/pengurus/presentation/pengurus_screen.dart';
 import '../features/order/presentation/order_detail.dart';
 import '../features/order/presentation/order_form_jastip.dart';
 import '../features/order/presentation/order_form_ojek.dart';
 import '../features/order/presentation/order_history.dart';
 import '../features/order/presentation/order_rating.dart';
 import '../features/order/presentation/order_tracking.dart';
-import '../features/pengurus/presentation/pengurus_screen.dart';
 import '../features/shell/presentation/app_shell.dart';
 import '../features/umkm/presentation/umkm_screen.dart';
 import 'auth/session.dart';
@@ -24,6 +24,9 @@ import 'boot.dart';
 import '../shared/widgets/app_icon.dart';
 import '../shared/models/order.dart';
 import '../shared/widgets/loading_dots.dart';
+import '../features/mitra_usaha/domain/mitra_usaha.dart';
+import '../features/mitra_usaha/presentation/mitra_usaha_detail.dart';
+import '../features/mitra_usaha/presentation/mitra_usaha_screen.dart';
 
 /// Halaman "kamu belum punya akses" — muncul kalau guard menolak rute.
 class AksesDitolakScreen extends ConsumerWidget {
@@ -225,10 +228,26 @@ GoRouter buatRouter(LokasiAwal awal) => GoRouter(
     // tapi tidak boleh membuat order yang harus dibayar.
     // =====================================================================
     GoRoute(
+      path: '/mitra-usaha',
+      pageBuilder: (_, GoRouterState s) =>
+          _halaman(s, const MitraUsahaScreen()),
+    ),
+    GoRoute(
+      path: '/mitra-usaha/:id',
+      pageBuilder: (_, GoRouterState s) => _halaman(
+        s,
+        MitraUsahaDetailScreen(id: s.pathParameters['id'] ?? ''),
+      ),
+    ),
+    GoRoute(
       path: '/jastip/form',
       pageBuilder: (_, GoRouterState s) => _halaman(
         s,
-        const RoleGate(minimal: UserRole.warga, child: JastipFormScreen()),
+        RoleGate(
+          minimal: UserRole.warga,
+          // Dari detail Mitra Usaha: lokasi beli terisi otomatis.
+          child: JastipFormScreen(tokoAwal: s.extra as MitraUsaha?),
+        ),
       ),
     ),
     GoRoute(
@@ -255,6 +274,23 @@ GoRouter buatRouter(LokasiAwal awal) => GoRouter(
         const RoleGate(
           minimal: UserRole.warga,
           child: OrderHistoryScreen(jenisAwal: JenisOrder.ojek),
+        ),
+      ),
+    ),
+    // Panel kendali pengurus: antrean FISH + sesi absensi.
+    //
+    // Rute ini TIDAK dihapus. Menu "Panel Pengurus" di Profil hanya muncul
+    // untuk role pengurus, dan pengalih role di APK rilis sudah dimatikan
+    // (lihat `AppConfig.roleSwitcher`), jadi warga biasa tidak pernah
+    // menemukan jalan ke sini. File dan rutenya tetap disimpan supaya
+    // fiturnya tetap bisa dipakai lagi begitu verifikasi dari pengurus hidup.
+    GoRoute(
+      path: '/pengurus',
+      pageBuilder: (_, GoRouterState s) => _halaman(
+        s,
+        const RoleGate(
+          minimal: UserRole.pengurus,
+          child: PengurusScreen(),
         ),
       ),
     ),
@@ -304,17 +340,6 @@ GoRouter buatRouter(LokasiAwal awal) => GoRouter(
             jenis: s.pathParameters['jenis'] ?? 'jastip',
             orderId: s.pathParameters['id'] ?? '',
           ),
-        ),
-      ),
-    ),
-    // Panel kendali pengurus: antrean FISH + sesi absensi.
-    GoRoute(
-      path: '/pengurus',
-      pageBuilder: (_, GoRouterState s) => _halaman(
-        s,
-        const RoleGate(
-          minimal: UserRole.pengurus,
-          child: PengurusScreen(),
         ),
       ),
     ),

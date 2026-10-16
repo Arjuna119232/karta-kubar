@@ -21,6 +21,8 @@ import '../../../shared/widgets/shimmer_box.dart';
 import '../../../shared/widgets/status_views.dart';
 import '../data/order_state.dart';
 import 'widgets_order.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../shared/models/mitra_jasa.dart';
 
 /// Satu layar untuk tracking JASTIP maupun OJEK.
 ///
@@ -397,7 +399,7 @@ class _PanelMitra extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.md),
-              const _TombolHubung(),
+              _TombolHubung(mitraId: mitraId),
             ],
           ),
         ),
@@ -406,42 +408,42 @@ class _PanelMitra extends ConsumerWidget {
   }
 }
 
-/// Tombol telepon + WhatsApp untuk mitra.
+/// Tombol telepon untuk mitra. Membuka aplikasi telepon bila nomor ada;
+/// bila belum ada (data contoh), warga diberi tahu.
 class _TombolHubung extends ConsumerWidget {
-  const _TombolHubung();
+  const _TombolHubung({required this.mitraId});
+
+  final String mitraId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: SizedBox(
-            width: double.infinity,
-            child: PrimaryButton(
-              label: 'Hubungi mitra',
-              icon: Ik.phone,
-              tone: PrimaryButtonTone.outlined,
-              onPressed: () => _salinNomor(context, ref),
-            ),
-          ),
-        ),
-      ],
+    return PrimaryButton(
+      label: 'Hubungi mitra',
+      icon: Ik.phone,
+      tone: PrimaryButtonTone.outlined,
+      onPressed: () => _hubungi(context, ref),
     );
   }
 
-  Future<void> _salinNomor(BuildContext context, WidgetRef ref) async {
-    // Nomor mitra belum tersedia di backend, jadi yang bisa dilakukan sekarang
-    // adalah memberi tahu warga ke mana harus menghubungi.
+  Future<void> _hubungi(BuildContext context, WidgetRef ref) async {
+    final Hasil<MitraJasa> h =
+        await ref.read(mitraRepositoryProvider).byId(mitraId);
     if (!context.mounted) return;
-    Haptics.light();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Nomor mitra belum tersedia di perangkat ini. Fitur hubung mitra '
-          'menyala begitu backend menyala.',
+    final String nomor = h.berhasil ? h.data!.nomor.trim() : '';
+    if (nomor.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nomor mitra belum tersedia. Coba lagi nanti.'),
         ),
-      ),
-    );
+      );
+      return;
+    }
+    final bool ok = await launchUrl(Uri(scheme: 'tel', path: nomor));
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tidak bisa membuka aplikasi telepon.')),
+      );
+    }
   }
 }
 

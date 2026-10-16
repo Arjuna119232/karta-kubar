@@ -22,6 +22,7 @@ import '../../order/data/order_state.dart';
 import '../../order/presentation/order_history.dart';
 import '../../shell/data/app_tabs.dart';
 import '../../../shared/widgets/cover_pilih.dart';
+import '../../../shared/widgets/berita_sheet.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -590,6 +591,8 @@ class _QuickActions extends ConsumerWidget {
       // tidak punya cara membuka Galeri sama sekali.
       _QuickItem(Ik.gallery, 'Galeri', AppColors.success,
           () => context.push('/galeri')),
+      _QuickItem(Ik.cart, 'Mitra Usaha', AppColors.warning,
+          () => context.push('/mitra-usaha')),
       _QuickItem(Ik.package, 'Jastip', AppColors.primary,
           () => context.push('/jastip/form')),
       _QuickItem(Ik.motorcycle, 'Ojek', AppColors.accent,
@@ -771,11 +774,7 @@ class _NewsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       padding: const EdgeInsets.all(14),
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Membuka: ${item.judul}')),
-        );
-      },
+      onTap: () => bukaBerita(context, item),
       child: Row(
         children: <Widget>[
           AppCover(coverBerita(item.tag), width: 56, height: 56, radius: 14),

@@ -11,38 +11,66 @@ class TarifService {
   const TarifService();
 
   // ---------------------------------------------------------------- ojek
-  static const double tarifDasarOjek = 3000;
-  static const double tarifPerKmOjek = 2500;
-
-  /// Jarak minimum yang tetap ditagih, supaya order 200 m tidak gratis.
-  static const double jarakMinOjek = 0.5;
+  /// Batas atas jarak (km, inklusif) -> tarif. Di atas baris terakhir:
+  /// [tarifOjekDasarLanjut] + (km - [batasOjekLanjut]) x [tarifOjekPerKmLanjut].
+  static const List<(double, double)> tabelOjek = <(double, double)>[
+    (2, 7000),
+    (4, 10000),
+    (6, 14000),
+    (8, 18000),
+    (10, 22000),
+    (12, 26000),
+    (15, 32000),
+  ];
+  static const double batasOjekLanjut = 15;
+  static const double tarifOjekDasarLanjut = 32000;
+  static const double tarifOjekPerKmLanjut = 2500;
 
   // -------------------------------------------------------------- jastip
-  static const double tarifDasarJastip = 4000;
-  static const double tarifPerKmJastip = 2000;
+  /// Biaya ANTAR saja (lokasi beli -> alamat antar), bukan jarak mitra ke toko.
+  static const List<(double, double)> tabelJastip = <(double, double)>[
+    (1, 3000),
+    (2, 5000),
+    (3, 7000),
+    (4, 9000),
+    (5, 11000),
+    (7, 15000),
+    (10, 20000),
+  ];
+  static const double batasJastipLanjut = 10;
+  static const double tarifJastipDasarLanjut = 20000;
+  static const double tarifJastipPerKmLanjut = 2500;
 
-  /// Minimal 1,5 km: jastip selalu lintas lokasi, jarak kecil berarti salah
-  /// ketik lokasi.
-  static const double jarakMinJastip = 1.5;
+  /// Tarif ojek dari TOTAL jarak (km) = mitra->jemput + jemput->tujuan.
+  double tarifOjek(double jarakKm) => _hitung(
+        jarakKm,
+        tabelOjek,
+        batasOjekLanjut,
+        tarifOjekDasarLanjut,
+        tarifOjekPerKmLanjut,
+      );
 
-  /// 1 pesanan = 1 fee. Jumlah barang tidak menambah fee, hanya menambah
-  /// perkiraan biaya barang.
-  static const double batasJauhJastip = 8.0;
+  /// Fee antar jastip dari jarak lokasi beli -> alamat antar (km).
+  double feeJastip(double jarakKm) => _hitung(
+        jarakKm,
+        tabelJastip,
+        batasJastipLanjut,
+        tarifJastipDasarLanjut,
+        tarifJastipPerKmLanjut,
+      );
 
-  /// Tarif ojek dari jarak (km).
-  double tarifOjek(double jarakKm) {
-    final double dasar = jarakKm < jarakMinOjek ? jarakMinOjek : jarakKm;
-    return _bulat(tarifDasarOjek + tarifPerKmOjek * dasar);
-  }
-
-  /// Fee jastip dari jarak lokasi beli -> alamat antar (km).
-  double feeJastip(double jarakKm) {
-    final double dasar = jarakKm < jarakMinJastip ? jarakMinJastip : jarakKm;
-    double fee = tarifDasarJastip + tarifPerKmJastip * dasar;
-    if (dasar > batasJauhJastip) {
-      fee += (dasar - batasJauhJastip) * 1000;
+  static double _hitung(
+    double km,
+    List<(double, double)> tabel,
+    double batas,
+    double dasar,
+    double perKm,
+  ) {
+    final double jarak = km < 0 ? 0 : km;
+    for (final (double maks, double tarif) in tabel) {
+      if (jarak <= maks) return tarif;
     }
-    return _bulat(fee);
+    return _bulat(dasar + (jarak - batas) * perKm);
   }
 
   /// Ringkasan biaya untuk ditampilkan di form (belum termasuk harga barang).
@@ -60,8 +88,8 @@ class TarifService {
         dariServer: rute.dariServer,
       );
 
-  /// Pembulatan ke ribuan terdekat supaya uangcash rapi.
-  static double _bulat(double nilai) => (nilai / 1000).round() * 1000.0;
+  /// Pembulatan ke Rp500 terdekat (tarif >15 km / >10 km kelipatan 2.500).
+  static double _bulat(double nilai) => (nilai / 500).round() * 500.0;
 
   /// Total yang perlu menyiapkan warga: fee + perkiraan harga barang.
   static double total(double tarif, double? hargaBarang) =>

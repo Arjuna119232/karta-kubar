@@ -25,12 +25,16 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/shimmer_box.dart';
 import '../data/order_state.dart';
 import 'widgets_order.dart';
+import '../../mitra_usaha/domain/mitra_usaha.dart';
 
 /// Form order JASTIP: warga menulis barang, lokasi beli, alamat antar.
 ///
 /// Alur yang tampil sengaja dibuat pendek: isi barang, cek fee, kirim.
 class JastipFormScreen extends ConsumerStatefulWidget {
-  const JastipFormScreen({super.key});
+  const JastipFormScreen({super.key, this.tokoAwal});
+
+  /// Mitra usaha yang dipilih dari katalog; mengisi lokasi beli otomatis.
+  final MitraUsaha? tokoAwal;
 
   @override
   ConsumerState<JastipFormScreen> createState() => _JastipFormScreenState();
@@ -45,7 +49,7 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
   final TextEditingController _perkiraanHarga = TextEditingController();
 
   int _qty = 1;
-  MetodeBayar _bayar = MetodeBayar.cash;
+  MetodeBayar _bayar = MetodeBayar.qris;
   File? _foto;
   TitikPeta _titikBeli = const TitikPeta(lat: 0, lng: 0);
   TitikPeta _titikAntar = const TitikPeta(lat: 0, lng: 0);
@@ -58,6 +62,14 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
   void initState() {
     super.initState();
     _alamatAntar.text = '';
+    final MitraUsaha? toko = widget.tokoAwal;
+    if (toko != null) {
+      _lokasiBeli.text = toko.lokasiBeliTeks;
+      _titikBeli = toko.titik;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _hitungUlang();
+      });
+    }
   }
 
   @override
@@ -166,9 +178,18 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
               ),
               const SizedBox(height: AppSpacing.section),
               SubOrder('Pembayaran', ikon: Ik.cash),
-              KartuBayar(dipilih: _bayar, onUbah: (MetodeBayar m) {
-                setState(() => _bayar = m);
-              }),
+              KartuBayar(
+                dipilih: _bayar,
+                qrisAktif: true,
+                keteranganQris:
+                    'Barang dibayar via QRIS. Scan QRIS yang dikirim mitra '
+                    'atau toko. Fee antar dibayar tunai ke mitra.',
+                keteranganCash:
+                    'Barang dan fee antar dibayar tunai ke mitra',
+                onUbah: (MetodeBayar m) {
+                  setState(() => _bayar = m);
+                },
+              ),
               const SizedBox(height: AppSpacing.section),
               _CatatanJujur(),
             ],
@@ -344,7 +365,7 @@ class _Intro extends StatelessWidget {
             child: Text(
               'Titip barang dari toko atau pasar di sekitar Kuningan Barat. '
               'Mitra yang menerima akan belanja dan mengantar ke alamatmu. '
-              'Pembayaran tuner saat barang diterima.',
+              'Fee antar dihitung dari jarak toko ke alamatmu. Barang dibayar via QRIS.',
               style: context.text.bodySmall,
             ),
           ),
@@ -677,8 +698,8 @@ class _CatatanJujur extends StatelessWidget {
           Expanded(
             child: Text(
               'Fee dihitung dari jarak dan bisa berubah kalau lokasi beli atau '
-              'alamat antar diperbaiki. Bayar hanya secara tunai kepada mitra, '
-              'setelah barang diterima.',
+              'alamat antar diperbaiki. Fee antar hanya dari jarak toko ke alamat antar '
+              '(bukan dari posisi mitra). Barang dibayar via QRIS.',
               style: context.text.bodySmall
                   ?.copyWith(color: context.semantic.textSecondary),
             ),

@@ -640,17 +640,23 @@ class BarisInfo extends StatelessWidget {
   }
 }
 
-/// Kartu pilihan metode bayar. CASH dulu; QRIS tampil tapi tidak bisa dipilih
-/// supaya warga tidak memilih fitur yang belum ada.
+/// Kartu pilihan metode bayar. Default: tunai aktif, QRIS belum bisa dipilih.
+/// Jastip mengaktifkan QRIS karena barang dibayar lewat QRIS.
 class KartuBayar extends StatelessWidget {
   const KartuBayar({
     super.key,
     required this.dipilih,
     required this.onUbah,
+    this.qrisAktif = false,
+    this.keteranganQris = 'Belum tersedia. Segera hadir setelah QRIS aktif.',
+    this.keteranganCash = 'Bayar langsung ke mitra saat barang diterima',
   });
 
   final MetodeBayar dipilih;
   final ValueChanged<MetodeBayar> onUbah;
+  final bool qrisAktif;
+  final String keteranganQris;
+  final String keteranganCash;
 
   @override
   Widget build(BuildContext context) {
@@ -659,7 +665,7 @@ class KartuBayar extends StatelessWidget {
         OpsiBayar(
           metode: MetodeBayar.cash,
           dipilih: dipilih == MetodeBayar.cash,
-          keterangan: 'Bayar langsung ke mitra saat barang diterima',
+          keterangan: keteranganCash,
           aktif: true,
           onUbah: onUbah,
         ),
@@ -667,8 +673,8 @@ class KartuBayar extends StatelessWidget {
         OpsiBayar(
           metode: MetodeBayar.qris,
           dipilih: dipilih == MetodeBayar.qris,
-          keterangan: 'Belum tersedia. Segera hadir setelah QRIS aktif.',
-          aktif: false,
+          keterangan: keteranganQris,
+          aktif: qrisAktif,
           onUbah: onUbah,
         ),
       ],
