@@ -61,8 +61,6 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
 
   /// Alamat yang terakhir berhasil dipecah jadi koordinat. Kalau teks berubah,
   /// titik lama sudah tidak berlaku dan harus dibuang.
-  String _teksBeli = '';
-  String _teksAntar = '';
   bool _mencariBeli = false;
   bool _mencariAntar = false;
   int _urutan = 0;
@@ -76,7 +74,6 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
     if (toko != null) {
       _lokasiBeli.text = toko.lokasiBeliTeks;
       _titikBeli = toko.titik;
-      _teksBeli = toko.lokasiBeliTeks;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _hitungUlang();
       });
@@ -266,7 +263,6 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
     setState(() {
       _titikBeli = hasil.data!;
       _lokasiBeli.text = hasil.data!.teks;
-      _teksBeli = hasil.data!.teks;
     });
     await _hitungUlang();
   }
@@ -291,7 +287,6 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
   /// datang dari saran yang diketuk atau dari peta.
   void _alamatBeliBerubah(String teks, TitikPeta? titik) {
     setState(() {
-      _teksBeli = titik == null ? '' : teks.trim();
       _titikBeli = titik ?? const TitikPeta(lat: 0, lng: 0);
       _mencariBeli = titik == null && teks.trim().length >= 3;
     });
@@ -301,7 +296,6 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
   /// Alamat antar berubah, sama seperti lokasi beli.
   void _alamatAntarBerubah(String teks, TitikPeta? titik) {
     setState(() {
-      _teksAntar = titik == null ? '' : teks.trim();
       _titikAntar = titik ?? const TitikPeta(lat: 0, lng: 0);
       _mencariAntar = titik == null && teks.trim().length >= 5;
     });

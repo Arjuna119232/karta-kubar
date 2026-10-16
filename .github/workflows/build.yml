@@ -108,13 +108,18 @@ jobs:
       - name: Non-Latin check (blocking)
         run: python3 tool/check_nonlatin.py
 
-      # Lint yang MESRAH (prefer_const, prefer_final_fields, ...) diperbaiki
-      # otomatis supaya hasil analyze benar-benar bersih, bukan 52 info yang
-      # membosankan lalu diabaikan.
-      - name: Dart fix + format
-        run: |
-          dart fix --apply || true
-          dart format lib/ tool/ || true
+      # PENTING: JANGAN `dart fix --apply` di sini. 16 Okt 2026 dibuktikan
+      # lint `avoid_init_to_null` mengubah parameter constructor
+      # `_FieldOjek` jadi `}) : validator = null : onChanged;` - kode yang
+      # tidak bisa di-parse, dan `|| true` menyembunyikan kegagalannya.
+      # `flutter analyze` memakai --no-fatal-infos, jadi info seperti
+      # prefer_const tidak memblokir; `dart fix` tidak diperlukan sama sekali.
+      # Hanya laporan, tanpa mengubah berkas.
+      - name: Dart fix (dry run, tidak mengubah berkas)
+        run: dart fix --dry-run || true
+
+      - name: Dart format
+        run: dart format lib/ tool/ || true
 
       - name: Analyze (blocking)
         run: flutter analyze --no-fatal-infos

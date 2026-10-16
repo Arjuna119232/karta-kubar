@@ -129,7 +129,7 @@ class _AlamatAutocompleteState extends ConsumerState<AlamatAutocomplete> {
         await context.push<LokasiTerpilih>(
       '/pilih-lokasi',
       extra: MintaLokasi(
-        judul: judulPeta ?? label,
+        judul: widget.judulPeta ?? widget.label,
         awal: _terkunci.valid ? _terkunci : null,
       ),
     );

@@ -375,7 +375,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
   MitraUsaha(
     id: 'm33',
     nama: 'Agen Galon Le Minerale - Toko Mami Gas',
-    kategori: <KategoriMitraUsaha>[KategoriMitraUsaha.agenGas+KategoriMitraUsaha.galonAir],
+    kategori: <KategoriMitraUsaha>[KategoriMitraUsaha.agenGas, KategoriMitraUsaha.galonAir],
     alamat: 'Jl. Mampang Prapatan XV No. 18, RT.9/RW.4',
     kelurahan: Kelurahan.dari('Mampang Prapatan'),
     fitur: 'Agen galon Le Minerale dan tabung gas',
@@ -507,7 +507,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
   MitraUsaha(
     id: 'm45',
     nama: 'Toko Air dan Gas Issola Kemang',
-    kategori: <KategoriMitraUsaha>[KategoriMitraUsaha.galonAir+KategoriMitraUsaha.agenGas],
+    kategori: <KategoriMitraUsaha>[KategoriMitraUsaha.galonAir, KategoriMitraUsaha.agenGas],
     alamat: 'Jl. Bungur Buntu (Jl. Kemang Utara No. 37), RT.1/RW.4',
     kelurahan: Kelurahan.dari('Bangka'),
     fitur: 'Agen air galon dan gas Elpiji',
@@ -529,7 +529,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
   MitraUsaha(
     id: 'm47',
     nama: 'AGEN GAS dan AQUA KRISNADI',
-    kategori: <KategoriMitraUsaha>[KategoriMitraUsaha.galonAir+KategoriMitraUsaha.agenGas],
+    kategori: <KategoriMitraUsaha>[KategoriMitraUsaha.galonAir, KategoriMitraUsaha.agenGas],
     alamat: 'RT.5/RW.4',
     kelurahan: Kelurahan.dari('Mampang Prapatan'),
     fitur: 'Agen galon Aqua dan gas Elpiji',

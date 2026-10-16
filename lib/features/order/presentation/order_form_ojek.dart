@@ -62,8 +62,6 @@ class _OjekFormScreenState extends ConsumerState<OjekFormScreen> {
 
   /// Teks alamat saat titiknya terakhir ditetapkan. Kalau teks berubah,
   /// titik lama sudah tidak berlaku.
-  String _teksJemputTitik = '';
-  String _teksTujuanTitik = '';
   bool _mencariJemput = false;
   bool _mencariTujuan = false;
   int _urutan = 0;
@@ -215,7 +213,6 @@ class _OjekFormScreenState extends ConsumerState<OjekFormScreen> {
       if (_jemput.text.trim().isEmpty) {
         _jemput.text = hasil.data!.teks;
       }
-      _teksJemputTitik = _jemput.text.trim();
     });
     await _hitungUlang();
   }
@@ -239,7 +236,6 @@ class _OjekFormScreenState extends ConsumerState<OjekFormScreen> {
   /// yang diketuk pengguna atau titik dari peta sudah memberikan koordinat.
   void _alamatJemputBerubah(String teks, TitikPeta? titik) {
     setState(() {
-      _teksJemputTitik = titik == null ? '' : teks.trim();
       _titikJemput = titik ?? const TitikPeta(lat: 0, lng: 0);
       _mencariJemput = titik == null && teks.trim().length >= 3;
     });
@@ -249,7 +245,6 @@ class _OjekFormScreenState extends ConsumerState<OjekFormScreen> {
   /// Alamat tujuan berubah, sama seperti jemput.
   void _alamatTujuanBerubah(String teks, TitikPeta? titik) {
     setState(() {
-      _teksTujuanTitik = titik == null ? '' : teks.trim();
       _titikTujuan = titik ?? const TitikPeta(lat: 0, lng: 0);
       _mencariTujuan = titik == null && teks.trim().length >= 3;
     });

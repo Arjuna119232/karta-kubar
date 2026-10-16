@@ -16,7 +16,11 @@ import '../models/order_tracking.dart';
 
 @immutable
 class SaranAlamat {
-  const SaranAlamat({required this.teks, required this.titik});
+  const SaranAlamat({
+    required this.teks,
+    required this.titik,
+    this.kelurahan,
+  });
 
   /// Alamat satu baris, mis. "Jl. Poncol Jaya, Kuningan Barat, Jakarta".
   final String teks;
