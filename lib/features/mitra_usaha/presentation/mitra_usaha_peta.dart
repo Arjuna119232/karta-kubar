@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:any_map/any_map.dart';
 import 'package:any_map_maplibre/any_map_maplibre.dart';
 import 'package:flutter/material.dart';
@@ -62,10 +64,9 @@ class _MitraUsahaPetaScreenState extends ConsumerState<MitraUsahaPetaScreen> {
           Positioned.fill(
             child: AnyMapWidget(
               adapter: MapLibreAdapter(styleUrl: gayaPetaGratis),
-              initialCamera: AnyCameraPosition(
-                target: _pusat(data),
-                zoom: 13,
-              ),
+              // Kamera awal = auto-fit ke semua marker (pusat bounds + zoom
+              // dari rentang titik). Kosong -> pusat Kuningan Barat.
+              initialCamera: _kameraFit(data),
               markers: <AnyMarker>[
                 for (final MitraUsaha m in data)
                   AnyMarker(
@@ -74,6 +75,7 @@ class _MitraUsahaPetaScreenState extends ConsumerState<MitraUsahaPetaScreen> {
                     anchor: AnyMarkerAnchor.center,
                     icon: _Pin(
                       warna: m.kategoriUtama.warna,
+                      ikon: m.kategoriUtama.ikon,
                       terpilih: terpilih?.id == m.id,
                     ),
                   ),
@@ -142,16 +144,32 @@ class _MitraUsahaPetaScreenState extends ConsumerState<MitraUsahaPetaScreen> {
     return out;
   }
 
-  static AnyLatLng _pusat(List<MitraUsaha> data) {
-    if (data.isEmpty) return const AnyLatLng(-6.2365, 106.8219);
-    double lat = 0;
-    double lng = 0;
-    for (final MitraUsaha m in data) {
-      lat += m.titik.lat;
-      lng += m.titik.lng;
+  /// Pusat default: Kuningan Barat (titik resmi, sama dengan `order.dart`).
+  static const AnyLatLng _pusatDefault = AnyLatLng(-6.2365, 106.8219);
+
+  /// Kamera yang memuat semua marker: pusat bounds + zoom dari rentang titik.
+  static AnyCameraPosition _kameraFit(List<MitraUsaha> data) {
+    if (data.isEmpty) {
+      return AnyCameraPosition(target: _pusatDefault, zoom: 14);
     }
-    final double n = data.length.toDouble();
-    return AnyLatLng(lat / n, lng / n);
+    double minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+    for (final MitraUsaha m in data) {
+      minLat = math.min(minLat, m.titik.lat);
+      maxLat = math.max(maxLat, m.titik.lat);
+      minLng = math.min(minLng, m.titik.lng);
+      maxLng = math.max(maxLng, m.titik.lng);
+    }
+    final double rentang = math.max(maxLat - minLat, maxLng - minLng);
+    // Satu layar ~ 360 / 2^zoom derajat; sisakan margin ~25%.
+    double zoom = 14;
+    if (rentang > 0) {
+      final double z = math.log(360 * 0.6 / rentang) / math.ln2;
+      zoom = z < 11.0 ? 11.0 : (z > 16.0 ? 16.0 : z);
+    }
+    return AnyCameraPosition(
+      target: AnyLatLng((minLat + maxLat) / 2, (minLng + maxLng) / 2),
+      zoom: zoom,
+    );
   }
 }
 
@@ -275,23 +293,30 @@ class _KartuTerpilih extends StatelessWidget {
 }
 
 class _Pin extends StatelessWidget {
-  const _Pin({required this.warna, required this.terpilih});
+  const _Pin({
+    required this.warna,
+    required this.ikon,
+    required this.terpilih,
+  });
 
   final Color warna;
+  final Ik ikon;
   final bool terpilih;
 
   @override
   Widget build(BuildContext context) {
-    final double d = terpilih ? 38 : 22;
+    final double d = terpilih ? 40 : 30;
     return Container(
       width: d,
       height: d,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         color: warna,
         shape: BoxShape.circle,
         border: Border.all(color: AppColors.white, width: terpilih ? 3 : 2),
         boxShadow: AppShadows.medium,
       ),
+      child: AppIcon(ikon, size: terpilih ? 22 : 16, color: AppColors.white),
     );
   }
 }

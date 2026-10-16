@@ -226,11 +226,24 @@ class MitraUsahaDetailScreen extends StatelessWidget {
   }
 
   Future<void> _bukaPeta(BuildContext context, MitraUsaha m) async {
-    final Uri uri = Uri.parse(
-      'geo:${m.titik.lat},${m.titik.lng}?q=${m.titik.lat},${m.titik.lng}'
-      '(${Uri.encodeComponent(m.nama)})',
+    // Google Maps via URL universal: membuka app Google Maps kalau ada,
+    // kalau tidak membuka browser. Cadangan terakhir: skema geo:.
+    final Uri web = Uri.parse(
+      'https://www.google.com/maps/search/?api=1'
+      '&query=${m.titik.lat},${m.titik.lng}',
     );
-    final bool ok = await launchUrl(uri);
+    bool ok = false;
+    try {
+      ok = await launchUrl(web, mode: LaunchMode.externalApplication);
+    } catch (_) {}
+    if (!ok) {
+      try {
+        ok = await launchUrl(
+          Uri.parse('geo:${m.titik.lat},${m.titik.lng}'
+              '?q=${m.titik.lat},${m.titik.lng}(${Uri.encodeComponent(m.nama)})'),
+        );
+      } catch (_) {}
+    }
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tidak ada aplikasi peta di perangkat.')),

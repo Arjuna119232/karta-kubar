@@ -93,13 +93,16 @@ class _AlamatAutocompleteState extends ConsumerState<AlamatAutocomplete> {
       return;
     }
     setState(() => _mencari = true);
-    _jeda = Timer(const Duration(milliseconds: 700), () => _cari(teks));
+    _jeda = Timer(const Duration(milliseconds: 500), () => _cari(teks));
   }
 
   Future<void> _cari(String teks) async {
     final LokasiService svc = ref.read(lokasiServiceProvider);
     final List<SaranAlamat> hasil = await svc.cariAlamatSaran(teks);
-    if (!mounted || teks != widget.controller.text.trim()) return;
+    if (!mounted) return;
+    // Hasil basi (teks sudah berubah): pencarian baru yang akan mematikan
+    // indikator loading, jadi jangan timpa saran dengan hasil lama.
+    if (teks != widget.controller.text.trim()) return;
     setState(() {
       _mencari = false;
       _saran = hasil;

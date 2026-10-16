@@ -20,18 +20,32 @@ class SaranAlamat {
     required this.teks,
     required this.titik,
     this.kelurahan,
+    this.shortName = '',
+    this.type = '',
   });
 
   /// Alamat satu baris, mis. "Jl. Poncol Jaya, Kuningan Barat, Jakarta".
+  /// Alias: `displayName`.
   final String teks;
 
   final TitikPeta titik;
 
-  /// Nama jalan/kawasan saja, untuk baris kecil di bawah alamat.
-  String get jalan => teks.split(',').first.trim();
-
-  /// Kelurahan/kecamatan hasil baca `addressdetails` Nominatim.
+  /// Kelurahan/kecamatan hasil baca detail alamat.
   final String? kelurahan;
+
+  /// Nama pendek (nama jalan/tempat) untuk baris utama saran.
+  final String shortName;
+
+  /// Jenis tempat (mis. `residential`, `shop`, `street`). Boleh kosong.
+  final String type;
+
+  String get displayName => teks;
+  double get lat => titik.lat;
+  double get lng => titik.lng;
+
+  /// Nama jalan/kawasan saja, untuk baris kecil di bawah alamat.
+  String get jalan =>
+      shortName.isNotEmpty ? shortName : teks.split(',').first.trim();
 
   /// Nama kedua yang tampil di bawah nama jalan: kelurahan kalau ada,
   /// kalau tidak pakai bagian kedua alamat.
@@ -77,14 +91,15 @@ class LokasiService {
   /// 6 detik dianggap gagal agar layar tidak menggantung.
   static const Duration batas = Duration(seconds: 6);
 
-  static const String _photon = 'https://photon.komoot.io/api';
+  static const String _photon = 'https://photon.komoot.io/api/';
 
   /// OpenStreetMap Nominatim. Rules penggunaan mereka mewajibkan User-Agent
-  /// yang bisa dihubungi dan maksimal 1 permintaan per detik, jadi [_jedaNominatim]
+  /// yang bisa dihubungi dan maksimal 1 permintaan per detik, jadi [_jeda]
   /// dipakai di semua panggilan.
   static const String _nominatim = 'https://nominatim.openstreetmap.org';
 
-  DateTime _nominatimTerakhir = DateTime.fromMillisecondsSinceEpoch(0);
+  /// Waktu panggilan terakhir ke tiap server (rate limit 1 permintaan/detik).
+  DateTime _terakhir = DateTime.fromMillisecondsSinceEpoch(0);
 
   /// Cache alamat supaya mengetik ulang kata yang sama tidak memanggil server
   /// lagi.dibatasi 40 entri terakhir, cukup untuk satu sesi form.
@@ -100,7 +115,7 @@ class LokasiService {
   HttpClient _http() {
     _klien ??= HttpClient()
       ..connectionTimeout = const Duration(seconds: 5)
-      ..userAgent = 'KUNBARConnect/0.13 (warga)';
+      ..userAgent = 'KUNBARConnect/1.0';
     return _klien!;
   }
 
@@ -195,99 +210,141 @@ class LokasiService {
 
   // -------------------------------------------------------------- geocoding
 
-  /// Cari koordinat dari teks alamat (nama jalan, toko, landmark).
+  /// Pusat pencarian (Kuningan Barat). Hasil dekat titik ini diutamakan.
+  static const String _biasLat = '-6.2365';
+  static const String _biasLon = '106.8219';
+
+  /// Rate limit 1 permintaan/detik: tunggu sisa waktu sejak panggilan terakhir.
   ///
-  /// Hasil kosong bukan error: form tetap bisa diisi manual, dan jarak tetap
-  /// dihitung dari koordinat yang sudah ada.
-  Future<List<TitikPeta>> cariAlamat(String kueri) async {
-    if (kueri.trim().length < 3) return const <TitikPeta>[];
-    try {
-      final Uri url = Uri.parse(_photon).replace(
-        queryParameters: <String, String>{
-          'q': kueri.trim(),
-          'limit': '6',
-          'lang': 'id',
-          // Condong ke Jakarta Selatan supaya "Pasar Minggu" tidak nyasar.
-          'lat': '-6.25',
-          'lon': '106.82',
-        },
-      );
-      final dynamic j = jsonDecode(await _ambil(url));
-      final dynamic fitur = j is Map ? j['features'] : null;
-      if (fitur is! List) return const <TitikPeta>[];
-      final List<TitikPeta> out = <TitikPeta>[];
-      for (final dynamic f in fitur) {
-        if (f is! Map) continue;
-        final dynamic geom = f['geometry'];
-        if (geom is! Map) continue;
-        final dynamic coords = geom['coordinates'];
-        if (coords is! List || coords.length < 2) continue;
-        out.add(
-          TitikPeta(
-            lat: (coords[1] as num).toDouble(),
-            lng: (coords[0] as num).toDouble(),
-          ),
-        );
-      }
-      return out;
-    } catch (_) {
-      return const <TitikPeta>[];
+  /// (Versi lama menghitung selisih dari epoch 1970 sehingga panggilan
+  /// pertama menunggu puluhan tahun -> pencarian "loading terus".)
+  Future<void> _jeda() async {
+    final Duration lewat = DateTime.now().difference(_terakhir);
+    const Duration minimal = Duration(seconds: 1);
+    if (lewat < minimal) {
+      await Future<void>.delayed(minimal - lewat);
     }
+    _terakhir = DateTime.now();
   }
 
-  /// Satu saran alamat dari Nominatim: teks siap tampil + koordinat.
-
-  /// Tunggu sampai satu detik sejak panggilan Nominatim terakhir.
-  Future<void> _jedaNominatim() async {
-    final DateTime sekarang = DateTime.now();
-    final Duration tunggu =
-        DateTime(sekarang.year, sekarang.month, sekarang.day,
-                sekarang.hour, sekarang.minute, sekarang.second)
-                .add(const Duration(seconds: 1))
-                .difference(_nominatimTerakhir);
-    if (tunggu.isNegative) return;
-    await Future<void>.delayed(tunggu);
-    _nominatimTerakhir = DateTime.now();
+  /// Cari koordinat dari teks alamat. Hasil kosong bukan error.
+  Future<List<TitikPeta>> cariAlamat(String kueri) async {
+    final List<SaranAlamat> s = await cariAlamatSaran(kueri);
+    return s.map((SaranAlamat e) => e.titik).toList(growable: false);
   }
 
-  /// Saran alamat lengkap dari teks yang diketik pengguna.
+  /// Saran alamat dari teks yang diketik pengguna.
   ///
-  /// Bedanya dengan [cariAlamat]: hasil punya TEKS alamat, jadi bisa
-  /// langsung ditampilkan di kolom isian. Kalau Nominatim gagal, otomatis
-  /// jatuh ke Photon supaya saran tetap ada (tanpa teks, nanti diisi manual).
+  /// Urutan: cache -> Photon (utama) -> Nominatim (cadangan). Tidak pernah
+  /// melempar error dan tidak pernah menggantung lebih dari beberapa detik.
   Future<List<SaranAlamat>> cariAlamatSaran(String kueri) async {
     final String k = kueri.trim().toLowerCase();
     if (k.length < 3) return const <SaranAlamat>[];
     final List<SaranAlamat>? ada = _cacheSaran[k];
     if (ada != null) return ada;
 
-    final List<SaranAlamat> hasil = await _saranNominatim(k);
+    List<SaranAlamat> hasil = await _saranPhoton(kueri.trim());
+    if (hasil.isEmpty) hasil = await _saranNominatim(kueri.trim());
     if (hasil.isNotEmpty) {
       _cacheSaran[k] = hasil;
       if (_cacheSaran.length > 40) _cacheSaran.remove(_cacheSaran.keys.first);
-      return hasil;
     }
-    final List<TitikPeta> cadangan = await cariAlamat(kueri);
-    if (cadangan.isEmpty) return const <SaranAlamat>[];
-    final List<SaranAlamat> teksKosong = cadangan
-        .map((TitikPeta t) => SaranAlamat(teks: '', titik: t))
-        .toList(growable: false);
-    _cacheSaran[k] = teksKosong;
-    return teksKosong;
+    return hasil;
+  }
+
+  Future<List<SaranAlamat>> _saranPhoton(String kueri) async {
+    Future<String> panggil(bool denganLang) async {
+      await _jeda();
+      return _ambil(
+        Uri.parse(_photon).replace(
+          queryParameters: <String, String>{
+            'q': kueri,
+            'limit': '5',
+            if (denganLang) 'lang': 'id',
+            'lat': _biasLat,
+            'lon': _biasLon,
+          },
+        ),
+      );
+    }
+
+    try {
+      String isi;
+      try {
+        isi = await panggil(true);
+      } on HttpException {
+        // Photon menolak `lang` yang tidak didukung (HTTP 400): ulangi tanpa.
+        isi = await panggil(false);
+      }
+      final dynamic j = jsonDecode(isi);
+      final dynamic fitur = j is Map ? j['features'] : null;
+      if (fitur is! List) return const <SaranAlamat>[];
+      final List<SaranAlamat> out = <SaranAlamat>[];
+      for (final dynamic f in fitur) {
+        if (f is! Map) continue;
+        final dynamic geom = f['geometry'];
+        final dynamic coords = geom is Map ? geom['coordinates'] : null;
+        if (coords is! List ||
+            coords.length < 2 ||
+            coords[0] is! num ||
+            coords[1] is! num) {
+          continue;
+        }
+        final Map<String, dynamic> p = f['properties'] is Map
+            ? (f['properties'] as Map).cast<String, dynamic>()
+            : <String, dynamic>{};
+        String t(String key) {
+          final Object? v = p[key];
+          return v is String ? v.trim() : '';
+        }
+
+        final String jalan = t('street');
+        final String nomor = t('housenumber');
+        String pendek = t('name');
+        if (pendek.isEmpty) {
+          pendek = jalan.isEmpty || nomor.isEmpty ? jalan : '$jalan $nomor';
+        }
+        final String kel = t('suburb').isNotEmpty ? t('suburb') : t('district');
+        final List<String> bagian = <String>[
+          pendek,
+          if (jalan.isNotEmpty && jalan != pendek) jalan,
+          kel,
+          t('city').isNotEmpty ? t('city') : t('county'),
+          t('state'),
+        ].where((String e) => e.isNotEmpty).toList();
+        if (bagian.isEmpty) continue;
+        out.add(
+          SaranAlamat(
+            teks: bagian.toSet().join(', '),
+            shortName: pendek.isEmpty ? bagian.first : pendek,
+            type: t('osm_value').isNotEmpty ? t('osm_value') : t('type'),
+            kelurahan: kel,
+            titik: TitikPeta(
+              lat: (coords[1] as num).toDouble(),
+              lng: (coords[0] as num).toDouble(),
+            ),
+          ),
+        );
+      }
+      return out;
+    } catch (e) {
+      debugPrint('[LokasiService] Photon gagal: $e');
+      return const <SaranAlamat>[];
+    }
   }
 
   Future<List<SaranAlamat>> _saranNominatim(String kueri) async {
     try {
-      await _jedaNominatim();
+      await _jeda();
       final Uri url = Uri.parse('$_nominatim/search').replace(
         queryParameters: <String, String>{
           'q': kueri,
           'format': 'jsonv2',
           'addressdetails': '1',
-          'limit': '6',
+          'limit': '5',
           'countrycodes': 'id',
-          'viewbox': '106.70,-6.30,106.90,-6.20',
-          'bounded': '1',
+          'accept-language': 'id',
+          'viewbox': '106.70,-6.15,106.95,-6.35',
         },
       );
       final dynamic j = jsonDecode(await _ambil(url));
@@ -296,43 +353,46 @@ class LokasiService {
       for (final dynamic e in j) {
         if (e is! Map) continue;
         final dynamic nama = e['display_name'];
-        final dynamic lat = e['lat'];
-        final dynamic lon = e['lon'];
-        if (nama is! String || nama.trim().isEmpty) continue;
-        final double? la = double.tryParse('$lat');
-        final double? lo = double.tryParse('$lon');
-        if (la == null || lo == null) continue;
+        final double? la = double.tryParse('${e['lat']}');
+        final double? lo = double.tryParse('${e['lon']}');
+        if (nama is! String || nama.trim().isEmpty || la == null || lo == null) {
+          continue;
+        }
         final Map<String, dynamic> alamat = e['address'] is Map
             ? (e['address'] as Map).cast<String, dynamic>()
             : <String, dynamic>{};
+        final dynamic n = e['name'];
         out.add(
           SaranAlamat(
             teks: nama,
+            shortName: n is String && n.trim().isNotEmpty
+                ? n.trim()
+                : nama.split(',').first.trim(),
+            type: '${e['type'] ?? ''}',
             titik: TitikPeta(lat: la, lng: lo),
             kelurahan: _ketikAlamat(alamat),
           ),
         );
       }
       return out;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[LokasiService] Nominatim gagal: $e');
       return const <SaranAlamat>[];
     }
   }
 
   /// Alamat dari titik (balik dari koordinat ke nama jalan).
-  ///
-  /// Dipakai map picker: pengguna menggeser penanda, lalu alamatnya
-  /// terisi otomatis. Kalau gagal, teks kosong dan pengguna mengetik manual.
   Future<String> reverseAlamat(TitikPeta titik) async {
     if (!titik.valid) return '';
     try {
-      await _jedaNominatim();
+      await _jeda();
       final Uri url = Uri.parse('$_nominatim/reverse').replace(
         queryParameters: <String, String>{
           'lat': '${titik.lat}',
           'lon': '${titik.lng}',
           'format': 'jsonv2',
           'zoom': '18',
+          'accept-language': 'id',
         },
       );
       final dynamic j = jsonDecode(await _ambil(url));
