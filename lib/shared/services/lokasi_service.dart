@@ -208,6 +208,23 @@ class LokasiService {
     }
   }
 
+  /// Sama seperti [posisiSaya], tapi koordinatnya juga diberi nama jalan dari
+  /// server (reverse geocode).
+  ///
+  /// Dipakai form pemesanan supaya tombol "lokasi HP" mengisi kolom alamat
+  /// dengan nama jalan, bukan angka koordinat mentah. Kalau server tidak bisa
+  /// dibaca, hasil tetap koordinat tanpa nama — pemesanan tidak boleh gagal
+  /// hanya karena nama jalannya tidak ketemu.
+  Future<Hasil<TitikPeta>> posisiSayaBeralamat() async {
+    final Hasil<TitikPeta> hasil = await posisiSaya();
+    if (!hasil.berhasil) return hasil;
+    final TitikPeta titik = hasil.data!;
+    final String nama = await reverseAlamat(titik);
+    return Hasil<TitikPeta>.berhasil(
+      TitikPeta(lat: titik.lat, lng: titik.lng, alamat: nama),
+    );
+  }
+
   // -------------------------------------------------------------- geocoding
 
   /// Pusat pencarian (Kuningan Barat). Hasil dekat titik ini diutamakan.

@@ -253,7 +253,7 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
   Future<void> _tandaiLokasiBeli() async {
     setState(() => _sibukLokasi = true);
     final LokasiService svc = ref.read(lokasiServiceProvider);
-    final Hasil<TitikPeta> hasil = await svc.posisiSaya();
+    final Hasil<TitikPeta> hasil = await svc.posisiSayaBeralamat();
     if (!mounted) return;
     setState(() => _sibukLokasi = false);
     if (!hasil.berhasil) {

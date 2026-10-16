@@ -104,27 +104,43 @@ enum MetodeBayar {
 /// Satu koordinat WGS84.
 @immutable
 class TitikPeta {
-  const TitikPeta({required this.lat, required this.lng});
+  const TitikPeta({
+    required this.lat,
+    required this.lng,
+    this.alamat = '',
+  });
 
   factory TitikPeta.dari(Object? nilai) {
     if (nilai is! Map) return const TitikPeta(lat: 0, lng: 0);
     return TitikPeta(
       lat: bacaAngka(nilai['lat']),
       lng: bacaAngka(nilai['lng']),
+      alamat: bacaTeks(nilai['alamat']),
     );
   }
 
   final double lat;
   final double lng;
 
+  /// Nama jalan / tempat dari server. Kosong kalau belum pernah di-geocode.
+  ///
+  /// Dipakai supaya pilihan "lokasi HP" menampilkan alamat, bukan angka
+  /// koordinat mentah seperti `-6.23649, 106.82187`.
+  final String alamat;
+
   bool get valid => lat != 0 || lng != 0;
 
   /// Bahasa manusia supaya tidak tampil "null" di UI.
-  String get teks => valid
-      ? '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}'
-      : 'Belum ada';
+  ///
+  /// Prioritas: alamat dari server, lalu koordinat, lalu "Belum ada".
+  String get teks {
+    if (!valid) return 'Belum ada';
+    if (alamat.isNotEmpty) return alamat;
+    return '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}';
+  }
 
-  Map<String, dynamic> keJson() => <String, dynamic>{'lat': lat, 'lng': lng};
+  Map<String, dynamic> keJson() =>
+      <String, dynamic>{'lat': lat, 'lng': lng, 'alamat': alamat};
 
   @override
   bool operator ==(Object other) =>

@@ -298,3 +298,31 @@ Paket `maplibre_gl` yang dibawa `any_map_maplibre` WAJIB Java 21 di CI.
 
 `flutter analyze` sudah 0 error 0 warning. Lint mekanis dibersihkan otomatis
 di CI oleh `dart fix --apply`. `tool/check_dart.py` tetap blocking.
+
+## v0.14.2 — paket "full fix" dari AI lain (AUDIT, sebagian kecil diambil)
+
+Paket `kunbar-full-fix.zip` (438 entri) **bukan** patch di atas v0.14.1, tapi
+*cabang penuh* dari state lama. 10 berkas berbeda + 3 berkas baru, hampir
+semuanya regresi:
+
+| Isi paket | Putuskan | Alasan |
+| --- | --- | --- |
+| `core/services/location_service.dart` (baru) | TOLAK | duplikat geocoder kedua (dua sumber kebenaran), bias coords `-6.2500/106.8230` = **salah ~1,3 km** (pusat resmi Nominatim `-6.2365/106.8219`) |
+| `shared/widgets/address_autocomplete.dart` (baru) | TOLAK | duplikat `alamat_autocomplete.dart` |
+| `ojek/presentation/map_picker_screen.dart` (baru) | TOLAK | duplikat `pilih_lokasi_peta.dart` + ganti peta ke `flutter_map` |
+| `mitra_usaha_lokal.dart` (lat ~-6.248) | TOLAK | koordinat dihitung ulang per jalan dari basis salah; merusak sebaran *golden angle* yang sudah diverifikasi |
+| `mitra_usaha.dart` | TOLAK | `Color(0xFF1B5E20)` mentah + `Icons.*` Material (larangan design system) |
+| `order.dart`, `pilih_lokasi_peta.dart` | TOLAK | `titikKuninganBarat` di-*reset* ke `-6.2500/106.8230` |
+| `mitra_usaha_peta.dart` (`flutter_map`) | TOLAK | ganti lib peta; kartu terpilih + auto-fit + pin ikon sudah ada di HEAD |
+| `order_form_ojek.dart` | TOLAK | hanya rewiring ke widget duplikat |
+| `pubspec.yaml` (`flutter_map`, `latlong2`, `geolocator ^13.0.1`) | TOLAK | `geolocator` 13.0.1 sudah terbukti merusak build (12.0.0 yang dipakai) |
+| `build.yml`, `test/tarif_service_test.dart` | IDENTIK | tidak ada yang perlu diambil |
+| **GPS menampilkan nama jalan** | **DIAMBIL** | satu perbaikan nyata (lihat bawah) |
+
+**Perbaikan yang diambil:** tombol "lokasi HP" mengisi kolom alamat dengan
+`-6.23649, 106.82187` (angka mentah). Sekarang diisi nama jalan dari
+reverse geocode. `TitikPeta` dapat field `alamat` (opsional, default kosong,
+`teks` memprioritaskan alamat), `LokasiService.posisiSayaBeralamat()` =
+`posisiSaya()` + `reverseAlamat()`, dipakai form ojek **dan** jastip.
+Kalau server tidak terbaca, koordinat tetap dipakai — pemesanan tidak boleh
+gagal hanya karena nama jalannya tidak ketemu.

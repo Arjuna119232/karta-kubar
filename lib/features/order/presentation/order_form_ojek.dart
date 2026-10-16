@@ -200,7 +200,7 @@ class _OjekFormScreenState extends ConsumerState<OjekFormScreen> {
   Future<void> _ambilLokasi() async {
     setState(() => _sibukLokasi = true);
     final LokasiService svc = ref.read(lokasiServiceProvider);
-    final Hasil<TitikPeta> hasil = await svc.posisiSaya();
+    final Hasil<TitikPeta> hasil = await svc.posisiSayaBeralamat();
     if (!mounted) return;
     setState(() => _sibukLokasi = false);
     if (!hasil.berhasil) {
