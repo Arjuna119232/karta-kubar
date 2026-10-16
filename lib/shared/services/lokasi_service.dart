@@ -13,7 +13,7 @@ import '../models/order_tracking.dart';
 /// Tiga sumber gratis tanpa API key:
 ///   1. `geolocator` -> posisi perangkat (butuh izin lokasi)
 ///   2. Photon       -> cari koordinat dari teks alamat (OpenStreetMap)
-///   3. OSRM demo    -> rute jalan kaki + jarak + ETA
+///   3. OSRM demo    -> rute jalan + geometri garis + jarak + ETA
 ///
 /// Kalau jaringan gagal, hasil tetap dikembalikan dari haversine dan ditandai
 /// `dariServer: false`, supaya UI bisa jujur membedakan "rute asli" dari
@@ -27,9 +27,9 @@ class LokasiService {
 
   static const String _photon = 'https://photon.komoot.io/api';
 
-  /// Mode `foot` dipakai karena KUNBAR adalah layanan lingkungan: jalan kaki
-  /// lebih masuk akal daripada mobil untuk jarak 1-3 km.
-  static const String _osrm = 'https://router.project-osrm.org/route/v1/foot';
+  /// Profil `driving`: ojek dan jastip memakai kendaraan bermotor, jadi jarak
+  /// harus mengikuti jalan yang bisa dilewati motor (bukan jalan kaki).
+  static const String _osrm = 'https://router.project-osrm.org/route/v1/driving';
 
   HttpClient? _klien;
 
@@ -143,6 +143,9 @@ class LokasiService {
           'q': kueri.trim(),
           'limit': '6',
           'lang': 'id',
+          // Condong ke Jakarta Selatan supaya "Pasar Minggu" tidak nyasar.
+          'lat': '-6.25',
+          'lon': '106.82',
         },
       );
       final dynamic j = jsonDecode(await _ambil(url));
@@ -170,13 +173,13 @@ class LokasiService {
 
   // ------------------------------------------------------------------ rute
 
-  /// Hitung rute jalan kaki dari [dari] ke [ke].
+  /// Hitung rute jalan (OSRM, profil kendaraan) dari [dari] ke [ke].
   Future<Rute> rute(TitikPeta dari, TitikPeta ke) async {
     if (!dari.valid || !ke.valid) return Rute.estimasi(0);
     try {
       final Uri url = Uri.parse(
         '$_osrm/${dari.lng},${dari.lat};${ke.lng},${ke.lat}'
-        '?overview=false&alternatives=false',
+        '?overview=full&geometries=geojson&alternatives=false',
       );
       final dynamic j = jsonDecode(await _ambil(url));
       final dynamic routes = j is Map ? j['routes'] : null;
@@ -187,9 +190,27 @@ class LokasiService {
       final dynamic jarak = r['distance'];
       if (jarak is! num) return Rute.estimasi(jarakKm(dari, ke));
       final dynamic durasi = r['duration'];
+      List<TitikPeta>? garis;
+      final dynamic geom = r['geometry'];
+      final dynamic koor = geom is Map ? geom['coordinates'] : null;
+      if (koor is List && koor.length > 1) {
+        final int langkah = koor.length > 300 ? (koor.length / 300).ceil() : 1;
+        garis = <TitikPeta>[];
+        for (int i = 0; i < koor.length; i += langkah) {
+          final dynamic c = koor[i];
+          if (c is List && c.length >= 2 && c[0] is num && c[1] is num) {
+            garis.add(TitikPeta(
+              lat: (c[1] as num).toDouble(),
+              lng: (c[0] as num).toDouble(),
+            ));
+          }
+        }
+        garis.add(ke);
+      }
       return Rute.dariServer(
         jarakKm: (jarak / 1000).toDouble(),
         durasiMenit: durasi is num ? (durasi / 60).round() : 0,
+        garis: garis,
       );
     } catch (_) {
       return Rute.estimasi(jarakKm(dari, ke));

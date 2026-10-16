@@ -16,6 +16,8 @@ void main() {
     expect(t.tarifOjek(15), 32000);
     expect(t.tarifOjek(16), 34500);
     expect(t.tarifOjek(20), 44500);
+    // Kasus laporan: mitra->jemput 0,1 km + jemput->tujuan 13,8 km = 13,9 km.
+    expect(t.tarifOjek(0.1 + 13.8), 32000);
   });
 
   test('fee antar jastip per tingkat jarak', () {

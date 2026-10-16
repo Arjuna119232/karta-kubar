@@ -127,7 +127,7 @@ class RingkasanTarif {
 
   /// Sumber angka, jujur ditampilkan supaya warga tidak mengira pasti.
   String get sumberTeks => dariServer
-      ? 'dihitung dari rute jalan kaki'
+      ? 'dihitung dari rute jalan (OSRM)'
       : adaJarak
           ? 'perkiraan kasar (server rute tidak bisa dihubungi)'
           : 'menunggu lokasi';

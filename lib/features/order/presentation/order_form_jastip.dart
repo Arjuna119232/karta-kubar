@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -58,6 +59,17 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
   bool _sibukTarif = false;
   RingkasanTarif _ringkasan = RingkasanTarif.kosong;
 
+  /// Alamat yang terakhir berhasil dipecah jadi koordinat. Kalau teks berubah,
+  /// titik lama sudah tidak berlaku dan harus dibuang.
+  String _teksBeli = '';
+  String _teksAntar = '';
+  bool _mencariBeli = false;
+  bool _mencariAntar = false;
+  Timer? _jedaBeli;
+  Timer? _jedaAntar;
+  int _urutan = 0;
+  List<TitikPeta> _garis = const <TitikPeta>[];
+
   @override
   void initState() {
     super.initState();
@@ -66,6 +78,7 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
     if (toko != null) {
       _lokasiBeli.text = toko.lokasiBeliTeks;
       _titikBeli = toko.titik;
+      _teksBeli = toko.lokasiBeliTeks;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _hitungUlang();
       });
@@ -74,6 +87,8 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
 
   @override
   void dispose() {
+    _jedaBeli?.cancel();
+    _jedaAntar?.cancel();
     _barang.dispose();
     _lokasiBeli.dispose();
     _alamatAntar.dispose();
@@ -116,7 +131,7 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
                 label: 'Lokasi beli',
                 hint: 'Contoh: Pasar Minggu, Jalan Melati No 12',
                 ikon: Ik.cart,
-                onChanged: (_) => _hitungUlang(),
+                onChanged: (_) => _beliBerubah(),
                 validator: (String? v) => _wajib(v, 'Lokasi beli', min: 3),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -134,13 +149,14 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
                 label: 'Alamat antar',
                 hint: 'Contoh: Jl. Kenanga No 4, RT 05 RW 02',
                 ikon: Ik.home,
-                onChanged: (_) => _hitungUlang(),
+                onChanged: (_) => _antarBerubah(),
                 validator: (String? v) => _wajib(v, 'Alamat antar', min: 5),
               ),
               const SizedBox(height: AppSpacing.md),
               _PetaRingkas(
                 judul: 'Perkiraan jalur',
                 titik: <TitikPeta>[_titikBeli, _titikAntar],
+                garis: _garis.length > 1 ? _garis : null,
               ),
               const SizedBox(height: AppSpacing.section),
               SubOrder('Foto referensi (opsional)', ikon: Ik.addPhoto),
@@ -173,7 +189,8 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
               const SizedBox(height: AppSpacing.md),
               _TarifCard(
                 ringkasan: _ringkasan,
-                sibuk: _sibukTarif,
+                sibuk: _sibukTarif || _mencariBeli || _mencariAntar,
+                status: _statusLokasi(),
                 onHitungUlang: _hitungUlang,
               ),
               const SizedBox(height: AppSpacing.section),
@@ -252,25 +269,119 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
     setState(() {
       _titikBeli = hasil.data!;
       _lokasiBeli.text = hasil.data!.teks;
+      _teksBeli = hasil.data!.teks;
     });
     await _hitungUlang();
   }
 
   /// Hitung ulang fee setiap kali lokasi berubah.
+  // ------------------------------------------------------- lokasi & tarif
+
+  /// Pesan bila alamat sudah diisi tetapi belum ketemu di peta.
+  String? _statusLokasi() {
+    if (_mencariBeli || _mencariAntar) return 'Mencari alamat di peta...';
+    if (_lokasiBeli.text.trim().length >= 3 && !_titikBeli.valid) {
+      return 'Lokasi beli belum ketemu di peta. Tulis lebih lengkap, atau tekan '
+          'ikon lokasi di bawah.';
+    }
+    if (_alamatAntar.text.trim().length >= 5 && !_titikAntar.valid) {
+      return 'Alamat antar belum ketemu di peta. Tulis lebih lengkap '
+          '(mis. nama jalan + nomor + RT/RW).';
+    }
+    return null;
+  }
+
+  /// Alamat beli berubah: titik lama dibuang, cari ulang setelah jeda.
+  ///
+  /// Dulu pencarian dibatasi "1x per 4 detik" sehingga kata terakhir yang
+  /// diketik tidak pernah dicari, alamat tidak pernah punya koordinat, dan fee
+  /// jatuh ke harga minimum yang tidak benar.
+  void _beliBerubah() {
+    final String teks = _lokasiBeli.text.trim();
+    if (teks != _teksBeli && _titikBeli.valid) {
+      setState(() => _titikBeli = const TitikPeta(lat: 0, lng: 0));
+    }
+    _jedaBeli?.cancel();
+    if (teks.length < 3 || teks == _teksBeli) {
+      setState(() => _mencariBeli = false);
+      _hitungUlang();
+      return;
+    }
+    setState(() => _mencariBeli = true);
+    _jedaBeli = Timer(const Duration(milliseconds: 700), _cariBeli);
+  }
+
+  Future<void> _cariBeli() async {
+    final String kueri = _lokasiBeli.text.trim();
+    final List<TitikPeta> found =
+        await ref.read(lokasiServiceProvider).cariAlamat(kueri);
+    if (!mounted || kueri != _lokasiBeli.text.trim()) return;
+    setState(() {
+      _mencariBeli = false;
+      if (found.isNotEmpty) {
+        _titikBeli = found.first;
+        _teksBeli = kueri;
+      }
+    });
+    await _hitungUlang();
+  }
+
+  /// Alamat antar berubah: sama seperti lokasi beli.
+  void _antarBerubah() {
+    final String teks = _alamatAntar.text.trim();
+    if (teks != _teksAntar && _titikAntar.valid) {
+      setState(() => _titikAntar = const TitikPeta(lat: 0, lng: 0));
+    }
+    _jedaAntar?.cancel();
+    if (teks.length < 5 || teks == _teksAntar) {
+      setState(() => _mencariAntar = false);
+      _hitungUlang();
+      return;
+    }
+    setState(() => _mencariAntar = true);
+    _jedaAntar = Timer(const Duration(milliseconds: 700), _cariAntar);
+  }
+
+  Future<void> _cariAntar() async {
+    final String kueri = _alamatAntar.text.trim();
+    final List<TitikPeta> found =
+        await ref.read(lokasiServiceProvider).cariAlamat(kueri);
+    if (!mounted || kueri != _alamatAntar.text.trim()) return;
+    setState(() {
+      _mencariAntar = false;
+      if (found.isNotEmpty) {
+        _titikAntar = found.first;
+        _teksAntar = kueri;
+      }
+    });
+    await _hitungUlang();
+  }
+
+  /// Fee antar dari jarak lokasi beli -> alamat antar.
+  ///
+  /// Tanpa kedua koordinat, tarif TIDAK ditampilkan. Angka minimum yang
+  /// muncul tanpa koordinat pernah mengecoh warga, jadi lebih baik kosong.
   Future<void> _hitungUlang() async {
-    if (!_ringkasan.adaJarak || _titikBeli.valid) {
-      setState(() => _sibukTarif = true);
-      final LokasiService svc = ref.read(lokasiServiceProvider);
-      final TitikPeta asal =
-          _titikBeli.valid ? _titikBeli : const TitikPeta(lat: -6.2447, lng: 106.8003);
-      final TitikPeta tujuan = _titikAntar.valid ? _titikAntar : asal;
-      final Rute rute = await svc.rute(asal, tujuan);
+    final int urutan = ++_urutan;
+    if (!_titikBeli.valid || !_titikAntar.valid) {
       if (!mounted) return;
       setState(() {
-        _ringkasan = ref.read(tarifServiceProvider).ringkasanJastip(rute);
+        _ringkasan = RingkasanTarif.kosong;
+        _garis = const <TitikPeta>[];
         _sibukTarif = false;
       });
+      return;
     }
+    setState(() => _sibukTarif = true);
+    final LokasiService svc = ref.read(lokasiServiceProvider);
+    final Rute rute = await svc.rute(_titikBeli, _titikAntar);
+    // Ada perhitungan yang lebih baru: abaikan hasil ini.
+    if (!mounted || urutan != _urutan) return;
+    setState(() {
+      _ringkasan = ref.read(tarifServiceProvider).ringkasanJastip(rute);
+      _garis = rute.garis ?? const <TitikPeta>[];
+      _sibukTarif = false;
+    });
   }
 
   Future<void> _kirim() async {
@@ -287,6 +398,15 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
     ).pesan;
     if (pesan != null) {
       _snak(pesan);
+      return;
+    }
+    if (!_ringkasan.adaJarak) {
+      _snak(
+        _statusLokasi() ??
+            'Fee belum dihitung. Tulis lokasi beli dan alamat antar sampai '
+                'keduanya ketemu di peta.',
+        galat: true,
+      );
       return;
     }
     Haptics.medium();
@@ -568,19 +688,34 @@ class _TombolLokasi extends StatelessWidget {
 }
 
 class _PetaRingkas extends StatelessWidget {
-  const _PetaRingkas({required this.judul, required this.titik});
+  const _PetaRingkas({
+    required this.judul,
+    required this.titik,
+    this.garis,
+  });
 
   final String judul;
   final List<TitikPeta> titik;
 
+  /// Garis rute jalan dari OSRM. Null = garis lurus antar dua titik.
+  final List<TitikPeta>? garis;
+
   @override
   Widget build(BuildContext context) {
+    final List<TitikPeta> sah = titik.where((TitikPeta t) => t.valid).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(judul, style: context.text.titleSmall),
         const SizedBox(height: AppSpacing.sm),
-        PetaOrder(titik: titik, tinggi: 170),
+        // Key ikut berubah bersama titiknya supaya kamera peta ikut pindah
+        // ke lokasi yang baru, bukan berhenti di tempat lama.
+        PetaOrder(
+          key: ValueKey<String>('${sah.length}|${garis?.length ?? 0}'),
+          titik: titik,
+          garis: garis ?? titik,
+          tinggi: 170,
+        ),
       ],
     );
   }
@@ -649,11 +784,15 @@ class _TarifCard extends StatelessWidget {
     required this.ringkasan,
     required this.sibuk,
     required this.onHitungUlang,
+    this.status,
   });
 
   final RingkasanTarif ringkasan;
   final bool sibuk;
   final VoidCallback onHitungUlang;
+
+  /// Kenapa fee belum muncul (alamat belum ketemu di peta).
+  final String? status;
 
   @override
   Widget build(BuildContext context) {
@@ -661,10 +800,10 @@ class _TarifCard extends StatelessWidget {
       children: <Widget>[
         KartuTarif(
           ringkasan: ringkasan,
-          judul: 'Fee jastip',
+          judul: 'Fee antar jastip',
           catatanTambahan: ringkasan.adaJarak
               ? ringkasan.sumberTeks
-              : 'Isi lokasi dulu untuk melihat fee.',
+              : (status ?? 'Isi lokasi beli dan alamat antar dulu.'),
         ),
         const SizedBox(height: AppSpacing.sm),
         SizedBox(

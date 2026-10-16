@@ -70,6 +70,7 @@ class Rute {
     required this.durasiMenit,
     required this.dariServer,
     this.polyline,
+    this.garis,
   });
 
   /// Rute cadangan: hanya jarak lurus.
@@ -83,18 +84,24 @@ class Rute {
     required double jarakKm,
     required int durasiMenit,
     String? polyline,
+    List<TitikPeta>? garis,
   }) =>
       Rute(
         jarakKm: jarakKm,
         durasiMenit: durasiMenit,
         dariServer: true,
         polyline: polyline,
+        garis: garis,
       );
 
   final double jarakKm;
   final int durasiMenit;
   final bool dariServer;
   final String? polyline;
+
+  /// Titik-titik garis rute jalan (sudah diringkas). null bila rute berasal
+  /// dari perkiraan garis lurus.
+  final List<TitikPeta>? garis;
 
   String get jarakTeks => jarakKm <= 0
       ? 'belum dihitung'
