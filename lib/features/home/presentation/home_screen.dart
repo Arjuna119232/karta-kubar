@@ -10,6 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_id.dart';
 import '../../../core/utils/haptics.dart';
+import '../../../shared/models/order.dart';
 import '../../../shared/models/order_ringkas.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_icon.dart';
@@ -18,6 +19,8 @@ import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/stat_tile.dart';
 
 import '../../kegiatan/domain/kegiatan.dart';
+import '../../mitra_usaha/data/mitra_usaha_lokal.dart';
+import '../../mitra_usaha/domain/mitra_usaha.dart';
 import '../../order/data/order_state.dart';
 import '../../order/presentation/order_history.dart';
 import '../../shell/data/app_tabs.dart';
@@ -85,6 +88,13 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           const SizedBox(height: 10),
+          SectionHeader(
+            title: 'Mitra Usaha Terdekat',
+            actionLabel: 'Lihat semua',
+            onAction: () => context.push('/mitra-usaha'),
+          ),
+          const _MitraTerdekat(),
+          const SizedBox(height: 22),
           const SectionHeader(title: 'Berita Terbaru'),
           for (final (int i, Berita n) in
               (ref.watch(beritaProvider).valueOrNull ?? const <Berita>[]).indexed)
@@ -97,6 +107,85 @@ class HomeScreen extends ConsumerWidget {
             ),
         ],
       ),
+      ),
+    );
+  }
+}
+
+/// Tiga mitra usaha terdekat dari pusat Kuningan Barat.
+///
+/// Dipakai `mitraTerdekat` supaya urutannya benar (bukan urutan file), lalu
+/// diambil 3 saja supaya beranda tidak jadi panjang. Menaru kartu "lihat
+/// semua" di section header.
+class _MitraTerdekat extends StatelessWidget {
+  const _MitraTerdekat();
+
+  @override
+  Widget build(BuildContext context) {
+    final List<MitraUsaha> dekat = mitraTerdekat(titikKuninganBarat, batas: 3);
+    return Column(
+      children: <Widget>[
+        for (final MitraUsaha m in dekat)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.gap),
+            child: _MitraTile(item: m),
+          ),
+      ],
+    );
+  }
+}
+
+class _MitraTile extends StatelessWidget {
+  const _MitraTile({required this.item});
+
+  final MitraUsaha item;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color w = item.kategoriUtama.warna;
+    return AppCard(
+      onTap: () => context.push('/mitra-usaha/${item.id}'),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: w.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Center(child: AppIcon(item.kategoriUtama.ikon, size: 22, color: w)),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  item.nama,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.text.titleSmall,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${item.kategoriUtama.label} - '
+                  '${item.is24Jam ? '24 jam' : item.jamBuka}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.text.bodySmall
+                      ?.copyWith(color: context.semantic.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            jarakPendek(item.jarakDariPusatKm),
+            style: context.text.labelSmall
+                ?.copyWith(color: context.semantic.textSecondary),
+          ),
+        ],
       ),
     );
   }

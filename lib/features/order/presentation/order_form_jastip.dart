@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -20,6 +19,7 @@ import '../../../shared/models/order_tracking.dart';
 import '../../../shared/services/jastip_service.dart';
 import '../../../shared/services/lokasi_service.dart';
 import '../../../shared/services/tarif_service.dart';
+import '../../../shared/widgets/alamat_autocomplete.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -65,8 +65,6 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
   String _teksAntar = '';
   bool _mencariBeli = false;
   bool _mencariAntar = false;
-  Timer? _jedaBeli;
-  Timer? _jedaAntar;
   int _urutan = 0;
   List<TitikPeta> _garis = const <TitikPeta>[];
 
@@ -87,8 +85,6 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
 
   @override
   void dispose() {
-    _jedaBeli?.cancel();
-    _jedaAntar?.cancel();
     _barang.dispose();
     _lokasiBeli.dispose();
     _alamatAntar.dispose();
@@ -126,12 +122,12 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
               ),
               const SizedBox(height: AppSpacing.section),
               SubOrder('Lokasi dan tujuan', ikon: Ik.place),
-              _Field(
+              AlamatAutocomplete(
                 controller: _lokasiBeli,
                 label: 'Lokasi beli',
-                hint: 'Contoh: Pasar Minggu, Jalan Melati No 12',
+                hint: 'Cari warung atau pasar di sekitar',
                 ikon: Ik.cart,
-                onChanged: (_) => _beliBerubah(),
+                onUbah: _alamatBeliBerubah,
                 validator: (String? v) => _wajib(v, 'Lokasi beli', min: 3),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -144,12 +140,13 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
                 onTekan: _tandaiLokasiBeli,
               ),
               const SizedBox(height: AppSpacing.md),
-              _Field(
+              AlamatAutocomplete(
                 controller: _alamatAntar,
                 label: 'Alamat antar',
-                hint: 'Contoh: Jl. Kenanga No 4, RT 05 RW 02',
+                hint: 'Ketik sebagian alamat, lalu pilih dari saran',
                 ikon: Ik.home,
-                onChanged: (_) => _antarBerubah(),
+                onUbah: _alamatAntarBerubah,
+                minTeks: 5,
                 validator: (String? v) => _wajib(v, 'Alamat antar', min: 5),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -279,82 +276,36 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
 
   /// Pesan bila alamat sudah diisi tetapi belum ketemu di peta.
   String? _statusLokasi() {
-    if (_mencariBeli || _mencariAntar) return 'Mencari alamat di peta...';
     if (_lokasiBeli.text.trim().length >= 3 && !_titikBeli.valid) {
-      return 'Lokasi beli belum ketemu di peta. Tulis lebih lengkap, atau tekan '
-          'ikon lokasi di bawah.';
+      return 'Lokasi beli belum ada titiknya. Pilih dari saran yang muncul, '
+          'tekan ikon peta, atau ambil lokasi HP sekarang.';
     }
     if (_alamatAntar.text.trim().length >= 5 && !_titikAntar.valid) {
-      return 'Alamat antar belum ketemu di peta. Tulis lebih lengkap '
-          '(mis. nama jalan + nomor + RT/RW).';
+      return 'Alamat antar belum ada titiknya. Pilih dari saran yang muncul '
+          'atau tekan ikon peta.';
     }
     return null;
   }
 
-  /// Alamat beli berubah: titik lama dibuang, cari ulang setelah jeda.
-  ///
-  /// Dulu pencarian dibatasi "1x per 4 detik" sehingga kata terakhir yang
-  /// diketik tidak pernah dicari, alamat tidak pernah punya koordinat, dan fee
-  /// jatuh ke harga minimum yang tidak benar.
-  void _beliBerubah() {
-    final String teks = _lokasiBeli.text.trim();
-    if (teks != _teksBeli && _titikBeli.valid) {
-      setState(() => _titikBeli = const TitikPeta(lat: 0, lng: 0));
-    }
-    _jedaBeli?.cancel();
-    if (teks.length < 3 || teks == _teksBeli) {
-      setState(() => _mencariBeli = false);
-      _hitungUlang();
-      return;
-    }
-    setState(() => _mencariBeli = true);
-    _jedaBeli = Timer(const Duration(milliseconds: 700), _cariBeli);
-  }
-
-  Future<void> _cariBeli() async {
-    final String kueri = _lokasiBeli.text.trim();
-    final List<TitikPeta> found =
-        await ref.read(lokasiServiceProvider).cariAlamat(kueri);
-    if (!mounted || kueri != _lokasiBeli.text.trim()) return;
+  /// Alamat beli berubah. [titik] null berarti belum ada koordinat; koordinat
+  /// datang dari saran yang diketuk atau dari peta.
+  void _alamatBeliBerubah(String teks, TitikPeta? titik) {
     setState(() {
-      _mencariBeli = false;
-      if (found.isNotEmpty) {
-        _titikBeli = found.first;
-        _teksBeli = kueri;
-      }
+      _teksBeli = titik == null ? '' : teks.trim();
+      _titikBeli = titik ?? const TitikPeta(lat: 0, lng: 0);
+      _mencariBeli = titik == null && teks.trim().length >= 3;
     });
-    await _hitungUlang();
+    _hitungUlang();
   }
 
-  /// Alamat antar berubah: sama seperti lokasi beli.
-  void _antarBerubah() {
-    final String teks = _alamatAntar.text.trim();
-    if (teks != _teksAntar && _titikAntar.valid) {
-      setState(() => _titikAntar = const TitikPeta(lat: 0, lng: 0));
-    }
-    _jedaAntar?.cancel();
-    if (teks.length < 5 || teks == _teksAntar) {
-      setState(() => _mencariAntar = false);
-      _hitungUlang();
-      return;
-    }
-    setState(() => _mencariAntar = true);
-    _jedaAntar = Timer(const Duration(milliseconds: 700), _cariAntar);
-  }
-
-  Future<void> _cariAntar() async {
-    final String kueri = _alamatAntar.text.trim();
-    final List<TitikPeta> found =
-        await ref.read(lokasiServiceProvider).cariAlamat(kueri);
-    if (!mounted || kueri != _alamatAntar.text.trim()) return;
+  /// Alamat antar berubah, sama seperti lokasi beli.
+  void _alamatAntarBerubah(String teks, TitikPeta? titik) {
     setState(() {
-      _mencariAntar = false;
-      if (found.isNotEmpty) {
-        _titikAntar = found.first;
-        _teksAntar = kueri;
-      }
+      _teksAntar = titik == null ? '' : teks.trim();
+      _titikAntar = titik ?? const TitikPeta(lat: 0, lng: 0);
+      _mencariAntar = titik == null && teks.trim().length >= 5;
     });
-    await _hitungUlang();
+    _hitungUlang();
   }
 
   /// Fee antar dari jarak lokasi beli -> alamat antar.

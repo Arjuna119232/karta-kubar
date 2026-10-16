@@ -26,6 +26,8 @@ import '../shared/models/order.dart';
 import '../shared/widgets/loading_dots.dart';
 import '../features/mitra_usaha/domain/mitra_usaha.dart';
 import '../features/mitra_usaha/presentation/mitra_usaha_detail.dart';
+import '../features/mitra_usaha/presentation/mitra_usaha_peta.dart';
+import '../features/order/presentation/pilih_lokasi_peta.dart';
 import '../features/mitra_usaha/presentation/mitra_usaha_screen.dart';
 
 /// Halaman "kamu belum punya akses" — muncul kalau guard menolak rute.
@@ -232,12 +234,24 @@ GoRouter buatRouter(LokasiAwal awal) => GoRouter(
       pageBuilder: (_, GoRouterState s) =>
           _halaman(s, const MitraUsahaScreen()),
     ),
+    // Peta harus SEBELUM '/mitra-usaha/:id', kalau tidak path 'peta' akan
+    // tertangkap sebagai id, jadi layar detail mitra yang terbuka.
+    GoRoute(
+      path: '/mitra-usaha/peta',
+      pageBuilder: (_, GoRouterState s) =>
+          _halaman(s, const MitraUsahaPetaScreen()),
+    ),
     GoRoute(
       path: '/mitra-usaha/:id',
       pageBuilder: (_, GoRouterState s) => _halaman(
         s,
         MitraUsahaDetailScreen(id: s.pathParameters['id'] ?? ''),
       ),
+    ),
+    GoRoute(
+      path: '/pilih-lokasi',
+      pageBuilder: (_, GoRouterState s) =>
+          _halaman(s, PilihLokasiPetaScreen(awal: s.extra as TitikPeta?)),
     ),
     GoRoute(
       path: '/jastip/form',

@@ -133,7 +133,7 @@ TOPLEVEL_RE = re.compile(
     re.MULTILINE,
 )
 TOPFUNC_RE = re.compile(
-    r"^([A-Za-z_$][\w$]*)\s*(?:<[^>]*>)?\s*\([^;{]*\)\s*(?:async\s*)?[{=]",
+    r"^([A-Za-z_$][\w$]*)\s*(?:<[^>]*>)?\s*\((?:[^;{}()]|\([^()]*\)|\{[^{}]*\})*\)\s*(?:async\s*)?[{=]",
     re.MULTILINE,
 )
 # Fungsi top-level yang ADA tipe return-nya, mis.
@@ -148,13 +148,19 @@ TOPFUNC_RE = re.compile(
 # huruf kecil supaya `Widget Build(...)` tidak dianggap fungsi.
 TOPFUNC_TYPED_RE = re.compile(
     r"^(?:[A-Za-z_$][\w$]*(?:<[^>]*>)?\??\s+)([a-z_$][\w$]*)\s*"
-    r"\([^;{]*\)\s*(?:async\s*)?[{=>]",
+    r"\((?:[^;{}()]|\([^()]*\)|\{[^{}]*\})*\)\s*(?:async\s*)?[{=>]",
     re.MULTILINE,
 )
 # Tipe diakhiri `>>` atau `[]` TANPA spasi sebelum nama variabel:
 #   final AsyncNotifierProvider<Notifier, List<Baris>>namaProvider =
 # Pola lama mewajibkan spasi setelah tipe, jadi deklarasi ini tidak pernah
 # tertangkap dan import-nya dilaporkan "tak terpakai" (false positive).
+# PENTING: pola parameter harus mengizinkan satu tingkat kurung kurawal
+# (`{int batas = 5}`) dan satu tingkat kurung. Kalau hanya `[^;{]*`, fungsi
+# top-level dengan named parameter TIDAK TERDAFTAR sebagai simbol, lalu import
+# yang benar-benar dipakai dilaporkan UNUSED-IMPORT (false positive).
+PARAM_RE = r'\((?:[^;{}()]|\([^()]*\)|\{[^{}]*\})*\)'
+
 TOPVAR_RE = re.compile(
     r"^(?:const|final)\s+([\w<>,?\s.\[\]]*?)([a-z_$][\w$]*)\s*=",
     re.MULTILINE,

@@ -1,4 +1,3 @@
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +17,7 @@ import '../../../shared/services/lokasi_service.dart';
 import '../../../shared/services/ojek_service.dart';
 import '../../../shared/services/tarif_service.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/alamat_autocomplete.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/loading_dots.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -66,14 +66,10 @@ class _OjekFormScreenState extends ConsumerState<OjekFormScreen> {
   String _teksTujuanTitik = '';
   bool _mencariJemput = false;
   bool _mencariTujuan = false;
-  Timer? _jedaJemput;
-  Timer? _jedaTujuan;
   int _urutan = 0;
 
   @override
   void dispose() {
-    _jedaJemput?.cancel();
-    _jedaTujuan?.cancel();
     _jemput.dispose();
     _tujuan.dispose();
     _catatan.dispose();
@@ -100,12 +96,12 @@ class _OjekFormScreenState extends ConsumerState<OjekFormScreen> {
               _IntroOjek(),
               const SizedBox(height: AppSpacing.section),
               SubOrder('Lokasi jemput', ikon: Ik.person),
-              _FieldOjek(
+              AlamatAutocomplete(
                 controller: _jemput,
                 label: 'Alamat jemput',
-                hint: 'Contoh: Jl. Kenanga No 4, RT 05 RW 02',
+                hint: 'Ketik sebagian alamat, lalu pilih dari saran',
                 ikon: Ik.place,
-                onChanged: (_) => _jemputBerubah(),
+                onUbah: _alamatJemputBerubah,
                 validator: (String? v) =>
                     _wajib(v, 'Alamat jemput', min: 3),
               ),
@@ -119,12 +115,12 @@ class _OjekFormScreenState extends ConsumerState<OjekFormScreen> {
               ),
               const SizedBox(height: AppSpacing.section),
               SubOrder('Lokasi tujuan', ikon: Ik.pinMitra),
-              _FieldOjek(
+              AlamatAutocomplete(
                 controller: _tujuan,
                 label: 'Mau pergi ke mana',
-                hint: 'Contoh: Pasar Minggu, Gang Melati No 9',
+                hint: 'Ketik sebagian alamat, lalu pilih dari saran',
                 ikon: Ik.place,
-                onChanged: (_) => _tujuanBerubah(),
+                onUbah: _alamatTujuanBerubah,
                 validator: (String? v) => _wajib(v, 'Lokasi tujuan', min: 3),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -228,80 +224,36 @@ class _OjekFormScreenState extends ConsumerState<OjekFormScreen> {
 
   /// Pesan bila alamat sudah diisi tetapi belum ditemukan di peta.
   String? _statusLokasi() {
-    if (_mencariJemput || _mencariTujuan) return 'Mencari alamat di peta...';
     if (_jemput.text.trim().length >= 3 && !_titikJemput.valid) {
-      return 'Alamat jemput belum ketemu di peta. Tulis lebih lengkap atau '
-          'tekan lokasi HP.';
+      return 'Alamat jemput belum ada titiknya. Pilih dari saran yang muncul, '
+          'tekan ikon peta, atau pakai lokasi HP.';
     }
     if (_tujuan.text.trim().length >= 3 && !_titikTujuan.valid) {
-      return 'Alamat tujuan belum ketemu di peta. Tulis lebih lengkap '
-          '(mis. nama tempat + kelurahan).';
+      return 'Alamat tujuan belum ada titiknya. Pilih dari saran yang muncul '
+          'atau tekan ikon peta.';
     }
     return null;
   }
 
-  /// Teks jemput berubah: titik lama tidak berlaku, cari ulang setelah jeda.
-  void _jemputBerubah() {
-    final String teks = _jemput.text.trim();
-    if (teks != _teksJemputTitik && _titikJemput.valid) {
-      setState(() => _titikJemput = const TitikPeta(lat: 0, lng: 0));
-    }
-    _jedaJemput?.cancel();
-    if (teks.length < 3 || teks == _teksJemputTitik) {
-      setState(() => _mencariJemput = false);
-      _hitungUlang();
-      return;
-    }
-    setState(() => _mencariJemput = true);
-    _jedaJemput = Timer(const Duration(milliseconds: 700), _cariJemput);
-  }
-
-  Future<void> _cariJemput() async {
-    final String kueri = _jemput.text.trim();
-    final List<TitikPeta> found =
-        await ref.read(lokasiServiceProvider).cariAlamat(kueri);
-    if (!mounted || kueri != _jemput.text.trim()) return;
+  /// Alamat jemput berubah. [titik] null berarti belum ada koordinat: saran
+  /// yang diketuk pengguna atau titik dari peta sudah memberikan koordinat.
+  void _alamatJemputBerubah(String teks, TitikPeta? titik) {
     setState(() {
-      _mencariJemput = false;
-      if (found.isNotEmpty) {
-        _titikJemput = found.first;
-        _teksJemputTitik = kueri;
-      }
+      _teksJemputTitik = titik == null ? '' : teks.trim();
+      _titikJemput = titik ?? const TitikPeta(lat: 0, lng: 0);
+      _mencariJemput = titik == null && teks.trim().length >= 3;
     });
-    await _hitungUlang();
+    _hitungUlang();
   }
 
-  /// Teks tujuan berubah: cari setelah pengguna berhenti mengetik. Dulu
-  /// pencarian dibatasi "1x per 4 detik" sehingga kata terakhir yang diketik
-  /// tidak pernah dicari dan tujuan tidak punya koordinat (jarak 0).
-  void _tujuanBerubah() {
-    final String teks = _tujuan.text.trim();
-    if (teks != _teksTujuanTitik && _titikTujuan.valid) {
-      setState(() => _titikTujuan = const TitikPeta(lat: 0, lng: 0));
-    }
-    _jedaTujuan?.cancel();
-    if (teks.length < 3 || teks == _teksTujuanTitik) {
-      setState(() => _mencariTujuan = false);
-      _hitungUlang();
-      return;
-    }
-    setState(() => _mencariTujuan = true);
-    _jedaTujuan = Timer(const Duration(milliseconds: 700), _cariTujuan);
-  }
-
-  Future<void> _cariTujuan() async {
-    final String kueri = _tujuan.text.trim();
-    final List<TitikPeta> found =
-        await ref.read(lokasiServiceProvider).cariAlamat(kueri);
-    if (!mounted || kueri != _tujuan.text.trim()) return;
+  /// Alamat tujuan berubah, sama seperti jemput.
+  void _alamatTujuanBerubah(String teks, TitikPeta? titik) {
     setState(() {
-      _mencariTujuan = false;
-      if (found.isNotEmpty) {
-        _titikTujuan = found.first;
-        _teksTujuanTitik = kueri;
-      }
+      _teksTujuanTitik = titik == null ? '' : teks.trim();
+      _titikTujuan = titik ?? const TitikPeta(lat: 0, lng: 0);
+      _mencariTujuan = titik == null && teks.trim().length >= 3;
     });
-    await _hitungUlang();
+    _hitungUlang();
   }
 
   /// Total jarak = mitra -> jemput + jemput -> tujuan. Tarif dari total itu.
