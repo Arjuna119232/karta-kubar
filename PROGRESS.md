@@ -356,3 +356,71 @@ sesuai kode asli: `LokasiService.reverseAlamat()` dan
   jawabannya tidak dipakai.
 - Ikon pakai `Ik.error` / `Ik.refresh` / `Ik.pinMitra` (setStandar proyek),
   bukan emoji.
+
+## v0.14.4 — 59 mitra usaha dengan koordinat asli warga (16 Okt 2026)
+
+Warga mengirim daftar warung, pasar, agen gas, dan depot air (4 pesan
+WhatsApp, 47 baris) dariAI lain. Datanya **jauh lebih akurat** dari 47
+mitra sebelumnya, yang koordinatnya adalah perkiraan per jalan + offset
+golden angle. Contoh kesalahan lama: Toko Buyung pk di `-6.2600` padahal
+Jl. Bangka IX ada di `-6.2451` (1,6 km meleset).
+
+### Yang berubah
+
+| | lama | baru |
+|---|---|---|
+| jumlah mitra | 47 | **59** |
+| koordinat asli warga | 0 | **40** |
+| titik ditandai perkiraan | semua diam-diam | **19** (tampil di UI) |
+| jam buka terkonfirmasi | 0 (semua karangan) | **22** |
+| jam buka "belum dikonfirmasi" | - | **37** |
+
+- **13 mitra baru** (8 warung kelontong/sembako + 5 kuliner Madura),
+- **1 duplikat digabung**: "Agen Galon Le Minerale Krisnadi" dan
+  "AGEN GAS dan AQUA KRISNADI" ternyata satu toko (RT.5/RW.4 sama),
+- **19 mitra tanpa koordinat warga** dicoba geocode Nominatim. Hasil
+  hanya diterima kalau jatuh di dalam borough yang benar dan maksimal
+  700 m dari centroid kelurahan (centroid dihitung dari 41 titik warga).
+  4 hasil ditolak: SMP Negeri 43 (Jl. Kapten Tendean), "Jalan Kuningan
+  Barat IV" untuk kueri Mampang Prapatan XV, centroid kecamatan, dan
+  Jalan Kemang Utara di Duren Tiga (kelurahan lain).
+- **Alamat dilengkapi `Kel.`** — dipakai form jastip/ojek sebagai
+  alamat tujuan.
+- **Pasar Rengas**: alamat lama "Rawa Barat / Kebayoran Baru" salah,
+  OSM menaruh Pasar Rengas di **Jl. Rengas I, Kel. Kuningan Barat**.
+- **Jam buka dusta dibuang.** Pasar Ar Riyadh tadinya `05:00 - 11:00`
+  (karangan) sehingga lencana menampilkan "Tutup sekarang" padahal
+  buka sampai 22.30. Sekarang lencana buka/tutup **tidak ditampilkan**
+  kalau jam buka belum dikonfirmasi warga (`jamBukaPasti`).
+- **Peta mitra** dapat tombol **zoom in / zoom out** di tengah kanan.
+
+### Peta mitra
+
+- Pin memakai `AnyLatLng(m.titik.lat, m.titik.lng)` dengan
+  `AnyMarkerAnchor.center`, jadi titik persis di koordinat — tidak ada
+  offset buatan anymore.
+- `any_map` 1.0.0 tidak punya tombol zoom bawaan dan adapter MapLibre
+  **tidak meneruskan `onCameraMove`** ke peta asli. Jadi tombol membaca
+  `getCameraPosition()` lalu `animateCamera()` dengan zoom +/- 1,
+  dibatasi 11-18. Jangan pakai `onCameraMove` di sini.
+- `initialCamera` hanya berlaku sekali, jadi ganti filter kategori tidak
+  memindahkan kamera (batasan library, bukan bug).
+
+### Alur pembaruan data mitra
+
+Jangan edit 755 baris Dart secara manual. Sumber kebenaran =
+`tool/data_mitra_baru.json`, ditulis oleh `tool/gen_mitra_usaha.py`:
+
+```bash
+python3 tool/gen_mitra_usaha.py   # validasi dulu, gagal = berkas Dart utuh
+python3 tool/check_dart.py        # harus 0 masalah
+python3 tool/check_nonlatin.py    # harus 0 masalah
+gh workflow run build.yml --ref feat/order-jastip-ojek -f analyze-only=yes -f release=no
+```
+
+Generator menolak menulis kalau: kelurahan/kategori tidak dikenal, pola
+jam buka salah, ada karakter non-Latin, ada dua pin < 5.5 m, id/nama
+ganda. Helper di ekor file (`jumlahKelurahan`, `mitraUsahaById`,
+`saringMitraUsaha`, `mitraTerdekat`, `produkUmum`) diambil ulang dari
+berkas yang ada sebelum ditulis, dan hasil tulis dibaca balik untuk
+diverifikasi.

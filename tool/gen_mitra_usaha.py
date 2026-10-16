@@ -29,12 +29,31 @@ NON_LATIN = re.compile(
     "[^\x00-\x7FÀ-ɏ‘’“”–—…•°]"
 )
 
-MARKER = "/// Jumlah mitra per kelurahan."
+AWAL_SIMBOL = re.compile(
+    r"^(?:final|const|int|double|String|bool|void|"
+    r"Map<[^>\n]*>|List<[^>\n]*>|MitraUsaha\??)"
+    r"\s+([a-zA-Z_][A-Za-z0-9_]*)",
+    re.M,
+)
+
+
+def simbol_atas(isi: str) -> set[str]:
+    """Nama deklarasi tingkat atas di satu berkas Dart."""
+    return set(AWAL_SIMBOL.findall(isi))
+
+# Helper = SEMUA yang ada di bawah daftar. Awalnya marker doc dipakai
+# ("Jumlah mitra per kelurahan"), dan itu langsung.drop `jumlahKategori`
+# karena helper itu justru letaknya satu baris LEBIH ATAS marker.
+# Satu-satunya penanda yang tidak bisa meleset: baris yang sama persis
+# dengan `];` menutup daftar.
 helper = ""
+sebelum: set[str] = set()
 if DST.exists():
     isi_lama = DST.read_text(encoding="utf-8")
-    if MARKER in isi_lama:
-        helper = isi_lama[isi_lama.index(MARKER):].replace(
+    sebelum = simbol_atas(isi_lama)
+    penutup = re.search(r"^\];\s*$", isi_lama, re.M)
+    if penutup:
+        helper = isi_lama[penutup.end():].replace(
             "cukup untuk 47 data lokal", "cukup untuk daftar lokal")
 
 errors: list[str] = []
@@ -141,29 +160,44 @@ for r in rows:
     baris.append("  ),")
 baris += ["];", ""]
 
-# Helper di ekor file (jumlahKelurahan, mitraUsahaById, saringMitraUsaha,
-# mitraTerdekat, produkUmum) dipakai layar lain. Kalau generator hanya
-# menulis daftar, helper ikut hilang dan build breakage jauh dari sumber.
-# Jadi: ambil lagi dari file yang sekarang di disk SEBELUM menimpanya.
+# Helper di ekor file (jumlahKategori, jumlahKelurahan, mitraUsahaById,
+# saringMitraUsaha, mitraTerdekat, produkUmum) dipakai layar lain. Kalau
+# generator hanya menulis daftar, helper ikut hilang dan build breakage jauh
+# dari sumber. Jadi: ambil lagi dari file yang sekarang di disk SEBELUM
+# menimpanya.
 isi_baru = "\n".join(baris)
 if helper:
     isi_baru += "\n" + helper
+
+# SEMUA pemeriksaan dilakukan di ISI BARU, sebelum menyentuh disk. Versi
+# sebelumnya menulis dulu baru memeriksa, jadi berkas rusak ikut tertinggal
+# di disk walaupun skrip exit 1.
+nulis = len(re.findall(r"^  MitraUsaha\($", isi_baru, re.M))
+if nulis != len(rows):
+    print(f"GAGAL: isi baru punya {nulis} entri, JSON punya {len(rows)}")
+    sys.exit(1)
+for simbol in ("jumlahKategori", "jumlahKelurahan", "mitraUsahaById",
+               "saringMitraUsaha", "mitraTerdekat", "produkUmum"):
+    if f"{simbol}(" not in isi_baru:
+        print(f"GAGAL: helper '{simbol}' hilang dari isi baru")
+        sys.exit(1)
+
+# Tidak boleh ada deklarasi tingkat atas yang HILANG. Ini penjaga yang
+# menangkap `jumlahKategori`: helper itu dipakai 2 layar, jadi kalau hilang
+# build rusak jauh dari sumber (masalah muncul di berkas lain).
+hilang = sorted(sebelum - simbol_atas(isi_baru))
+if hilang:
+    print(f"GAGAL: deklarasi ini hilang setelah generate: {', '.join(hilang)}")
+    sys.exit(1)
+
 DST.write_text(isi_baru, encoding="utf-8")
 
-# BUKTI tulis. Percaya output "OK" tanpa membaca balik pernah menyesatkan:
-# sekali `write_text` hilang saat patching, skrip tetap print OK padahal
-# berkas lama utuh.
+# Bukti tulis: skrip pernah print "OK" padahal `write_text` hilang saat
+# patching, jadi berkas lama utuh. Baca balik dan bandingkan.
 kembali = DST.read_text(encoding="utf-8")
-kembali = DST.read_text(encoding="utf-8")
-nulis = len(re.findall(r"^  MitraUsaha\($", kembali, re.M))
-if nulis != len(rows):
-    print(f"GAGAL: file hasil punya {nulis} entri, JSON punya {len(rows)}")
+if kembali != isi_baru:
+    print("GAGAL: isi di disk berbeda dari isi yang baru ditulis")
     sys.exit(1)
-for simbol in ("jumlahKelurahan", "mitraUsahaById", "saringMitraUsaha",
-              "mitraTerdekat", "produkUmum"):
-    if f"{simbol}(" not in kembali:
-        print(f"GAGAL: helper '{simbol}' hilang dari file hasil")
-        sys.exit(1)
 
 # ---------------------------------------------------------------- laporan
 pasti = sum(1 for r in rows if not r["perkiraan"])

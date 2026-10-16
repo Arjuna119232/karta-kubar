@@ -751,6 +751,11 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
   ),
 ];
 
+
+/// Jumlah mitra per kategori (untuk chip filter).
+int jumlahKategori(KategoriMitraUsaha kategori) =>
+    daftarMitraUsaha.where((MitraUsaha m) => m.kategori.contains(kategori)).length;
+
 /// Jumlah mitra per kelurahan.
 int jumlahKelurahan(Kelurahan kelurahan) =>
     daftarMitraUsaha.where((MitraUsaha m) => m.kelurahan == kelurahan).length;
