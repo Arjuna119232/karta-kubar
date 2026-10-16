@@ -20,6 +20,11 @@ on:
         type: choice
         options: ['yes', 'no']
         default: 'yes'
+      analyze-only:
+        description: 'Cuma analyze + cek statis (~2 menit, tanpa APK). Pakai ini saat iterasi banyak.'
+        type: choice
+        options: ['no', 'yes']
+        default: 'no'
 
 permissions:
   contents: write
@@ -33,7 +38,10 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          # WAJIB 21: any_map_maplibre menarik maplibre_gl yang dikompilasi
+          # dengan Java 21. Pakai 17 -> "invalid source release: 21" dan build
+          # gagal. Angka ini sudah dibuktikan di APK Mitra.
+          java-version: '21'
 
       - uses: subosito/flutter-action@v2
         with:
@@ -107,13 +115,13 @@ jobs:
       # 16 Okt 2026: ukuran APK tidak jadi pertimbangan; yang penting satu
       # berkas bisa dipasang di HP mana pun, emulator, dan Chromebook.
       - name: Build release APK (universal)
-        if: github.event.inputs.abi != 'arm64'
+        if: github.event.inputs['analyze-only'] != 'yes' && github.event.inputs.abi != 'arm64'
         run: |
           flutter build apk --release \
             --dart-define=KUNBAR_DEMO=${{ github.event.inputs.demo || 'true' }}
 
       - name: Build release APK (arm64 only)
-        if: github.event.inputs.abi == 'arm64'
+        if: github.event.inputs['analyze-only'] != 'yes' && github.event.inputs.abi == 'arm64'
         run: |
           flutter build apk --release \
             --target-platform android-arm64 \
@@ -122,22 +130,24 @@ jobs:
       # Play Store mewajibkan AAB (bukan APK) untuk aplikasi baru. AAB selalu
       # dipisah per ABI oleh Play, jadi ukurannya kecil tanpa perlu flag apa pun.
       - name: Build release AAB (Play Store)
-        if: github.event.inputs.release != 'no'
+        if: github.event.inputs['analyze-only'] != 'yes' && github.event.inputs.release != 'no'
         run: flutter build appbundle --release --dart-define=KUNBAR_DEMO=${{ github.event.inputs.demo || 'true' }}
 
       - name: Report artifact sizes
+        if: github.event.inputs['analyze-only'] != 'yes'
         run: |
           ls -lh build/app/outputs/flutter-apk/app-release.apk
           ls -lh build/app/outputs/bundle/release/app-release.aab 2>/dev/null || true
 
       - name: Upload APK artifact
+        if: github.event.inputs['analyze-only'] != 'yes'
         uses: actions/upload-artifact@v4
         with:
           name: karta-kubar-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload AAB artifact
-        if: github.event.inputs.release != 'no'
+        if: github.event.inputs['analyze-only'] != 'yes' && github.event.inputs.release != 'no'
         uses: actions/upload-artifact@v4
         with:
           name: karta-kubar-aab
@@ -148,7 +158,7 @@ jobs:
         run: echo "version=$(grep -E '^version:' pubspec.yaml | awk '{print $2}')" >> "$GITHUB_OUTPUT"
 
       - name: Publish Release with APK
-        if: github.event.inputs.release != 'no'
+        if: github.event.inputs['analyze-only'] != 'yes' && github.event.inputs.release != 'no'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.ver.outputs.version }}-${{ github.run_number }}

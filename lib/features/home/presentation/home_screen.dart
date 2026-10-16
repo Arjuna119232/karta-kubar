@@ -10,6 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_id.dart';
 import '../../../core/utils/haptics.dart';
+import '../../../shared/models/order_ringkas.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/fade_slide_in.dart';
@@ -17,6 +18,8 @@ import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/stat_tile.dart';
 
 import '../../kegiatan/domain/kegiatan.dart';
+import '../../order/data/order_state.dart';
+import '../../order/presentation/order_history.dart';
 import '../../shell/data/app_tabs.dart';
 import '../../../shared/widgets/cover_pilih.dart';
 
@@ -42,6 +45,7 @@ class HomeScreen extends ConsumerWidget {
           ref.invalidate(kegiatanProvider);
           ref.invalidate(beritaProvider);
           ref.invalidate(ringkasanBerandaProvider);
+          ref.invalidate(orderProvider);
           await Future<void>.delayed(const Duration(milliseconds: 700));
         },
         child: ListView(
@@ -56,6 +60,10 @@ class HomeScreen extends ConsumerWidget {
           const FadeSlideIn(index: 2, child: _StatistikBeranda()),
           const SizedBox(height: 22),
           const _KartuDarurat(),
+          const SizedBox(height: 22),
+          const _MenuOrder(),
+          const SizedBox(height: 22),
+          const _OrderAktif(),
           const SizedBox(height: 22),
           const SectionHeader(title: 'Aksi Cepat'),
           const FadeSlideIn(index: 3, child: _QuickActions()),
@@ -445,6 +453,117 @@ class _AnnouncementCard extends StatelessWidget {
   }
 }
 
+/// Dua menu besar order: Jastip dan Ojek.
+class _MenuOrder extends StatelessWidget {
+  const _MenuOrder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: _KartuMenuOrder(
+            judul: 'Jastip',
+            keterangan: 'Titip belanja, diantar ke rumah',
+            ikon: Ik.package,
+            warna: AppColors.primary,
+            onTekan: () => context.push('/jastip/form'),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: _KartuMenuOrder(
+            judul: 'Ojek',
+            keterangan: 'Antar-jemput searah',
+            ikon: Ik.motorcycle,
+            warna: AppColors.accent,
+            onTekan: () => context.push('/ojek/form'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _KartuMenuOrder extends StatelessWidget {
+  const _KartuMenuOrder({
+    required this.judul,
+    required this.keterangan,
+    required this.ikon,
+    required this.warna,
+    required this.onTekan,
+  });
+
+  final String judul;
+  final String keterangan;
+  final Ik ikon;
+  final Color warna;
+  final VoidCallback onTekan;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: warna.withValues(alpha: 0.10),
+      borderRadius: BorderRadius.circular(AppRadius.card),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        onTap: () {
+          Haptics.medium();
+          onTekan();
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              AppIcon(ikon, size: 26, color: warna),
+              const SizedBox(height: AppSpacing.md),
+              Text(judul, style: context.text.titleSmall),
+              const SizedBox(height: 2),
+              Text(
+                keterangan,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: context.text.bodySmall
+                    ?.copyWith(color: context.semantic.textSecondary),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Order yang masih berjalan. Kalau tidak ada, section ini disembunyikan
+/// supaya beranda tidak penuh dengan pesan kosong.
+class _OrderAktif extends ConsumerWidget {
+  const _OrderAktif();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final List<OrderRingkas> aktif = ref.watch(orderAktifProvider);
+    if (aktif.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        SectionHeader(
+          title: 'Order Berjalan',
+          actionLabel: 'Lihat semua',
+          onAction: () => context.push('/order/list'),
+        ),
+        SizedBox(
+          width: double.infinity,
+          child: OrderAktifCard(
+            order: aktif.first,
+            sisa: aktif.length - 1,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _QuickActions extends ConsumerWidget {
   const _QuickActions();
 
@@ -471,6 +590,10 @@ class _QuickActions extends ConsumerWidget {
       // tidak punya cara membuka Galeri sama sekali.
       _QuickItem(Ik.gallery, 'Galeri', AppColors.success,
           () => context.push('/galeri')),
+      _QuickItem(Ik.package, 'Jastip', AppColors.primary,
+          () => context.push('/jastip/form')),
+      _QuickItem(Ik.motorcycle, 'Ojek', AppColors.accent,
+          () => context.push('/ojek/form')),
     ];
 
     // BUKAN `Row` dengan 5 `Expanded`: di layar 360 dp tiap kolom tinggal

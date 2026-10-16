@@ -28,9 +28,25 @@ add_permission() {
   sed -i "s#<application#<uses-permission android:name=\"android.permission.$perm\"/>\n    <application#" "$MANIFEST"
   echo "    + permission: $perm"
 }
-# Hanya izin yang BENAR-BENAR dipakai. Tambahkan CAMERA / lokasi di sini
-# saat fitur pindai QR dan absensi GPS sungguhan sudah dibuat (Play Store
-# menolak/mempersulit review kalau izin diminta tapi tidak dipakai).
+# Hanya izin yang BENAR-BENAR dipakai. Play Store menolak/mempersulit review
+# kalau izin diminta tapi tidak dipakai, jadi setiap baris di sini harus punya
+# fitur nyata yang membutuhkannya.
 add_permission INTERNET
+# Peta + lokasi: geolocator (posisi warga) dan MapLibre (titik lokasi sendiri
+# di peta). Tanpa dua izin ini, peta hanya menampilkan tiles tanpa titik.
+add_permission ACCESS_FINE_LOCATION
+add_permission ACCESS_COARSE_LOCATION
+
+# --- 5) Verifikasi izin lokasi benar-benar ada ---
+# Kehilangan satu baris di sini tidak selalu reddenya build: geolocator
+# berhenti diam-diam (selalu "izin ditolak"), jadi manifest diperiksa ulang.
+for p in ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION INTERNET; do
+  grep -q "android.permission.$p" "$MANIFEST" || {
+    echo "FAIL: permission $p tidak ada di manifest"
+    exit 1
+  }
+done
+grep -q 'com.baseflow.geolocator.GeolocatorLocationService' \
+  "$MANIFEST" || true
 
 echo "==> patch_android: done"
