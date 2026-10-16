@@ -587,6 +587,20 @@ class BintangRating extends StatelessWidget {
 }
 
 /// Baris info label-nilai, dipakai di layar detail.
+/// Ikon kecil di depan baris info. Dipisah supaya `ikon` jadi parameter
+/// (yang bisa di-promote) bukan field widget.
+class _IkonBaris extends StatelessWidget {
+  const _IkonBaris({required this.ikon});
+
+  final Ik ikon;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(right: AppSpacing.sm),
+        child: AppIcon(ikon, size: 18, color: context.semantic.textSecondary),
+      );
+}
+
 class BarisInfo extends StatelessWidget {
   const BarisInfo({
     super.key,
@@ -601,18 +615,16 @@ class BarisInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Field widget tidak bisa di-promote oleh null-check di Dart, jadi
-    // nilainya dibaca ke variabel lokal lebih dulu.
-    final Ik? _ikon = ikon;
+    // Ikon jadi widget terpisah: field widget tidak bisa di-promote oleh
+    // null-check, dan menyimpan nilainya di variabel lokal memicu nama
+    // yang sama dengan field (ditangkap analyzer sebagai 'referenced
+    // before declaration' setelah `dart fix` menamainya).
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          if (_ikon != null) ...<Widget>[
-            AppIcon(_ikon, size: 18, color: context.semantic.textSecondary),
-            const SizedBox(width: AppSpacing.sm),
-          ],
+          if (ikon != null) _IkonBaris(ikon: ikon),
           SizedBox(
             width: 104,
             child: Text(
