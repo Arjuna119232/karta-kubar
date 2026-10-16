@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../shared/models/mitra_jasa.dart';
 import '../../../shared/models/order.dart';
 import '../../../shared/models/order_ringkas.dart';
+import '../../../shared/models/order_tracking.dart';
 import '../../../shared/models/review_order.dart';
 import '../../../shared/services/jastip_service.dart';
 import '../../../shared/services/lokasi_service.dart';
@@ -201,7 +202,11 @@ Stream<List<TitikPeta>> _alurTitik(
   String id,
   JenisOrder jenis,
 ) async* {
-  yield await titikUntuk(store, id, jenis);
+  final List<OrderTracking> titik = await titikUntuk(store, id, jenis);
+  yield titik
+      .where((OrderTracking t) => t.punyaTitik)
+      .map((OrderTracking t) => t.lokasi)
+      .toList(growable: false);
 }
 
 class _Bagian {

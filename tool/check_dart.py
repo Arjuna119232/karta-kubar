@@ -423,6 +423,23 @@ if m:
             if not files_in:
                 note(f"assets/{relpath} kosong (hanya .gitkeep) - aman, tapi tidak ada file yang dipaket")
 
+def nama_lokal(teks):
+    """Kumpulan nama yang dideklarasikan di dalam file ini sendiri."""
+    found = set()
+    # variabel/field: `final double tarif = ...`, `String? label,`
+    for m in re.finditer(
+        r"\b(?:final|const|late|var)\s+[\w<>,\s?.]*?\b(\w+)\s*(?:[=,;)])", teks
+    ):
+        found.add(m.group(1))
+    # parameter fungsi/konstruktor: `nama)` atau `nama,` atau `nama =`
+    for m in re.finditer(r"[(,]\s*(?:this\.)?(\w+)\s*(?:[,)=])", teks):
+        found.add(m.group(1))
+    # `this.x` -> x milik file ini
+    for m in re.finditer(r"\bthis\.(\w+)", teks):
+        found.add(m.group(1))
+    return found
+
+
 # ---------------------------------------------------------------- 9. import yang HILANG
 # Ini kelas bug paling berbahaya: file yang tidak terjangkau dari main.dart
 # TIDAK PERNAH dikompilasi, jadi `undefined name` di dalamnya lolos dari CI.
@@ -454,6 +471,8 @@ for name, owners in sorted(symbols.items()):
         if any(src_file in provides(t) for t, _s, _t in imports_of[f]):
             continue
         if rel[src_file] in code[f]:  # di-'part' tanpa import
+            continue
+        if name in nama_lokal(raw[f]):
             continue
         bad("MISSING-IMPORT", f,
             f"pakai `{name}` yang dideklarasikan di {rel[src_file]}, "

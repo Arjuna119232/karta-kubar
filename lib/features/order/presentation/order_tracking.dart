@@ -74,6 +74,13 @@ class OrderTrackingScreen extends ConsumerWidget {
       if (ojek != null) ...<TitikPeta>[ojek.titikJemput, ojek.titikTujuan],
     ];
 
+    // Jejak yang sudah dikirim mitra. Belum ada apa-apa sebelum Mitra aktif,
+    // jadi peta tetap menampilkan jemput dan tujuan saja.
+    final List<TitikPeta> jejak =
+        ref.watch(trackingTitikProvider(kunci)).valueOrNull ??
+            const <TitikPeta>[];
+    final List<TitikPeta> semuaTitik = <TitikPeta>[...jejak, ...titik];
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Lacak ${order.jenis.label}'),
@@ -99,11 +106,19 @@ class OrderTrackingScreen extends ConsumerWidget {
               _KepalaStatus(order: order),
               const SizedBox(height: AppSpacing.section),
               PetaOrder(
-                titik: titik,
-                garis: titik,
+                titik: semuaTitik,
+                garis: jejak.length > 1 ? jejak : titik,
                 tinggi: 230,
                 lokasiSaya: ojek != null,
               ),
+              if (jejak.isNotEmpty) ...<Widget>[
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Garis menunjukkan ${jejak.length} titik yang sudah dikirim mitra.',
+                  style: context.text.bodySmall
+                      ?.copyWith(color: context.semantic.textSecondary),
+                ),
+              ],
               const SizedBox(height: AppSpacing.section),
               SubOrder('Perjalanan order', ikon: Ik.route),
               AppCard(
