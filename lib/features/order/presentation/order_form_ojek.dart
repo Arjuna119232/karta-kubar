@@ -486,8 +486,6 @@ class _FieldOjek extends StatelessWidget {
     required this.label,
     required this.hint,
     required this.ikon,
-    this.validator,
-    this.onChanged,
     this.maksBaris = 1,
   });
 
@@ -495,16 +493,12 @@ class _FieldOjek extends StatelessWidget {
   final String label;
   final String hint;
   final Ik ikon;
-  final String? Function(String?)? validator;
-  final ValueChanged<String>? onChanged;
   final int maksBaris;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
-      onChanged: onChanged,
-      validator: validator,
       maxLines: maksBaris,
       textInputAction:
           maksBaris > 1 ? TextInputAction.newline : TextInputAction.next,
