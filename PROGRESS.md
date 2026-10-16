@@ -3,7 +3,7 @@
 Berkas ini supaya sesi baru bisa melanjutkan tanpa membaca ulang semua riwayat.
 
 **Terakhir diperbarui:** 16 Okt 2026
-**Versi aplikasi:** 0.12.2+24 (build 20 = 0.7.0 sudah DIRUSAK, jangan dipakai sebagai acuan)
+**Versi aplikasi:** 0.13.0+25 (build 20 = 0.7.0 sudah DIRUSAK, jangan dipakai sebagai acuan)
 
 ---
 
@@ -34,7 +34,8 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 | 10 | FISH warga (kirim + pantau status) + Pengurus (antrean + aksi status) | ✅ | `bc3f88e` |
 | 11 | UMKM warga + Lapor darurat | ✅ | `04e81e6` |
 | 12 | Overhaul tampilan v6 (satu bahasa visual untuk semua layar) | ✅ | (commit ini) |
-| 13 | Empat tombol kosong jadi fitur nyata: kalender, unduh CSV, unggah galeri, edit profil | ✅ | (commit ini) |
+| 13 | Empat tombol kosong jadi fitur nyata: kalender, unduh CSV, unggah galeri, edit profil | ✅ | `fc97844` |
+| 14 | Order Jastip & Ojek: schema, model, service, 7 layar, peta gratis | ✅ | (commit ini) |
 
 ### Status 15 fitur APK (dicek dari kode, bukan dari daftar)
 
@@ -51,7 +52,7 @@ disiapkan. Yang tersisa: konfigurasi `.env` asli dan verifikasi di perangkat.
 | 9 | Booking fasilitas | ❌ | Skema `fasilitas` + `booking` sudah ada |
 | 10 | Donasi | ❌ | Skema ada. **Butuh Midtrans** (akun merchant) untuk uang sungguhan |
 | 11 | Absensi kegiatan | ✅ | QR + riwayat, khusus anggota |
-| 12 | Kartu anggota digital | ⚠️ | Kartu sudah ada, **QR-nya masih gambar tiruan** (belum bisa discan) |
+| 12 | Kartu anggota digital | ⚠ | Kartu sudah ada, **QR-nya masih gambar tiruan** (belum bisa discan) |
 | 13 | Chat | ❌ | Skema `pesan` ada. Butuh login Supabase Auth + Realtime |
 | 14 | Profil | ✅ | Kartu anggota, hak akses, menu |
 | 15 | Pengaturan | ✅ | Tema, mode Lansia, status backend, edit profil, notifikasi, bantuan |
@@ -243,3 +244,57 @@ cd ~/karta-kubar && git status --short && python3 tool/check_dart.py | tail -3
 - Widget baru: `AnimatedButton`, `GlassCard`, `Shimmer*`, `AnimatedListItem`, `EmptyState`, `ErrorState`, `ModernCard`, `AnimatedFab`, `LoadingDots`, `FlipCard`, `Confetti`, `AppDialog`/`AppSheet`, `Haptics`.
 - Spinner polos, AlertDialog, dan warna hardcode sudah diganti token.
 - Catatan: build number sengaja 22 (bukan 6) supaya bisa menimpa v0.11.0+21 di HP.
+
+
+---
+
+## Order Jastip & Ojek (0.13.0, 16 Okt 2026)
+
+### Yang sudah jadi
+
+- **Schema** (`supabase/schema.sql` bagian 12-14): `mitra_jasa`,
+  `order_jastip`, `order_ojek`, `order_tracking`, `review_order` + RLS +
+  realtime publication. Semua memakai `warga_id` nullable FK ke `public.profiles`
+  plus `warga_kunci` stabil per perangkat, karena login APK belum Supabase Auth.
+- **Model** (`lib/shared/models/`): `order`, `order_jastip`, `order_ojek`,
+  `mitra_jasa`, `order_tracking`, `review_order`, `order_ringkas`. Plain Dart
+  tanpa codegen.
+- **Service** (`lib/shared/services/`): `lokasi_service` (geolocator + Photon +
+  OSRM, semua keyless), `tarif_service`, `tracking_service`,
+  `order_repository` (lokal), `order_service_base`, `jastip_service`,
+  `ojek_service`, `review_service`.
+- **Layar** (`lib/features/order/presentation/`): form jastip, form ojek,
+  tracking, riwayat, daftar semua, detail, rating, `widgets_order` (peta,
+  kartu order, timeline status, bintang, pilihan bayar).
+- **Beranda**: dua menu besar Jastip dan Ojek, bagian "Order Berjalan", dua
+  aksi cepat baru.
+- **8 rute**: `/jastip/form`, `/ojek/form`, `/jastip/history`,
+  `/ojek/history`, `/order/list`, `/order/tracking/:jenis/:id`,
+  `/order/detail/:jenis/:id`, `/order/rating/:jenis/:id`.
+
+### Yang SENGAJA belum ada (disebut apa adanya di UI)
+
+| Fitur | Kenyataan |
+|---|---|
+| Order masuk ke server | Baru tersimpan di perangkat. Kirim otomatis begitu Supabase Auth menyala; RLS-nya sudah ditulis sekarang |
+| Posisi mitra bergerak | Peta baru menampilkan titik yang dikirim aplikasi Mitra. формы tracking menihilkan ini di UI |
+| Nomor mitra | Belum ada di backend, jadi tombol "Hubungi mitra" hanya memberi tahu, bukan membuka telepon |
+| Pilih driver otomatis | Mitra masih data contoh; begitu backend nyala, repository mengembalikannya |
+| QRIS | Terlihat di form tapi tidak bisa dipilih (butuh akun merchant) |
+| Notifikasi push | Butuh FCM |
+
+### Peta gratis
+
+`any_map` + `any_map_maplibre` (MapLibre) + OpenFreeMap. Style yang benar:
+`https://tiles.openfreemap.org/styles/liberty` (URL `openfreemap.org/style.json`
+yang biasa muncul di tutorial mengembalikan 404). Pencarian alamat dari Photon,
+rute jalan kaki dari OSRM, cadangan haversine kalau jaringan gagal.
+
+Paket `maplibre_gl` yang dibawa `any_map_maplibre` WAJIB Java 21 di CI.
+`geolocator` dikunci di 12.x (13.x mengganti `getCurrentPosition` ke
+`locationSettings`).
+
+### Cek build
+
+`flutter analyze` sudah 0 error 0 warning. Lint mekanis dibersihkan otomatis
+di CI oleh `dart fix --apply`. `tool/check_dart.py` tetap blocking.
