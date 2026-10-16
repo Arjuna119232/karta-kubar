@@ -12,6 +12,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../shared/models/order.dart';
+import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../order/presentation/widgets_order.dart';
 import '../data/mitra_usaha_lokal.dart';
@@ -32,9 +33,19 @@ class MitraUsahaPetaScreen extends ConsumerStatefulWidget {
 }
 
 class _MitraUsahaPetaScreenState extends ConsumerState<MitraUsahaPetaScreen> {
+  /// Batas zoom: 11 masih melihat seluruh kecamatan, 18 sampai tingkat
+  /// pintu toko. `any_map` memakai nilai berbeda per platform, jadi batas
+  /// yang sama dipakai untuk widget dan untuk tombol.
+  static const double _zoomMin = 11;
+
+  static const double _zoomMax = 18;
+
   KategoriMitraUsaha? _kategori;
 
   MitraUsaha? _terpilih;
+
+  /// Diisi lewat `onMapCreated`. Tanpa ini tombol zoom tidak punya kendali.
+  AnyMapController? _kontrol;
 
   List<MitraUsaha> _data() => _kategori == null
       ? daftarMitraUsaha
@@ -67,6 +78,9 @@ class _MitraUsahaPetaScreenState extends ConsumerState<MitraUsahaPetaScreen> {
               // Kamera awal = auto-fit ke semua marker (pusat bounds + zoom
               // dari rentang titik). Kosong -> pusat Kuningan Barat.
               initialCamera: _kameraFit(data),
+              onMapCreated: (AnyMapController c) => _kontrol = c,
+              minZoom: _zoomMin,
+              maxZoom: _zoomMax,
               markers: <AnyMarker>[
                 for (final MitraUsaha m in data)
                   AnyMarker(
@@ -109,8 +123,55 @@ class _MitraUsahaPetaScreenState extends ConsumerState<MitraUsahaPetaScreen> {
               bottom: AppSpacing.lg,
               child: _KartuTerpilih(item: terpilih),
             ),
+          // Zoom in / out di tengah kanan. `any_map` tidak menyediakan
+          // tombol bawaan, jadi kamera digerakkan lewat controller.
+          Positioned(
+            right: AppSpacing.screen,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  _TombolPeta(
+                    ikon: Ik.plus,
+                    label: 'Perbesar peta',
+                    onTap: () => _ubahZoom(1),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _TombolPeta(
+                    ikon: Ik.minus,
+                    label: 'Perkecil peta',
+                    onTap: () => _ubahZoom(-1),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  /// Gerakkan zoom satu tingkat. Posisi kamera dibaca dari peta saat tombol
+  /// ditekan: `onCameraMove` tidak dipakai karena adapter MapLibre tidak
+  /// meneruskan parameter itu ke peta aslinya.
+  Future<void> _ubahZoom(double langkah) async {
+    final AnyMapController? kontrol = _kontrol;
+    if (kontrol == null) return;
+    Haptics.selection();
+    final AnyCameraPosition sekarang = await kontrol.getCameraPosition();
+    double z = sekarang.zoom + langkah;
+    if (z < _zoomMin) z = _zoomMin;
+    if (z > _zoomMax) z = _zoomMax;
+    await kontrol.animateCamera(
+      AnyCameraPosition(
+        target: sekarang.target,
+        zoom: z,
+        tilt: sekarang.tilt,
+        bearing: sekarang.bearing,
+      ),
+      duration: const Duration(milliseconds: 280),
     );
   }
 
@@ -318,6 +379,41 @@ class _Pin extends StatelessWidget {
         boxShadow: AppShadows.medium,
       ),
       child: AppIcon(ikon, size: terpilih ? 22 : 16, color: AppColors.white),
+    );
+  }
+}
+
+/// Tombol bulat mengambang di atas peta (zoom in / zoom out).
+///
+/// Ukuran 46x46, bukan 40: target sentuh minimum yang comfortable adalah
+/// 44 dp, dan ini tombol yang dipakai sambil berjalan di jalan.
+class _TombolPeta extends StatelessWidget {
+  const _TombolPeta({
+    required this.ikon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final Ik ikon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: label,
+      child: AppCard(
+        onTap: onTap,
+        radius: AppRadius.md,
+        padding: EdgeInsets.zero,
+        child: SizedBox(
+          width: 46,
+          height: 46,
+          child: Center(
+            child: AppIcon(ikon, size: 22, color: AppColors.primary),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -134,7 +134,7 @@ for r in rows:
         f"    titik: TitikPeta(lat: {r['lat']:.6f}, lng: {r['lng']:.6f}),",
         f"    jamBuka: {q(r['jamBuka'])},",
         f"    titikPerkiraan: {str(r['perkiraan']).lower()},",
-        "    layanan: <String>[" + ", ".join(q(x) for x in r["layanan"]) + "],",
+        "    layanan: const <String>[" + ", ".join(q(x) for x in r["layanan"]) + "],",
     ]
     if r.get("info"):
         baris.append(f"    info: {q(r['info'])},")
@@ -144,7 +144,26 @@ baris += ["];", ""]
 # Helper di ekor file (jumlahKelurahan, mitraUsahaById, saringMitraUsaha,
 # mitraTerdekat, produkUmum) dipakai layar lain. Kalau generator hanya
 # menulis daftar, helper ikut hilang dan build breakage jauh dari sumber.
-# Jadi: ambil lagi dari file yang sekarang di disk sebelum menimpanya.
+# Jadi: ambil lagi dari file yang sekarang di disk SEBELUM menimpanya.
+isi_baru = "\n".join(baris)
+if helper:
+    isi_baru += "\n" + helper
+DST.write_text(isi_baru, encoding="utf-8")
+
+# BUKTI tulis. Percaya output "OK" tanpa membaca balik pernah menyesatkan:
+# sekali `write_text` hilang saat patching, skrip tetap print OK padahal
+# berkas lama utuh.
+kembali = DST.read_text(encoding="utf-8")
+kembali = DST.read_text(encoding="utf-8")
+nulis = len(re.findall(r"^  MitraUsaha\($", kembali, re.M))
+if nulis != len(rows):
+    print(f"GAGAL: file hasil punya {nulis} entri, JSON punya {len(rows)}")
+    sys.exit(1)
+for simbol in ("jumlahKelurahan", "mitraUsahaById", "saringMitraUsaha",
+              "mitraTerdekat", "produkUmum"):
+    if f"{simbol}(" not in kembali:
+        print(f"GAGAL: helper '{simbol}' hilang dari file hasil")
+        sys.exit(1)
 
 # ---------------------------------------------------------------- laporan
 pasti = sum(1 for r in rows if not r["perkiraan"])

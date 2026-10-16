@@ -31,7 +31,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.236920, lng: 106.818810),
     jamBuka: '24 jam',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm2',
@@ -43,7 +43,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.235980, lng: 106.817540),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm3',
@@ -55,7 +55,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.236490, lng: 106.823480),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm4',
@@ -67,7 +67,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.235038, lng: 106.820275),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm5',
@@ -79,7 +79,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.241538, lng: 106.827368),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm6',
@@ -91,7 +91,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.240510, lng: 106.831200),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm7',
@@ -103,7 +103,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.248014, lng: 106.833205),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Titik peta diambil dari lokasi Jalan Tegal Parang Selatan I.',
   ),
   MitraUsaha(
@@ -116,7 +116,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.242172, lng: 106.832427),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Titik peta diambil dari lokasi Jalan Tegal Parang Utara V.',
   ),
   MitraUsaha(
@@ -129,7 +129,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.242852, lng: 106.822201),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm10',
@@ -141,7 +141,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.245800, lng: 106.831500),
     jamBuka: '24 jam',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm11',
@@ -153,7 +153,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.249215, lng: 106.828514),
     jamBuka: '24 jam',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm12',
@@ -165,7 +165,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.245100, lng: 106.821100),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm13',
@@ -177,7 +177,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.242500, lng: 106.816100),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm14',
@@ -189,7 +189,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.243300, lng: 106.817200),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm15',
@@ -201,7 +201,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.242900, lng: 106.816800),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm16',
@@ -213,7 +213,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.247100, lng: 106.821900),
     jamBuka: '24 jam',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm17',
@@ -225,7 +225,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.236109, lng: 106.824982),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm18',
@@ -237,7 +237,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.243548, lng: 106.823405),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm19',
@@ -249,7 +249,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.237248, lng: 106.826042),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm20',
@@ -261,7 +261,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.241000, lng: 106.824200),
     jamBuka: '05:00 - 17:00',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm21',
@@ -273,7 +273,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.241500, lng: 106.833900),
     jamBuka: '06:00 - 22:30',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm22',
@@ -285,7 +285,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.241300, lng: 106.817400),
     jamBuka: '06:30 - 21:00',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm23',
@@ -297,7 +297,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.252600, lng: 106.828200),
     jamBuka: '04:00 - 22:00',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm24',
@@ -309,7 +309,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.236763, lng: 106.818478),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>['Komoditas pangan', 'Jajanan pasar'],
+    layanan: const <String>['Komoditas pangan', 'Jajanan pasar'],
     info: 'Lokasi pasar diambil dari titik Pasar Rengas di Jalan Rengas I.',
   ),
   MitraUsaha(
@@ -322,7 +322,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.239100, lng: 106.822500),
     jamBuka: '05:30 - 09:00',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Berjalan di sepanjang koridor Jalan Poncol Jaya.',
   ),
   MitraUsaha(
@@ -335,7 +335,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.236489, lng: 106.821872),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Titik peta diambil dari lokasi Jalan Kuningan Barat Raya.',
   ),
   MitraUsaha(
@@ -348,7 +348,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.236529, lng: 106.821672),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Titik peta diambil dari lokasi Jalan Kuningan Barat Raya.',
   ),
   MitraUsaha(
@@ -361,7 +361,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.241800, lng: 106.817900),
     jamBuka: '24 jam',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm29',
@@ -373,7 +373,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.246905, lng: 106.816351),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Titik peta diambil dari lokasi Jalan Bangka IV.',
   ),
   MitraUsaha(
@@ -386,7 +386,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.255607, lng: 106.824642),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Titik peta diambil dari lokasi Jalan Kemang Utara.',
   ),
   MitraUsaha(
@@ -399,7 +399,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.242300, lng: 106.825000),
     jamBuka: '07:00 - 21:00',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Hari Sabtu buka 19.00 - 21.00.',
   ),
   MitraUsaha(
@@ -412,7 +412,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.241080, lng: 106.824320),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Berada di dalam kompleks Pasar Mampang.',
   ),
   MitraUsaha(
@@ -425,7 +425,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.240268, lng: 106.823720),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm34',
@@ -437,7 +437,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.236688, lng: 106.819702),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm35',
@@ -449,7 +449,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.244300, lng: 106.831800),
     jamBuka: '07:00 - 20:30',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm36',
@@ -461,7 +461,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.244604, lng: 106.833110),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Titik peta diambil dari lokasi Jalan Tegal Parang Utara III.',
   ),
   MitraUsaha(
@@ -474,7 +474,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.250068, lng: 106.829456),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Titik peta diambil dari lokasi Jalan Mampang Prapatan XI.',
   ),
   MitraUsaha(
@@ -487,7 +487,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.248090, lng: 106.833120),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Titik peta diambil dari lokasi Jalan Tegal Parang Selatan I.',
   ),
   MitraUsaha(
@@ -500,7 +500,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.245700, lng: 106.818800),
     jamBuka: '07:00 - 21:00',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm40',
@@ -512,7 +512,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.248200, lng: 106.820800),
     jamBuka: '07:00 - 20:00',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Tutup hari Minggu.',
   ),
   MitraUsaha(
@@ -525,7 +525,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.244296, lng: 106.818293),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Titik peta diambil dari lokasi Jalan Bangka II.',
   ),
   MitraUsaha(
@@ -538,7 +538,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.245260, lng: 106.821320),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Titik peta mendekati lokasi Jalan Bangka IX.',
   ),
   MitraUsaha(
@@ -551,7 +551,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.249275, lng: 106.817884),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Titik peta diambil dari lokasi Jalan Bangka VIII.',
   ),
   MitraUsaha(
@@ -564,7 +564,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.252050, lng: 106.821600),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: true,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Titik peta mendekati lokasi Jalan Kemang Utara.',
   ),
   MitraUsaha(
@@ -577,7 +577,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.251900, lng: 106.821400),
     jamBuka: '07:00 - 19:00',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm47',
@@ -589,7 +589,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.242500, lng: 106.825100),
     jamBuka: '07:00 - 21:00',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Dulu tercatat dua kali dengan nama berbeda, kini jadi satu mitra.',
   ),
   MitraUsaha(
@@ -602,7 +602,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.238120, lng: 106.825100),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm49',
@@ -614,7 +614,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.243110, lng: 106.828940),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm50',
@@ -626,7 +626,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.245210, lng: 106.830110),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm51',
@@ -638,7 +638,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.240180, lng: 106.826850),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm52',
@@ -650,7 +650,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.246830, lng: 106.819210),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm53',
@@ -662,7 +662,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.241105, lng: 106.814521),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm54',
@@ -674,7 +674,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.243800, lng: 106.817900),
     jamBuka: 'Belum dikonfirmasi',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm55',
@@ -686,7 +686,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.246100, lng: 106.822500),
     jamBuka: '24 jam',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm56',
@@ -698,7 +698,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.245200, lng: 106.829800),
     jamBuka: '24 jam',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm57',
@@ -710,7 +710,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.241500, lng: 106.828200),
     jamBuka: '24 jam',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm58',
@@ -722,7 +722,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.248200, lng: 106.833100),
     jamBuka: '18:00 - 00:00',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
     info: 'Tutup hari Jumat.',
   ),
   MitraUsaha(
@@ -735,7 +735,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.241200, lng: 106.817500),
     jamBuka: '16:00 - 23:00',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
   MitraUsaha(
     id: 'm60',
@@ -747,7 +747,7 @@ final List<MitraUsaha> daftarMitraUsaha = <MitraUsaha>[
     titik: TitikPeta(lat: -6.245100, lng: 106.830900),
     jamBuka: '24 jam',
     titikPerkiraan: false,
-    layanan: <String>[],
+    layanan: const <String>[],
   ),
 ];
 
