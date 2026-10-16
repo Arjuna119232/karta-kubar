@@ -163,7 +163,7 @@ class MitraJasa {
       };
 
   @override
-  bool operator ==(Object lain) => lain is MitraJasa && lain.id == id;
+  bool operator ==(Object other) => other is MitraJasa && other.id == id;
 
   @override
   int get hashCode => id.hashCode;

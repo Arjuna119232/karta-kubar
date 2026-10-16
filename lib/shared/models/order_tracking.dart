@@ -51,8 +51,8 @@ class OrderTracking {
       };
 
   @override
-  bool operator ==(Object lain) =>
-      lain is OrderTracking && lain.id == id && lain.dibuat == dibuat;
+  bool operator ==(Object other) =>
+      other is OrderTracking && other.id == id && other.dibuat == dibuat;
 
   @override
   int get hashCode => Object.hash(id, dibuat);

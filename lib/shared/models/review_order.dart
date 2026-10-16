@@ -56,8 +56,8 @@ class ReviewOrder {
       };
 
   @override
-  bool operator ==(Object lain) =>
-      lain is ReviewOrder && lain.id == id && lain.orderId == orderId;
+  bool operator ==(Object other) =>
+      other is ReviewOrder && other.id == id && other.orderId == orderId;
 
   @override
   int get hashCode => Object.hash(id, orderId);

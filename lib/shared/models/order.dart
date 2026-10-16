@@ -127,8 +127,8 @@ class TitikPeta {
   Map<String, dynamic> keJson() => <String, dynamic>{'lat': lat, 'lng': lng};
 
   @override
-  bool operator ==(Object lain) =>
-      lain is TitikPeta && lain.lat == lat && lain.lng == lng;
+  bool operator ==(Object other) =>
+      other is TitikPeta && other.lat == lat && other.lng == lng;
 
   @override
   int get hashCode => Object.hash(lat, lng);

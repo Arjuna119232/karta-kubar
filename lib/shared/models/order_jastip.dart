@@ -189,7 +189,7 @@ class OrderJastip {
       };
 
   @override
-  bool operator ==(Object lain) => lain is OrderJastip && lain.id == id;
+  bool operator ==(Object other) => other is OrderJastip && other.id == id;
 
   @override
   int get hashCode => id.hashCode;

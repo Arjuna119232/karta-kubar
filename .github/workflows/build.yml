@@ -108,8 +108,16 @@ jobs:
       - name: Non-Latin check (blocking)
         run: python3 tool/check_nonlatin.py
 
-      - name: Analyze (non-blocking)
-        run: flutter analyze || true
+      # Lint yang MESRAH (prefer_const, prefer_final_fields, ...) diperbaiki
+      # otomatis supaya hasil analyze benar-benar bersih, bukan 52 info yang
+      # membosankan lalu diabaikan.
+      - name: Dart fix + format
+        run: |
+          dart fix --apply || true
+          dart format lib/ tool/ || true
+
+      - name: Analyze (blocking)
+        run: flutter analyze --no-fatal-infos
 
       # Default = universal (arm64-v8a + armeabi-v7a + x86_64). KEPUTUSAN USER
       # 16 Okt 2026: ukuran APK tidak jadi pertimbangan; yang penting satu
