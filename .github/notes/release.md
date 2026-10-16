@@ -1,26 +1,28 @@
-### KUNBAR Connect v0.13.0
+### KUNBAR Connect v0.13.1
 
-Jastip dan Ojek komunitas, lengkap dengan peta dan tarif otomatis.
+Tombol yang tadinya kosong sekarang benar-benar bekerja, plus katalog Mitra Usaha.
 
-**Fitur baru**
-- Pesan Jastip: nama barang, jumlah, lokasi beli, alamat antar, foto
-  referensi, catatan, dan fee yang dihitung dari jarak
-- Pesan Ojek: jemput dari lokasi HP, cari tujuan di peta, pilih mitra atau
-  biarkan sistem menugaskan
-- Layar lacak: peta, timeline status, ringkasan, dan pembatalan dengan alasan
-- Riwayat dan daftar semua order dengan filter, plus penilaian bintang untuk
-  mitra setelah order selesai
-- Beranda: dua menu besar Jastip dan Ojek, dan bagian "Order Berjalan"
+**Tombol yang diperbaiki**
+- Berita di Beranda dan Galeri: membuka detail, bukan tulisan "Membuka..."
+- "Lengkapi data profil": langsung ke halaman edit profil
+- "Hubungi mitra": membuka aplikasi telepon
 
-**Peta gratis**
-- MapLibre + OpenFreeMap tanpa API key
-- Pencarian alamat dan rute jalan kaki dari server gratis, dengan cadangan
-  perkiraan lokal kalau jaringan tidak bisa dihubungi
+**Tarif baru**
+- Ojek: Rp 7.000 sampai 15 km, naik bertahap, Rp 2.500/km di atas 15 km
+- Jastip: fee antar Rp 3.000 sampai 10 km, Rp 2.500/km di atasnya
+- Jarak ojek dihitung dari mitra ke jemput, lalu jemput ke tujuan
+- Barang jastip bisa dibayar QRIS; fee antar tetap tunai ke mitra
 
-**Bayar**
-- Tunai ke mitra dulu. QRIS sudah terlihat di form tapi belum bisa dipilih
+**Mitra Usaha**
+- Katalog warung, pasar, agen gas, dan depot galon di sekitar Kuningan Barat
+- Detail lengkap dengan peta, jam buka, dan barang yang biasa dibeli
+- "Buka di peta" dan "Titip belanja di sini" yang langsung mengisi form jastip
+-。Masuk dari Beranda dan menu Profil
 
-**Yang perlu diketahui**
-- Order disimpan di perangkat dulu. Kirim ke server otomatis setelah login
-  Supabase benar-benar menyala, supaya fitur tetap bisa dicoba sekarang
-- Peta menampilkan posisi mitra setelah aplikasi Mitra mengirimnya
+**Keamanan**
+- Pengalih level akses hanya hidup di mode debug. Sebelumnya bisa dipakai di
+  APK rilis, sehingga siapa pun bisa elevating dirinya jadi Admin
+
+**Yang belum ada**
+- Koordinat dan harga Mitra Usaha masih perkiraan
+- Pembayaran QRIS di app ini baru pilihan metode, belum transaksi sungguhan
