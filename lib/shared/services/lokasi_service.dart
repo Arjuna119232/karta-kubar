@@ -91,7 +91,15 @@ class LokasiService {
   /// 6 detik dianggap gagal agar layar tidak menggantung.
   static const Duration batas = Duration(seconds: 6);
 
+  /// Batas waktu untuk Photon. Endpoint `/reverse`-nya jauh lebih ringan dari
+  /// Nominatim, jadi batasnya lebih pendek supaya layar cepat terisi atau gagal.
+  static const Duration batasPhoton = Duration(seconds: 4);
+
   static const String _photon = 'https://photon.komoot.io/api/';
+
+  /// Photon untuk baca balik koordinat -> nama jalan. Lebih cepat dari
+  /// Nominatim, jadi dipakai lebih dulu; Nominatim hanya cadangan.
+  static const String _photonReverse = 'https://photon.komoot.io/reverse';
 
   /// OpenStreetMap Nominatim. Rules penggunaan mereka mewajibkan User-Agent
   /// yang bisa dihubungi dan maksimal 1 permintaan per detik, jadi [_jeda]
@@ -105,6 +113,16 @@ class LokasiService {
   /// lagi.dibatasi 40 entri terakhir, cukup untuk satu sesi form.
   final Map<String, List<SaranAlamat>> _cacheSaran =
       <String, List<SaranAlamat>>{};
+
+  /// Cache hasil baca balik alamat, dikunci koordinat 4 desimal (sekitar 11
+  /// meter).
+  ///
+  /// Geser peta bolak-balik ke lokasi yang sama langsung memakai hasil lama,
+  /// tanpa memanggil server lagi. `static` supaya tetap ada walau service
+  /// dibuat ulang, dan dibatasi supaya tidak tumbuh terus saat peta digeser
+  /// jauh-jauh.
+  static final Map<String, String> _cacheReverse = <String, String>{};
+  static const int _batasCacheReverse = 60;
 
   /// Profil `driving`: ojek dan jastip memakai kendaraan bermotor, jadi jarak
   /// harus mengikuti jalan yang bisa dilewati motor (bukan jalan kaki).
@@ -399,24 +417,123 @@ class LokasiService {
   }
 
   /// Alamat dari titik (balik dari koordinat ke nama jalan).
+  ///
+  /// Photon jadi API utama karena endpoint `/reverse`-nya lebih ringan dan
+  /// lebih cepat, lalu Nominatim jadi cadangan. Hasil kosong berarti tidak
+  /// ketemu atau jaringan mati; pemanggil yang menampilkan pesannya ke
+  /// pengguna. Hasil yang berhasil disimpan di cache supaya mengulang titik
+  /// yang sama tidak memanggil server lagi.
   Future<String> reverseAlamat(TitikPeta titik) async {
     if (!titik.valid) return '';
+
+    final String kunci =
+        '${titik.lat.toStringAsFixed(4)},${titik.lng.toStringAsFixed(4)}';
+    final String? tersimpan = _cacheReverse[kunci];
+    if (tersimpan != null) return tersimpan;
+
+    // 1) Photon, dibatasi 4 detik.
+    final String? json = await _coba(
+      () => _ambil(
+        Uri.parse(_photonReverse).replace(
+          queryParameters: <String, String>{
+            'lat': '${titik.lat}',
+            'lon': '${titik.lng}',
+            'lang': 'id',
+          },
+        ),
+        batasWaktu: batasPhoton,
+      ),
+    );
+    if (json != null) {
+      final String nama = _bacaPhoton(json);
+      if (nama.isNotEmpty) {
+        _simpanReverse(kunci, nama);
+        return nama;
+      }
+    }
+
+    // 2) Cadangan Nominatim. User-Agent sudah dipasang di [_http] dan jeda 1
+    // detik dipakai karena aturan pakai mereka mewajibkannya.
     try {
       await _jeda();
-      final Uri url = Uri.parse('$_nominatim/reverse').replace(
-        queryParameters: <String, String>{
-          'lat': '${titik.lat}',
-          'lon': '${titik.lng}',
-          'format': 'jsonv2',
-          'zoom': '18',
-          'accept-language': 'id',
-        },
-      );
-      final dynamic j = jsonDecode(await _ambil(url));
+      final dynamic j = jsonDecode(await _ambil(
+        Uri.parse('$_nominatim/reverse').replace(
+          queryParameters: <String, String>{
+            'lat': '${titik.lat}',
+            'lon': '${titik.lng}',
+            'format': 'jsonv2',
+            'zoom': '18',
+            'accept-language': 'id',
+          },
+        ),
+      ));
+      if (j is Map) {
+        final String nama = bacaTeks(j['display_name']).trim();
+        if (nama.isNotEmpty) {
+          _simpanReverse(kunci, nama);
+          return nama;
+        }
+      }
+    } catch (_) {
+      // Dua-duanya gagal -> hasil kosong, bukan error yang merembet ke UI.
+    }
+    return '';
+  }
+
+  /// Susun satu baris alamat dari balasan `/reverse` Photon.
+  ///
+  /// Photon tidak punya `display_name` seperti Nominatim, jadi bagian yang
+  /// berguna dirangkai berurutan. Bagian kosong dan duplikat dilewati supaya
+  /// hasilnya tidak jadi "Jakarta, Jakarta, Indonesia".
+  static String _bacaPhoton(String json) {
+    try {
+      final dynamic j = jsonDecode(json);
       if (j is! Map) return '';
-      return bacaTeks(j['display_name']);
+      final dynamic fitur = j['features'];
+      if (fitur is! List || fitur.isEmpty) return '';
+      final dynamic pertama = fitur.first;
+      if (pertama is! Map) return '';
+      final dynamic props = pertama['properties'];
+      if (props is! Map) return '';
+      const List<String> urutan = <String>[
+        'name',
+        'street',
+        'houseNumber',
+        'district',
+        'city',
+        'county',
+        'state',
+        'postcode',
+        'country',
+      ];
+      final Set<String> dipakai = <String>{};
+      final List<String> bagian = <String>[];
+      for (final String k in urutan) {
+        final String v = bacaTeks(props[k]).trim();
+        if (v.isEmpty) continue;
+        if (!dipakai.add(v.toLowerCase())) continue;
+        bagian.add(v);
+        if (bagian.length == 4) break;
+      }
+      return bagian.join(', ');
     } catch (_) {
       return '';
+    }
+  }
+
+  void _simpanReverse(String kunci, String nilai) {
+    if (_cacheReverse.length >= _batasCacheReverse) {
+      _cacheReverse.remove(_cacheReverse.keys.first);
+    }
+    _cacheReverse[kunci] = nilai;
+  }
+
+  /// Jalankan [panggil]; hasilnya `null` kalau gagal, bukan melempar error.
+  Future<T?> _coba<T>(Future<T> Function() panggil) async {
+    try {
+      return await panggil();
+    } catch (_) {
+      return null;
     }
   }
 
@@ -466,9 +583,10 @@ class LokasiService {
     }
   }
 
-  Future<String> _ambil(Uri url) async {
+  Future<String> _ambil(Uri url, {Duration? batasWaktu}) async {
     final HttpClientRequest req = await _http().getUrl(url);
-    final HttpClientResponse res = await req.close().timeout(batas);
+    final HttpClientResponse res =
+        await req.close().timeout(batasWaktu ?? batas);
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw HttpException('HTTP ${res.statusCode}', uri: url);
     }

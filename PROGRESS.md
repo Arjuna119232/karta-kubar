@@ -326,3 +326,33 @@ reverse geocode. `TitikPeta` dapat field `alamat` (opsional, default kosong,
 `posisiSaya()` + `reverseAlamat()`, dipakai form ojek **dan** jastip.
 Kalau server tidak terbaca, koordinat tetap dipakai — pemesanan tidak boleh
 gagal hanya karena nama jalannya tidak ketemu.
+
+## v0.14.3 — reverse geocode cepat (Photon utama + cache + status gagal)
+
+Brief dari user menyebut `LocationService.reverseGeocode()` dan
+`MapPickerScreen` — **dua nama itu tidak ada di repo ini**, keduanya berasal
+dari cabang `kunbar-full-fix.zip` yang ditolak (lihat v0.14.2). Implementasi
+sesuai kode asli: `LokasiService.reverseAlamat()` dan
+`PilihLokasiPetaScreen` (`pilih_lokasi_peta.dart`).
+
+- **Photon jadi API utama** `GET https://photon.komoot.io/reverse?lat&lon&lang=id`,
+  batas 4 detik. Balasan `/reverse` tidak punya `display_name`, jadi
+  `_bacaPhoton()` merangkai `name/street/houseNumber/district/city/county/
+  state/postcode/country`, membuang bagian kosong dan duplikat, maksimal 4
+  bagian. Nominatim tetap cadangan dengan batas 6 detik, `format=jsonv2`,
+  `zoom=18`, `accept-language=id`, User-Agent `KUNBARConnect/1.0` (sudah
+  dipasang di `HttpClient.userAgent`).
+- **Cache balik alamat** `_cacheReverse` (static, kunci koordinat 4 desimal
+  ~11 m, maksimum 60 entri). Geser balik ke titik yang sama = instan.
+  Hanya hasil **yang tidak kosong** yang disimpan, supaya jaringan yang
+  pulih lalu tombol "Coba Lagi" tetap bisa berhasil.
+- **Debounce 400 ms** di peta. Sebelumnya tiap `onCameraIdle` langsung
+  memanggil server, jadi drag sedikit sudah menembak API.
+- **Statusnya jujur, tidak menggantung:** saat nunggu tampil koordinat +
+  "Mencari alamat..." + spinner kecil; sukses = alamat penuh + ikon pin;
+  gagal = koordinat + "Alamat tidak tersedia" + tombol **Coba Lagi**.
+  `AnimatedSwitcher` 220 ms supaya tidak terlihat melompat.
+- Hasil basi dibuang: kalau titik tengah sudah berubah selama menunggu,
+  jawabannya tidak dipakai.
+- Ikon pakai `Ik.error` / `Ik.refresh` / `Ik.pinMitra` (setStandar proyek),
+  bukan emoji.

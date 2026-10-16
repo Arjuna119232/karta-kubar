@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:any_map/any_map.dart';
 import 'package:any_map_maplibre/any_map_maplibre.dart';
 import 'package:flutter/material.dart';
@@ -78,10 +80,20 @@ class _PilihLokasiPetaScreenState extends State<PilihLokasiPetaScreen> {
   );
   String _alamatTeks = '';
   bool _sibuk = false;
+  bool _gagal = false;
   bool _sudahTebak = false;
+
+  /// Menahan permintaan baca balik alamat.
+  ///
+  /// Peta yang sedang digeser memunculkan banyak sekali `onCameraIdle`.
+  /// Tanpa penahan, tiap henti kecil memanggil server. 400 ms cukup supaya
+  ///singkat menghasilkan permintaan, tapi tidak terasa lambat.
+  Timer? _tunggu;
+  static const Duration _jedaAlamat = Duration(milliseconds: 400);
 
   @override
   void dispose() {
+    _tunggu?.cancel();
     _svc.buang();
     super.dispose();
   }
@@ -143,6 +155,9 @@ class _PilihLokasiPetaScreenState extends State<PilihLokasiPetaScreen> {
               teks: _alamatTeks,
               koordinat:
                   '${_tengah.lat.toStringAsFixed(5)}, ${_tengah.lng.toStringAsFixed(5)}',
+              sibuk: _sibuk,
+              gagal: _gagal,
+              onCobaLagi: () => _mintaAlamat(langsung: true),
             ),
           ),
         ],
@@ -174,16 +189,44 @@ class _PilihLokasiPetaScreenState extends State<PilihLokasiPetaScreen> {
     final AnyLatLng t = _kamera.target;
     if (!t.latitude.isFinite || !t.longitude.isFinite) return;
     setState(() => _tengah = TitikPeta(lat: t.latitude, lng: t.longitude));
-    _bacaAlamat();
+    _mintaAlamat();
+  }
+
+  /// Siapkan tampilan sambil menunggu: koordinat langsung tampil, alamat
+  /// menyusul setelah [_jedaAlamat].
+  ///
+  /// [langsung] dipakai tombol "Coba Lagi" supaya tidak menunggu penahan.
+  void _mintaAlamat({bool langsung = false}) {
+    _tunggu?.cancel();
+    // Alamat lama disembunyikan supaya tidak terlihat seperti milik titik
+    // yang baru. Status gagal juga dibersihkan karena ini percobaan baru.
+    setState(() {
+      _sibuk = true;
+      _gagal = false;
+      _alamatTeks = '';
+    });
+    if (langsung) {
+      _bacaAlamat();
+      return;
+    }
+    _tunggu = Timer(_jedaAlamat, _bacaAlamat);
   }
 
   Future<void> _bacaAlamat() async {
-    setState(() => _sibuk = true);
-    final String teks = await _svc.reverseAlamat(_tengah);
+    final TitikPeta ditanyakan = _tengah;
+    final String teks = await _svc.reverseAlamat(ditanyakan);
+    // Peta sudah digeser lagi atau layar ditutup -> buang hasil basi.
     if (!mounted) return;
+    if (_tengah.lat != ditanyakan.lat || _tengah.lng != ditanyakan.lng) {
+      return;
+    }
     setState(() {
       _sibuk = false;
-      if (teks.isNotEmpty) _alamatTeks = teks;
+      if (teks.isEmpty) {
+        _gagal = true;
+      } else {
+        _alamatTeks = teks;
+      }
     });
   }
 
@@ -234,13 +277,29 @@ class _PinTengah extends StatelessWidget {
 /// Alamat di bawah peta: nama jalan dari server, plus koordinat sebagai
 /// cadangan supaya pengguna tahu pasti mana yang dipilih.
 class _KartuAlamat extends StatelessWidget {
-  const _KartuAlamat({required this.teks, required this.koordinat});
+  const _KartuAlamat({
+    required this.teks,
+    required this.koordinat,
+    required this.sibuk,
+    required this.gagal,
+    required this.onCobaLagi,
+  });
 
   final String teks;
   final String koordinat;
 
+  /// Sedang membaca alamat dari server. Koordinat tetap ditampilkan.
+  final bool sibuk;
+
+  /// Dua sumber alamat gagal. Kartu menampilkan tombol coba lagi supaya
+  /// pengguna tidak terjebak di "Mencari alamat...".
+  final bool gagal;
+
+  final VoidCallback onCobaLagi;
+
   @override
   Widget build(BuildContext context) {
+    final String utama = teks.isEmpty ? 'Belum ada' : teks;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -256,28 +315,81 @@ class _KartuAlamat extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const AppIcon(Ik.pinMitra, size: 20, color: AppColors.primary),
+          AppIcon(
+            gagal ? Ik.error : Ik.pinMitra,
+            size: 20,
+            color: gagal ? AppColors.error : AppColors.primary,
+          ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Text(
-                  teks.isEmpty ? 'Alamat belum terbaca' : teks,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.text.bodyMedium,
+                // Berpindah halus antara koordinat -> alamat supaya tidak
+                // terlihat melompat.
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  child: Column(
+                    key: ValueKey<String>(sibuk ? 'sibuk' : utama),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        koordinat,
+                        style: context.text.labelSmall
+                            ?.copyWith(color: context.semantic.textSecondary),
+                      ),
+                      const SizedBox(height: 2),
+                      if (sibuk)
+                        Text(
+                          'Mencari alamat...',
+                          style: context.text.bodyMedium,
+                        )
+                      else if (gagal)
+                        Text(
+                          'Alamat tidak tersedia',
+                          style: context.text.bodyMedium
+                              ?.copyWith(color: AppColors.error),
+                        )
+                      else
+                        Text(
+                          utama,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.text.bodyMedium,
+                        ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  koordinat,
-                  style: context.text.labelSmall
-                      ?.copyWith(color: context.semantic.textSecondary),
-                ),
+                if (gagal)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: TextButton.icon(
+                      onPressed: onCobaLagi,
+                      icon: const AppIcon(Ik.refresh, size: 16),
+                      label: const Text('Coba Lagi'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
+          if (sibuk)
+            const Padding(
+              padding: EdgeInsets.only(left: AppSpacing.sm, top: 2),
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
         ],
       ),
     );
