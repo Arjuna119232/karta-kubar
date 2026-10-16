@@ -606,25 +606,25 @@ class BarisInfo extends StatelessWidget {
     super.key,
     required this.label,
     required this.nilai,
-    this.ikon,
-  });
+    Ik? ikon,
+  }) : _ikon = ikon;
 
   final String label;
   final String nilai;
-  final Ik? ikon;
+
+  /// Field-nya PRIVAT dan final supaya Dart bisa promotesinya setelah null
+  /// check. Field publik tidak akan di-promote, dan karena itu ikon harus
+  /// disimpan lewat initializer constructor, bukan `this.ikon`.
+  final Ik? _ikon;
 
   @override
   Widget build(BuildContext context) {
-    // Ikon jadi widget terpisah: field widget tidak bisa di-promote oleh
-    // null-check, dan menyimpan nilainya di variabel lokal memicu nama
-    // yang sama dengan field (ditangkap analyzer sebagai 'referenced
-    // before declaration' setelah `dart fix` menamainya).
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          if (ikon != null) _IkonBaris(ikon: ikon),
+          if (_ikon != null) _IkonBaris(ikon: _ikon),
           SizedBox(
             width: 104,
             child: Text(
