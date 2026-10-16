@@ -219,6 +219,37 @@ def extension_members(body):
     return members
 
 
+# ------------------------------------------------- 0. IK-ENUM ADA/TIDAK
+# `Ik.error` padahal enum `Ik` tidak punya `error` -> `undefined_enum_constant`.
+# Ini sudah MENYALA DUA KALI di proyek ini (Ik.error, Ik.close), jadi dijaga kode.
+def _nilai_enum(path, nama_enum):
+    """Semua nama konstanta di `enum <nama_enum> { ... }` pada satu berkas."""
+    m = re.search(r"enum\s+" + nama_enum + r"\s*\{(.*?)\n\}", raw[path], re.S)
+    if not m:
+        return None
+    isi = re.sub(r"//[^\n]*", "", m.group(1))
+    # Konstanta terakhir enum SELALU diakhiri `;`, bukan `,`. Kalau hanya
+    # .rstrip(",") maka `xCircle;` tidak akan sama dengan `xCircle` ->
+    # false positive di setiap pemakaian ikon terakhir. Gebrak dua-duanya.
+    return {v.strip().rstrip(",;").strip() for v in isi.split("\n")
+            if v.strip() and not v.strip().startswith("@")}
+
+# Cari berkas yang mendeklarasikan enum `Ik`. Kunci `files` berisi Path,
+# bukan string -- jangan bandingkan dengan nama berkas teks.
+pemegang = [f for f in files if "enum Ik" in raw[f]]
+if pemegang:
+    ik_ada = _nilai_enum(pemegang[0], "Ik") or set()
+    for f in files:
+        for m in re.finditer(r"\bIk\.([A-Za-z_][A-Za-z0-9_]*)", raw[f]):
+            if m.group(1) not in ik_ada:
+                baris = raw[f][:m.start()].count("\n") + 1
+                bad("IK-ENUM", f,
+                    f"baris {baris}: `Ik.{m.group(1)}` tapi enum `Ik` tidak "
+                    f"punya konstanta itu -> undefined_enum_constant "
+                    f"(yang ada: {', '.join(sorted(ik_ada)[:8])}...)")
+else:
+    note("cek IK-ENUM dilewati: enum `Ik` tidak ditemukan di lib/")
+
 # ---------------------------------------------------------------- 1. import resolve + 3. reachability
 edges = {f: set() for f in files}
 imports_of = {f: [] for f in files}
@@ -904,7 +935,8 @@ if problems:
              "IMPORT-RESOLVE": 5, "UNUSED-IMPORT": 6, "UNUSED-PRIVATE": 7,
              "UNUSED-PROVIDER": 8, "BRACE": 9, "NON-LATIN": 10, "ASSET": 11,
              "FIELD-HILANG": 2, "EXT-HILANG": 2, "REF-FIELD-AWAL": 2,
-             "GALAT-TIPE": 2, "IMPORT-GO-ROUTER": 6, "PAKET-HILANG": 5}
+             "GALAT-TIPE": 2, "IMPORT-GO-ROUTER": 6, "PAKET-HILANG": 5,
+             "IK-ENUM": 2}
     for kind, path, msg in sorted(problems, key=lambda p: (order.get(p[0], 9), p[1])):
         print(f"  [{kind}] {path}\n      {msg}")
     sys.exit(1)

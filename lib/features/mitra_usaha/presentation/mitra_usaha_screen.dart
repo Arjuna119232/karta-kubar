@@ -14,7 +14,7 @@ import '../../../shared/widgets/status_views.dart';
 import '../data/mitra_usaha_lokal.dart';
 import '../domain/mitra_usaha.dart';
 
-/// Daftar 47 mitra usaha: cari, filter kategori, filter kelurahan, peta.
+/// Daftar mitra usaha: cari, filter kategori, filter kelurahan, peta.
 ///
 /// Semua data lokal, jadi halaman ini tidak pernah menunggu server. Pencarian
 /// cukup mencocokkan nama, alamat, kelurahan, dan kategori.
@@ -176,7 +176,9 @@ class _Ringkasan extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final int buka = data.where((MitraUsaha m) => m.isOpen).length;
+    final int buka = data
+        .where((MitraUsaha m) => m.jamBukaPasti && m.isOpen)
+        .length;
     final int semantics = data.where((MitraUsaha m) => m.is24Jam).length;
     return Row(
       children: <Widget>[
@@ -332,8 +334,14 @@ class _KartuMitra extends StatelessWidget {
                   runSpacing: 4,
                   children: <Widget>[
                     _Lencana(
-                      teks: item.is24Jam ? '24 jam' : item.jamBuka,
-                      warna: item.isOpen ? AppColors.success : AppColors.warning,
+                      teks: item.jamBukaPasti
+                          ? (item.is24Jam ? '24 jam' : item.jamBuka)
+                          : 'jam buka belum dikonfirmasi',
+                      warna: !item.jamBukaPasti
+                          ? context.semantic.textSecondary
+                          : (item.isOpen
+                              ? AppColors.success
+                              : AppColors.warning),
                     ),
                     _Lencana(teks: k.label, warna: w),
                     _Lencana(

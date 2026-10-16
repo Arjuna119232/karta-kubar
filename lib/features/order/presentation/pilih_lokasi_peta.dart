@@ -316,7 +316,7 @@ class _KartuAlamat extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           AppIcon(
-            gagal ? Ik.error : Ik.pinMitra,
+            gagal ? Ik.cloudOff : Ik.pinMitra,
             size: 20,
             color: gagal ? AppColors.error : AppColors.primary,
           ),

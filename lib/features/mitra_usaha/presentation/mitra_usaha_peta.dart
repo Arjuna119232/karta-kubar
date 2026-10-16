@@ -22,7 +22,7 @@ import '../domain/mitra_usaha.dart';
 /// Warna penanda mengikuti kategori (hijau brand untuk warung, warna lain
 /// hanya untuk membedakan). Tap penanda menampilkan kartu bawah; ketuk kartu
 /// untuk masuk ke detail. Filter kategori berlaku langsung ke peta, jadi tidak
-/// ada peta yang menampilkan 47 titik lalu 40 di antaranya tidak terlihat.
+/// ada peta yang menampilkan semua titik lalu sebagian besar tidak terlihat.
 class MitraUsahaPetaScreen extends ConsumerStatefulWidget {
   const MitraUsahaPetaScreen({super.key});
 
@@ -276,7 +276,8 @@ class _KartuTerpilih extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       '${item.kelurahan.nama} - '
-                      '${item.is24Jam ? '24 jam' : item.jamBuka}',
+                      '${item.jamBukaPasti ? (item.is24Jam ? '24 jam' : item.jamBuka) : 'jam buka belum dikonfirmasi'}'
+                      '${item.titikPerkiraan ? ' - titik perkiraan' : ''}',
                       style: context.text.bodySmall
                           ?.copyWith(color: context.semantic.textSecondary),
                     ),

@@ -91,14 +91,25 @@ class MitraUsahaDetailScreen extends StatelessWidget {
             spacing: AppSpacing.sm,
             runSpacing: 6,
             children: <Widget>[
-              _Lencana(
-                teks: m.is24Jam ? 'Buka 24 jam' : 'Buka ${m.jamBuka}',
-                warna: m.isOpen ? AppColors.success : AppColors.warning,
-              ),
-              _Lencana(
-                teks: m.isOpen ? 'Buka sekarang' : 'Tutup sekarang',
-                warna: m.isOpen ? AppColors.success : AppColors.warning,
-              ),
+              if (m.jamBukaPasti) ...<Widget>[
+                _Lencana(
+                  teks: m.is24Jam ? 'Buka 24 jam' : 'Buka ${m.jamBuka}',
+                  warna: m.isOpen ? AppColors.success : AppColors.warning,
+                ),
+                _Lencana(
+                  teks: m.isOpen ? 'Buka sekarang' : 'Tutup sekarang',
+                  warna: m.isOpen ? AppColors.success : AppColors.warning,
+                ),
+              ] else
+                _Lencana(
+                  teks: 'Jam buka belum dikonfirmasi warga',
+                  warna: context.semantic.textSecondary,
+                ),
+              if (m.titikPerkiraan)
+                _Lencana(
+                  teks: 'Titik peta masih perkiraan',
+                  warna: AppColors.warning,
+                ),
               for (final KategoriMitraUsaha x in m.kategori)
                 _Lencana(teks: x.label, warna: x.warna),
             ],
@@ -128,7 +139,20 @@ class MitraUsahaDetailScreen extends StatelessWidget {
               children: <Widget>[
                 _Info(ikon: Ik.pinMitra, teks: m.alamat),
                 const SizedBox(height: AppSpacing.md),
-                _Info(ikon: Ik.clock, teks: 'Jam buka ${m.jamBuka}'),
+                _Info(
+                  ikon: Ik.clock,
+                  teks: m.jamBukaPasti
+                      ? 'Jam buka ${m.jamBuka}'
+                      : 'Jam buka belum dikonfirmasi warga',
+                ),
+                if (m.titikPerkiraan) ...<Widget>[
+                  const SizedBox(height: AppSpacing.md),
+                  _Info(
+                    ikon: Ik.pinMitra,
+                    teks: 'Titik peta masih perkiraan. Alamatnya benar, tapi '
+                        'koordinat pintu toko belum dikirim warga.',
+                  ),
+                ],
                 if (m.layanan.isNotEmpty) ...<Widget>[
                   const SizedBox(height: AppSpacing.md),
                   _Info(

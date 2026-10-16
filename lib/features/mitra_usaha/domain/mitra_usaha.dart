@@ -149,6 +149,7 @@ class MitraUsaha {
     this.rating = 0,
     this.layanan = const <String>[],
     this.info,
+    this.titikPerkiraan = false,
   });
 
   final String id;
@@ -174,7 +175,18 @@ class MitraUsaha {
   /// Catatan singkat, mis. "Pasar terdekat dari Kuningan Barat".
   final String? info;
 
+  /// Benar kalau titik peta ini persis koordinat yang diberikan warga. Kalau
+  /// false, alamatnya benar tapi titiknya masih titik jalan (hasil geocode)
+  /// atau perkiraan lama - aplikasi wajib jujur soal ini.
+  final bool titikPerkiraan;
+
   bool get is24Jam => jamBuka.toLowerCase().contains('24');
+
+  /// True kalau jam buka benar-benar berasal dari warga atau catatan warga.
+  /// Kalau belum, aplikasi TIDAK menampilkan lencana "buka sekarang"/
+  /// "tutup sekarang": menebak jam buka sama dengan mengarang data.
+  bool get jamBukaPasti =>
+      is24Jam || RegExp(r'\d{2}:\d{2}\s*-\s*\d{2}:\d{2}').hasMatch(jamBuka);
 
   /// Apakah masih buka sekarang. Pasar yang jam bukanya tidak lengkap
   /// dianggap buka supaya tidak salah menutup warup.
