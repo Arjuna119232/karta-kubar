@@ -2,6 +2,12 @@ import '../../core/data/hasil.dart';
 import '../models/order.dart';
 import '../models/order_tracking.dart';
 
+/// Tanda tangan fungsi pembacaan titik, dipakai `TrackingPolling`.
+typedef Ambil = Future<Hasil<List<OrderTracking>>> Function(
+  String orderId,
+  JenisOrder jenis,
+);
+
 /// Sumber titik perjalanan untuk satu order.
 ///
 /// Kenapa abstrak: APK warga hanya butuh "ambil 10 titik terbaru", APK mitra
@@ -42,19 +48,18 @@ class TrackingPolling implements TrackingService {
 
   /// Fungsi pembacaan titik (dipisah dari class supaya file ini tidak
   /// bergantung pada repository tertentu).
-  final Future<Hasil<List<OrderTracking>>> Function(String orderId, JenisOrder jenis)
-      ambil;
+  final Ambil ambil;
 
-  /// Pembricaan sekali tanpa jeda — dipakai saat layar baru dibuka supaya
+  /// Pembacaan sekali tanpa jeda - dipakai saat layar baru dibuka supaya
   /// tidak menunggu satu tick penuh.
-  final Future<Hasil<List<OrderTracking>>> Function(String orderId, JenisOrder jenis)?
-      ambilLangsung;
+  final Ambil? ambilLangsung;
 
   final Duration interval;
 
   Stream<List<OrderTracking>> stream(String orderId, JenisOrder jenis) async* {
-    if (ambilLangsung != null) {
-      final Hasil<List<OrderTracking>> awal = await ambilLangsung(orderId, jenis);
+    final Ambil? langsung = ambilLangsung;
+    if (langsung != null) {
+      final Hasil<List<OrderTracking>> awal = await langsung(orderId, jenis);
       if (awal.berhasil) yield awal.data ?? const <OrderTracking>[];
     }
     while (true) {

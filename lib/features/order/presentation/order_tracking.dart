@@ -59,9 +59,8 @@ class OrderTrackingScreen extends ConsumerWidget {
                   child: ShimmerListSkeleton(itemCount: 3, itemHeight: 120),
                 )
               : AppErrorState(
-                  title: 'Order tidak ditemukan',
                   message: 'Order ini sudah tidak ada di perangkat ini, atau '
-                      'ID-nya salah.',
+                      'ID-nya salah. Tarik ke bawah untuk mencoba lagi.',
                   onRetry: () => ref.invalidate(orderPantauProvider(kunci)),
                 ),
         ),

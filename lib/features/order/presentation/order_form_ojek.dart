@@ -329,7 +329,7 @@ class _IntroOjek extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          AppIcon(Ik.motorcycle, size: 26, color: context.colors.accent),
+          AppIcon(Ik.motorcycle, size: 26, color: AppColors.accent),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(

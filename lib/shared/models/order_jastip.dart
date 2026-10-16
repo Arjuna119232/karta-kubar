@@ -58,7 +58,7 @@ class OrderJastip {
         catatan: bacaTeks(j['catatan']),
         fotoReferensi: j['foto_referensi']?.toString(),
         jarakKm: bacaAngka(j['jarak_km']),
-        fee: bacaAngka(j['fee']),
+        tarif: bacaAngka(j['fee']),
         estimasiBiayaBarang: j['estimasi_biaya_barang'] == null
             ? null
             : bacaAngka(j['estimasi_biaya_barang']),

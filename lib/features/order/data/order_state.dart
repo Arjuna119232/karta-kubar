@@ -94,9 +94,8 @@ final Provider<LokasiService> lokasiServiceProvider =
 final Provider<TarifService> tarifServiceProvider =
     Provider<TarifService>((ref) => const TarifService());
 
-final Provider<KunciWarga> kunciWargaProvider = FutureProvider<KunciWarga>(
-  (ref) => KunciWarga.muat(),
-);
+final FutureProvider<KunciWarga> kunciWargaProvider =
+    FutureProvider<KunciWarga>((ref) => KunciWarga.muat());
 
 /// Penyimpanan titik tracking di perangkat.
 final Provider<TrackingLokal> trackingLokalProvider =
@@ -127,7 +126,11 @@ class OrderNotifier extends AsyncNotifier<List<OrderRingkas>> {
   }
 
   Future<void> muatUlang() async {
-    state = await AsyncValue<List<OrderRingkas>>.guard(build);
+    try {
+      state = AsyncValue<List<OrderRingkas>>.data(await build());
+    } catch (e, st) {
+      state = AsyncValue<List<OrderRingkas>>.error(e, st);
+    }
   }
 
   /// Dipanggil setelah form berhasil submit supaya daftar langsung terlihat.
@@ -157,17 +160,17 @@ final Provider<List<OrderRingkas>> orderAktifProvider =
 ///
 /// [kunci] dibawa sebagai `"<jenis>|<uuid>"` (contoh `jastip|local-123`) supaya
 /// satu provider melayani jastip dan ojek tanpa parameter kedua.
-final StreamProvider.autoDispose.family<OrderRingkas?, String>
-    orderPantauProvider =
+///
+/// Tipe provider TIDAK ditulis eksplisit (`StreamProvider.autoDispose.family`
+/// sebagai anotasi tipe butuh versi riverpod tertentu; ditulis sebagai
+/// inferensi, kodenya jalan di riverpod 2.x maupun 3.x).
+final orderPantauProvider =
     StreamProvider.autoDispose.family<OrderRingkas?, String>((ref, kunci) {
-  final int pisah = kunci.indexOf('|');
-  final String jenis =
-      pisah > 0 ? kunci.substring(0, pisah) : JenisOrder.jastip.name;
-  final String idAsli = pisah > 0 ? kunci.substring(pisah + 1) : kunci;
-  final OrderServiceDasar svc = jenis == JenisOrder.ojek.name
+  final _Bagian bagian = _pecah(kunci);
+  final OrderServiceDasar svc = bagian.jenis == JenisOrder.ojek
       ? ref.watch(ojekServiceProvider)
       : ref.watch(jastipServiceProvider);
-  return _pantau(svc, idAsli);
+  return _pantau(svc, bagian.id);
 });
 
 Future<OrderRingkas?> _pantau(OrderServiceDasar svc, String id) async* {
@@ -186,39 +189,46 @@ Future<OrderRingkas?> _pantau(OrderServiceDasar svc, String id) async* {
 }
 
 /// Titik perjalanan untuk satu order, dipakai peta dan timeline.
-final StreamProvider.autoDispose.family<List<TitikPeta>, String>
-    trackingTitikProvider =
+final trackingTitikProvider =
     StreamProvider.autoDispose.family<List<TitikPeta>, String>((ref, kunci) {
-  final int pisah = kunci.indexOf('|');
-  final String jenis =
-      pisah > 0 ? kunci.substring(0, pisah) : JenisOrder.jastip.name;
-  final String idAsli = pisah > 0 ? kunci.substring(pisah + 1) : kunci;
+  final _Bagian bagian = _pecah(kunci);
   final TrackingLokal store = ref.watch(trackingLokalProvider);
-  return titikUntuk(store, idAsli, JenisOrder.dari(jenis));
+  return titikUntuk(store, bagian.id, bagian.jenis);
 });
 
-;
+class _Bagian {
+  const _Bagian(this.jenis, this.id);
+
+  final JenisOrder jenis;
+  final String id;
+}
+
+_Bagian _pecah(String kunci) {
+  final int i = kunci.indexOf('|');
+  if (i <= 0) return _Bagian(JenisOrder.jastip, kunci);
+  return _Bagian(JenisOrder.dari(kunci.substring(0, i)), kunci.substring(i + 1));
+}
+
 // =====================================================================
 //  Mitra
 // =====================================================================
 
 /// Mitra yang sedang online dan bisa menerima order [jenis].
-final FutureProvider.family<List<MitraJasa>, JenisOrder>
-    mitraTersediaProvider =
+final mitraTersediaProvider =
     FutureProvider.family<List<MitraJasa>, JenisOrder>((ref, jenis) async {
   final MitraRepository repo = ref.watch(mitraRepositoryProvider);
   return (await repo.tersedia(jenis)).data ?? const <MitraJasa>[];
 });
 
 /// Rating mitra untuk kartu di form ojek dan kartu detail.
-final FutureProvider.family<RingkasanRating, String> ringkasanRatingProvider =
+final ringkasanRatingProvider =
     FutureProvider.family<RingkasanRating, String>((ref, mitraId) async {
   if (mitraId.isEmpty) return RingkasanRating.kosong;
   return ref.watch(reviewServiceProvider).ringkasan(mitraId);
 });
 
 /// Ulasan untuk satu mitra (kartu detail order).
-final FutureProvider.family<List<ReviewOrder>, String> ulasanMitraProvider =
+final ulasanMitraProvider =
     FutureProvider.family<List<ReviewOrder>, String>((ref, mitraId) async {
   if (mitraId.isEmpty) return const <ReviewOrder>[];
   final Hasil<List<ReviewOrder>> h =

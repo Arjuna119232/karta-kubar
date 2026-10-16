@@ -248,13 +248,13 @@ class _UlasanLama extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FutureBuilder<List<ReviewOrder>>(
+    return FutureBuilder<Hasil<List<ReviewOrder>>>(
       future: ref.watch(reviewServiceProvider).untukOrder(idOrder, jenis),
-      builder: (BuildContext context, AsyncSnapshot<List<ReviewOrder>> snap) {
-        if (snap.connectionState != ConnectionState.done) {
+      builder: (BuildContext context, AsyncSnapshot<Hasil<List<ReviewOrder>>> snap) {
+        if (snap.connectionState != ConnectionState.done || !snap.hasData) {
           return const SizedBox.shrink();
         }
-        final List<ReviewOrder> list = snap.data ?? const <ReviewOrder>[];
+        final List<ReviewOrder> list = snap.data?.data ?? const <ReviewOrder>[];
         if (list.isEmpty) return const SizedBox.shrink();
         final ReviewOrder lama = list.first;
         return AppCard(

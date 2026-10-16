@@ -214,7 +214,7 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
       setState(() => _foto = berkas);
       Haptics.success();
     } catch (e) {
-      _Snak.err('Tidak bisa mengambil foto: $e');
+      _snak('Tidak bisa mengambil foto: $e');
     }
   }
 
@@ -225,7 +225,7 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
     if (!mounted) return;
     setState(() => _sibukLokasi = false);
     if (!hasil.berhasil) {
-      _Snak.err(hasil.galat?.pesan ?? 'Gagal membaca lokasi.');
+      _snak(hasil.galat?.pesan ?? 'Gagal membaca lokasi.');
       return;
     }
     setState(() {
@@ -255,7 +255,7 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
   Future<void> _kirim() async {
     FocusScope.of(context).unfocus();
     if (!(_form.currentState?.validate() ?? false)) {
-      _Snak.err('Masih ada kolom yang perlu diperbaiki.');
+      _snak('Masih ada kolom yang perlu diperbaiki.');
       return;
     }
     final String? pesan = JastipService.validasi(
@@ -265,7 +265,7 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
       alamatAntar: _alamatAntar.text,
     ).pesan;
     if (pesan != null) {
-      _Snak.err(pesan);
+      _snak(pesan);
       return;
     }
     Haptics.medium();
@@ -296,7 +296,7 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
     setState(() => _sibukKirim = false);
     if (!hasil.berhasil) {
       Haptics.error();
-      _Snak.err(hasil.galat?.pesan ?? 'Order gagal dikirim.');
+      _snak(hasil.galat?.pesan ?? 'Order gagal dikirim.');
       return;
     }
     Haptics.success();
@@ -305,7 +305,7 @@ class _JastipFormScreenState extends ConsumerState<JastipFormScreen> {
     context.push('/order/tracking/${hasil.data!.jenis.name}/${hasil.data!.id}');
   }
 
-  void _Snak(String pesan, {bool galat = false}) {
+  void _snak(String pesan, {bool galat = false}) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(

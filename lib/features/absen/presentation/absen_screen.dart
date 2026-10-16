@@ -272,7 +272,7 @@ class _ScannerSheetState extends ConsumerState<_ScannerSheet> {
             FilledButton.icon(
               onPressed: () {
                 widget.ctrl.catat(
-                  _cocok(judul!),
+                  _cocok(judul),
                   StatusKehadiran.hadir,
                   pada: DateTime.now(),
                 );

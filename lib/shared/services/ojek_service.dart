@@ -167,15 +167,14 @@ class MitraRepositoryContoh implements MitraRepository {
   Stream<MitraJasa?> pantauLokasi(String id, {Duration? interval}) async* {
     // Data contoh tidak bergerak. Layar tracking menampilkan catatan jujur
     // bahwa posisi belum dikirim, bukan marker yang diam di tengah peta.
-    for (MitraJasa? m = await _cari(id); int i = 0; i < 600; i++) {
-      yield m;
-      await Future<void>.delayed(interval ?? const Duration(seconds: 10));
-      m = await _cari(id);
+    final Duration jeda = interval ?? const Duration(seconds: 10);
+    MitraJasa? terakhir = await byId(id).then((Hasil<MitraJasa> h) =>
+        h.berhasil ? h.data : null);
+    yield terakhir;
+    for (int i = 0; i < 600; i++) {
+      await Future<void>.delayed(jeda);
+      if (terakhir != null && terakhir.id != id) return;
+      yield terakhir;
     }
-  }
-
-  Future<MitraJasa?> _cari(String id) async {
-    final Hasil<MitraJasa> h = await byId(id);
-    return h.berhasil ? h.data : null;
   }
 }

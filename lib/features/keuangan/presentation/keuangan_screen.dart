@@ -559,7 +559,7 @@ class _PratinjauCsvState extends State<PratinjauCsv> {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text(
-          '\$baris baris - siap diunduh atau disalin.',
+          '$baris baris - siap diunduh atau disalin.',
           style: context.text.bodySmall
               ?.copyWith(color: context.semantic.textSecondary),
         ),

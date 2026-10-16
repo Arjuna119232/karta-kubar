@@ -185,7 +185,7 @@ bool bacaBenar(Object? v) => v == true || v == 'true' || v == 1;
 String rupiah(num nilai) {
   final int bulat = nilai.round();
   final String s = bulat.abs().toString();
-  final StringBuilder out = StringBuilder(bulat < 0 ? '-Rp' : 'Rp');
+  final StringBuffer out = StringBuffer(bulat < 0 ? '-Rp' : 'Rp');
   for (int i = 0; i < s.length; i++) {
     if (i > 0 && (s.length - i) % 3 == 0) out.write('.');
     out.write(s[i]);

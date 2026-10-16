@@ -48,7 +48,7 @@ String _acak(int panjang) {
   const String abjad = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ';
   final DateTime now = DateTime.now();
   int seed = now.microsecondsSinceEpoch;
-  final StringBuilder out = StringBuilder();
+  final StringBuffer out = StringBuffer();
   for (int i = 0; i < panjang; i++) {
     seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF;
     out.write(abjad[seed % abjad.length]);

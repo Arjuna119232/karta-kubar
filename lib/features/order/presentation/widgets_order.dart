@@ -164,7 +164,7 @@ class _Pin extends StatelessWidget {
 
 /// Tampilan saat koordinat belum ada: memberi tahu, bukan peta kosong.
 class PetaKosong extends StatelessWidget {
-  const PetaKosong({super.key, this.tinggi = 220});
+  const PetaKosong({super.key, this.tinggi = 220.0});
 
   final double tinggi;
 
@@ -382,7 +382,7 @@ class _Lencana extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color w = jenis == JenisOrder.jastip
         ? context.colors.primary
-        : context.colors.accent;
+        : AppColors.accent;
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -423,13 +423,13 @@ Color warnaStatus(BuildContext context, StatusOrder status) {
     case StatusOrder.menunggu:
       return context.semantic.textSecondary;
     case StatusOrder.diterima:
-      return context.colors.info;
+      return AppColors.info;
     case StatusOrder.diproses:
-      return context.colors.warning;
+      return AppColors.warning;
     case StatusOrder.dalamPerjalanan:
       return context.colors.primary;
     case StatusOrder.selesai:
-      return context.colors.success;
+      return AppColors.success;
     case StatusOrder.batal:
     case StatusOrder.dibatalkan:
       return context.semantic.textSecondary;
@@ -682,7 +682,7 @@ class OpsiBayar extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color w = metode == MetodeBayar.cash
         ? context.colors.primary
-        : context.colors.accent;
+        : AppColors.accent;
     return InkWell(
       onTap: aktif
           ? () {
