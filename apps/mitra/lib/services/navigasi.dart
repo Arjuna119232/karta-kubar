@@ -183,6 +183,7 @@ class SuaraNavigasi implements AnyVoiceGuidance {
     } catch (_) {}
   }
 
+  @override
   void dispose() {
     stop();
   }
