@@ -122,7 +122,7 @@ class _PetaScreenState extends State<PetaScreen> {
 
   /// Kembalikan kamera ke pusat Mampang Prapatan.
   Future<void> _kePusatMampang() async {
-    await _ctrl?.moveCamera(AnyCameraPosition(target: _pusatMampang, zoom: 14));
+    await _ctrl?.moveCamera(const AnyCameraPosition(target: _pusatMampang, zoom: 14));
   }
 
   List<AnyMarker> _marker() {
@@ -193,8 +193,8 @@ class _PetaScreenState extends State<PetaScreen> {
           foregroundColor: _kuningan,
           onPressed: onTekan,
           tooltip: tooltip,
-          child: Icon(ikon, size: 24),
           shape: const CircleBorder(),
+          child: Icon(ikon, size: 24),
         ),
       );
 
