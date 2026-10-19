@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config.dart';
-import 'core/design/tokens.dart';
 import 'core/diagnostik.dart';
 import 'core/theme.dart';
 import 'screens/izin_screen.dart';
