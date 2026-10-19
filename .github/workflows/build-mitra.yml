@@ -41,6 +41,13 @@ jobs:
           test -s android/app/upload-keystore.jks || { echo "FAIL: keystore kosong"; exit 1; }
       - name: Pasang signing config release
         run: python3 tool/patch_signing.py
+      # R8 (minify) aktif di build release. Tanpa aturan keep, anggota kelas
+      # plugin bisa hilang -> NoSuchMethodError hanya di release (debug aman).
+      - name: Pasang aturan R8 untuk plugin (proguard)
+        run: python3 tool/patch_proguard.py
+      # Cache build lama bisa mencampur dua versi AAR plugin yang berbeda ->
+      # NoSuchMethodError pada registrar Pigeon. Selalu mulai dari bersih.
+      - run: flutter clean
       - run: flutter pub get
       - run: flutter analyze
       - name: Build APK (universal, 1 file)
