@@ -25,6 +25,22 @@ jobs:
       - uses: subosito/flutter-action@v2
         with: { channel: stable }
       - run: bash tools/setup_android.sh
+      # Tanpa langkah ini APK release tertandatangani debug key yang DI-GENERATE
+      # ULANG tiap run -> sertifikatnya berubah terus dan update di atas APK lama
+      # selalu gagal ("App not installed"). Keystore disimpan di GitHub Secrets.
+      - name: Restore keystore (release signing)
+        run: |
+          mkdir -p android
+          echo "${{ secrets.KUNBAR_MITRA_KEYSTORE_BASE64 }}" | base64 -d > android/app/upload-keystore.jks
+          cat > android/key.properties <<EOF
+          storeFile=upload-keystore.jks
+          storePassword=${{ secrets.KUNBAR_MITRA_KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.KUNBAR_MITRA_KEY_ALIAS }}
+          keyPassword=${{ secrets.KUNBAR_MITRA_KEY_PASSWORD }}
+          EOF
+          test -s android/app/upload-keystore.jks || { echo "FAIL: keystore kosong"; exit 1; }
+      - name: Pasang signing config release
+        run: python3 tool/patch_signing.py
       - run: flutter pub get
       - run: flutter analyze
       - name: Build APK (universal, 1 file)
@@ -37,6 +53,13 @@ jobs:
           --dart-define=FCM_SENDER_ID=${{ secrets.FCM_SENDER_ID }}
           --dart-define=FCM_PROJECT_ID=${{ secrets.FCM_PROJECT_ID }}
       - run: ls -l build/app/outputs/flutter-apk/
+      - name: Verifikasi APK tidak memakai debug key
+        run: |
+          APKSIGNER="$(ls "$ANDROID_SDK_ROOT"/build-tools/*/apksigner 2>/dev/null | tail -1)"
+          [ -x "$APKSIGNER" ] || APKSIGNER="$(ls "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)"
+          DN="$("$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-release.apk | grep -m1 'certificate DN')"
+          echo "$DN"
+          case "$DN" in *"Android Debug"*) echo "GAGAL: APK masih debug key"; exit 1;; esac
       - uses: actions/upload-artifact@v4
         with:
           name: kunbar-mitra-apk
