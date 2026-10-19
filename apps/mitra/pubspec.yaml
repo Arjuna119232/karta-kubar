@@ -28,6 +28,8 @@ dependencies:
   image_picker: ^1.1.2
   any_map: ^1.0.0
   any_map_maplibre: ^1.0.0
+  # Suara petunjuk navigasi (TTS) - butuh mesin suara Indonesia di HP.
+  flutter_tts: ^4.2.5
 
 dev_dependencies:
   flutter_test:

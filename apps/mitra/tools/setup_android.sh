@@ -46,7 +46,7 @@ if ! grep -q 'android.permission.CAMERA' "$M"; then
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
-    <queries><intent><action android:name="android.intent.action.VIEW"/><data android:scheme="https"/></intent><intent><action android:name="android.intent.action.VIEW"/><data android:scheme="google.navigation"/></intent><intent><action android:name="android.intent.action.DIAL"/><data android:scheme="tel"/></intent></queries>
+    <queries><intent><action android:name="android.intent.action.VIEW"/><data android:scheme="https"/></intent><intent><action android:name="android.intent.action.VIEW"/><data android:scheme="google.navigation"/></intent><intent><action android:name="android.intent.action.DIAL"/><data android:scheme="tel"/></intent><intent><action android:name="android.intent.action.TTS_SERVICE"/></intent></queries>
     <application#' "$M"
 fi
 sed -i 's/android:label="[^"]*"/android:label="KUNBAR Mitra"/' "$M"
@@ -74,6 +74,11 @@ else
   }
   perl -pi -e 's/minSdkVersion\s+flutter\.minSdkVersion/minSdkVersion 23/' "$G"
 fi
+
+# Android 11+ membatasi paket yang terlihat: tanpa queries TTS_SERVICE,
+# flutter_tts tidak menemukan mesin suara dan navigasi jadi senyap.
+grep -q 'android.intent.action.TTS_SERVICE' "$M" || {
+  echo "GAGAL: queries TTS_SERVICE tidak ada di manifest"; exit 1; }
 
 # Guard: izin yang dipakai kode WAJIB ada di manifest.
 for izin in CAMERA RECORD_AUDIO ACCESS_FINE_LOCATION POST_NOTIFICATIONS \

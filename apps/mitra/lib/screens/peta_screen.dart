@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/models.dart';
 import '../services/rute.dart';
 import '../state/app_state.dart';
+import 'navigasi_screen.dart';
 import 'widgets.dart';
 
 /// Peta KUNBAR-Mitra — fokus Kecamatan Mampang Prapatan, Jakarta Selatan.
@@ -296,10 +297,18 @@ class _PetaScreenState extends State<PetaScreen> {
   }
 
   Future<void> _bukaNavigasi(BuildContext c, Order o) async {
-    final (_, _, alamat) = o.navTarget;
+    final (lat, lng, alamat) = o.navTarget;
+    if (lat != null && lng != null) {
+      // Navigasi belok-per-belok di dalam aplikasi (suara + rute alternatif).
+      await Navigator.of(c).push(
+        MaterialPageRoute(builder: (_) => NavigasiScreen(order: o)),
+      );
+      return;
+    }
+    // Titik koordinat belum ada -> serahkan ke Google Maps lewat alamat.
     final web = Uri.parse(
         'https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(alamat)}');
     final ok = await launchUrl(web, mode: LaunchMode.externalApplication);
-    if (!ok && c.mounted) toast(c, 'Tidak ada aplikasi peta yang bisa dibuka');
+    if (!ok && c.mounted) toast(c, 'Alamat ini belum punya koordinat.');
   }
 }
