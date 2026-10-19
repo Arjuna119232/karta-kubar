@@ -6,22 +6,23 @@ import 'package:provider/provider.dart';
 
 import '../core/format.dart';
 import '../core/theme.dart';
-import '../services/kotak_masuk.dart';
 import '../models/models.dart';
+import '../services/kotak_masuk.dart';
 import '../state/app_state.dart';
 import '../widgets/kit.dart';
 import 'account_screen.dart';
+import 'kotak_masuk_screen.dart';
+import 'order_detail_screen.dart';
+import 'order_masuk_screen.dart';
 import 'orders_screen.dart';
 import 'pendapatan_screen.dart';
-import 'order_detail_screen.dart';
-import 'kotak_masuk_screen.dart';
-import 'order_masuk_screen.dart';
 import 'widgets.dart';
 
 /// Beranda kerja: peta penuh di belakang, semua kontrol mengambang di atasnya.
-/// - Peta full screen yang gratis (MapLibre + OpenFreeMap, tanpa API key).
+///
+/// - Peta full screen gratis (MapLibre + OpenFreeMap, tanpa API key).
 /// - Lokasi mitra dan order aktif tampil sebagai marker.
-/// - Header kaca: sapaan, rating, jumlah order, status, tombol profil.
+/// - Header kaca: sapaan, rating, ringkasan hari ini, status, kotak masuk.
 /// - Tombol AKTIFKAN / NONAKTIFKAN besar dengan denyut pelan.
 /// - Empat aksi cepat plus kartu order aktif di atasnya.
 class HomeScreen extends StatefulWidget {
@@ -42,12 +43,12 @@ class _HomeScreenState extends State<HomeScreen> {
     _pantauOrder();
   }
 
-  @override
-  void didUpdateWidget(covariant HomeScreen old) {
-    super.didUpdateWidget(old);
-  }
-
-  /// Order baru langsung dibuka layar penuh, seperti aplikasi ojek pada umumnya.
+  /// Order baru langsung dibuka layar penuh, seperti aplikasi ojek umumnya.
+  ///
+  /// [_orderDitampilkan] sengaja TIDAK direset setelah layar ditutup: kalau
+  /// order masih ada di `incoming` (ditolak tapi belum hilang, atau gagal
+  /// terkirim), membuka ulang layarnya hanya membuat mitra terjebak lingkar.
+  /// Reset terjadi sendiri ketika order itu benar-benar lenyap dari `incoming`.
   void _pantauOrder() {
     final s = context.read<AppState>();
     final o = s.incoming.isEmpty ? null : s.incoming.first;
@@ -57,48 +58,60 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     if (_orderDitampilkan == o.id) return;
     _orderDitampilkan = o.id;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      await Navigator.of(context).push(
+      Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => OrderMasukScreen(order: o)),
       );
-      if (mounted) setState(() => _orderDitampilkan = null);
     });
   }
 
+  /// Koordinat lengkap = lat DAN lng terisi; kalau salah satu null, marker
+  /// tidak digambar (menghindari `null!` yang mematikan layar beranda).
+  static AnyLatLng? _titikOrder(double? lat, double? lng) =>
+      (lat == null || lng == null) ? null : AnyLatLng(lat, lng);
+
   AnyLatLng _titikAwal(AppState s) {
     final o = s.active;
-    if (o != null && o.pickupLat != null && o.pickupLng != null) {
-      return AnyLatLng(o.pickupLat!, o.pickupLng!);
-    }
+    final t = o == null ? null : _titikOrder(o.pickupLat, o.pickupLng);
+    if (t != null) return t;
     if (_saya != null) return _saya!;
     return const AnyLatLng(-6.2385, 106.8280); // Kuningan Barat
   }
 
-  List<AnyMarker> _marker(AppState s) => [
-        if (_saya != null)
-          AnyMarker(
-            id: 'mitra',
-            position: _saya!,
-            icon: const Icon(Icons.two_wheeler_rounded, color: Colors.white, size: 34),
-            zIndex: 9,
-          ),
-        if (s.active != null && s.active!.pickupLat != null)
-          AnyMarker(
-            id: 'aktif',
-            position: AnyLatLng(s.active!.pickupLat!, s.active!.pickupLng!),
-            icon: const Icon(Icons.local_shipping_rounded, color: Colors.amber, size: 32),
-            zIndex: 8,
-          ),
-        if (s.incoming.isNotEmpty &&
-            s.incoming.first.pickupLat != null)
-          AnyMarker(
-            id: 'baru',
-            position: AnyLatLng(s.incoming.first.pickupLat!, s.incoming.first.pickupLng!),
-            icon: const Icon(Icons.campaign_rounded, color: Colors.red, size: 32),
-            zIndex: 8,
-          ),
-      ];
+  List<AnyMarker> _marker(AppState s) {
+    final aktif = s.active == null
+        ? null
+        : _titikOrder(s.active!.pickupLat, s.active!.pickupLng);
+    final baru = s.incoming.isEmpty
+        ? null
+        : _titikOrder(s.incoming.first.pickupLat, s.incoming.first.pickupLng);
+    return [
+      if (_saya != null)
+        AnyMarker(
+          id: 'mitra',
+          position: _saya!,
+          icon: const Icon(Icons.two_wheeler_rounded,
+              color: Colors.white, size: 34),
+          zIndex: 9,
+        ),
+      if (aktif != null)
+        AnyMarker(
+          id: 'aktif',
+          position: aktif,
+          icon: const Icon(Icons.local_shipping_rounded,
+              color: Colors.amber, size: 32),
+          zIndex: 8,
+        ),
+      if (baru != null)
+        AnyMarker(
+          id: 'baru',
+          position: baru,
+          icon: const Icon(Icons.campaign_rounded, color: Colors.red, size: 32),
+          zIndex: 8,
+        ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +124,9 @@ class _HomeScreenState extends State<HomeScreen> {
           // 1. PETA FULL SCREEN
           Positioned.fill(
             child: AnyMapWidget(
-              adapter: MapLibreAdapter(styleUrl: 'https://tiles.openfreemap.org/styles/liberty'),
+              adapter: MapLibreAdapter(
+                styleUrl: 'https://tiles.openfreemap.org/styles/liberty',
+              ),
               initialCamera: AnyCameraPosition(target: _titikAwal(s), zoom: 14.5),
               markers: _marker(s),
               myLocationEnabled: true,
@@ -119,50 +134,40 @@ class _HomeScreenState extends State<HomeScreen> {
                 _ctrl = c;
                 _posisiSaya();
               },
-              onError: (e) {
-                debugPrint('peta: ${e.message}');
-              },
+              onError: (e) => debugPrint('peta: ${e.message}'),
             ),
           ),
 
-          // 2. FLOATING HEADER
+          // 2. HEADER KACA
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 12,
             right: 12,
-            child: _HeaderKaca(
+            child: _HeaderBeranda(
               nama: s.name,
               online: s.online,
               rating: s.avgRating,
-              orderSelesai: s.history.where((o) => o.isDone).length,
-              onProfil: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const AccountScreen())),
+              orderHariIni: s.history.where((o) => o.isDone).length,
+              pendapatan: s.todayEarnings,
+              onProfil: () => _ke(context, const AccountScreen(dapatTombolKembali: true)),
+              onKotakMasuk: () => _ke(context, const KotakMasukScreen()),
             ),
           ),
 
-          // tombol zoom + lokasi di kanan peta
+          // 3. TOMBOL PETA (kanan)
           Positioned(
             right: 12,
-            bottom: 220,
+            bottom: 232,
             child: Column(
               children: [
                 _TombolPeta(ikon: Icons.add_rounded, onTekan: _zoomMasuk),
                 const SizedBox(height: 8),
-                _TombolPeta(
-                  ikon: Icons.my_location_rounded,
-                  onTekan: () async {
-                    await _posisiSaya();
-                    final p = _saya;
-                    if (p != null && _ctrl != null) {
-                      _ctrl!.moveCamera(AnyCameraPosition(target: p, zoom: 16));
-                    }
-                  },
-                ),
+                _TombolPeta(ikon: Icons.my_location_rounded, onTekan: _keSaya),
               ],
             ),
           ),
 
-          // 3. TOMBOL STATUS BESAR + ORDER AKTIF + QUICK ACTION
+          // 4. TOMBOL STATUS + ORDER AKTIF + AKSI CEPAT
           Positioned(
             left: 12,
             right: 12,
@@ -178,11 +183,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? 'MENYIAPKAN...'
                       : (s.online ? 'NONAKTIFKAN' : 'AKTIFKAN'),
                   subjudul: s.online
-                      ? 'sedang menerima order'
+                      ? 'sedang menerima order di sekitar'
                       : 'tekan untuk mulai menerima order',
                   gradien: Gaya.hijau(s.online),
                   denyut: s.online,
-                  ikon: s.online ? Icons.power_settings_new : Icons.power_off_rounded,
+                  menyala: !s.menyiapkanOnline,
+                  ikon: s.online
+                      ? Icons.power_settings_new_rounded
+                      : Icons.power_off_rounded,
                   onTekan: () => _toggle(s),
                 ),
                 const SizedBox(height: 10),
@@ -202,17 +210,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       child: KotakAksi(
                         ikon: Icons.payments_rounded,
-                        warna: const Color(0xFF1565C0),
+                        warna: AppColors.info,
                         judul: 'Pendapatan',
                         subjudul: rp(s.todayEarnings),
-                        onTekan: () => _ke(context, const PendapatanScreen(dapatTombolKembali: true)),
+                        onTekan: () => _ke(
+                            context, const PendapatanScreen(dapatTombolKembali: true)),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: KotakAksi(
                         ikon: Icons.inbox_rounded,
-                        warna: const Color(0xFF6A1B9A),
+                        warna: AppColors.violet,
                         judul: 'Kotak',
                         subjudul: 'info admin',
                         onTekan: () => _ke(context, const KotakMasukScreen()),
@@ -222,10 +231,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       child: KotakAksi(
                         ikon: Icons.person_rounded,
-                        warna: const Color(0xFF00695C),
+                        warna: AppColors.teal,
                         judul: 'Profil',
                         subjudul: s.vehicleType,
-                        onTekan: () => _ke(context, const AccountScreen(dapatTombolKembali: true)),
+                        onTekan: () =>
+                            _ke(context, const AccountScreen(dapatTombolKembali: true)),
                       ),
                     ),
                   ],
@@ -249,7 +259,19 @@ class _HomeScreenState extends State<HomeScreen> {
     final c = _ctrl;
     if (c == null) return;
     final p = await c.getCameraPosition();
-    await c.moveCamera(p.copyWith(zoom: (p.zoom + 1).clamp(2, 20)));
+    final z = p.zoom + 1;
+    // clamp() mengembalikan `num`, bukan `double` - tulis eksplisit.
+    await c.moveCamera(p.copyWith(zoom: z < 2 ? 2 : (z > 20 ? 20 : z)));
+  }
+
+  Future<void> _keSaya() async {
+    await _posisiSaya();
+    final p = _saya;
+    if (p != null && _ctrl != null) {
+      await _ctrl!.moveCamera(AnyCameraPosition(target: p, zoom: 16));
+    } else {
+      await _posisiSaya();
+    }
   }
 
   Future<void> _posisiSaya() async {
@@ -276,9 +298,11 @@ class _HomeScreenState extends State<HomeScreen> {
             'Order yang sedang berjalan tetap bisa diselesaikan.',
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(d, false), child: const Text('Batal')),
+            TextButton(
+                onPressed: () => Navigator.pop(d, false),
+                child: const Text('Batal')),
             FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.error),
               onPressed: () => Navigator.pop(d, true),
               child: const Text('MATIKAN'),
             ),
@@ -293,84 +317,211 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _HeaderKaca extends StatelessWidget {
-  const _HeaderKaca({
+/// Header: identitas, status, dan ringkasan hari ini dalam satu kartu kaca.
+class _HeaderBeranda extends StatelessWidget {
+  const _HeaderBeranda({
     required this.nama,
     required this.online,
     required this.rating,
-    required this.orderSelesai,
+    required this.orderHariIni,
+    required this.pendapatan,
     required this.onProfil,
+    required this.onKotakMasuk,
   });
 
   final String nama;
   final bool online;
   final double rating;
-  final int orderSelesai;
+  final int orderHariIni;
+  final int pendapatan;
   final VoidCallback onProfil;
+  final VoidCallback onKotakMasuk;
 
   @override
   Widget build(BuildContext context) {
+    final p = Palet.of(context);
     final jam = DateTime.now().hour;
     final sapaan = jam < 11
         ? 'Selamat pagi'
-        : (jam < 15 ? 'Selamat siang' : (jam < 18 ? 'Selamat sore' : 'Selamat malam'));
+        : (jam < 15
+            ? 'Selamat siang'
+            : (jam < 18 ? 'Selamat sore' : 'Selamat malam'));
     final awal = nama.trim().isEmpty ? 'Mitra' : nama.trim().split(' ').first;
 
     return Kaca(
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          GestureDetector(onTap: onProfil, child: _Avatar(nama: awal)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('$sapaan, $awal',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 2),
-                Row(
+          Row(
+            children: [
+              GestureDetector(onTap: onProfil, child: _Avatar(nama: awal)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
-                    Text(rating <= 0 ? 'baru' : rating.toStringAsFixed(1),
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-                    Text('  -  $orderSelesai order',
-                        style: const TextStyle(fontSize: 13)),
+                    Text(
+                      '$sapaan, $awal',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Teks.judul.copyWith(color: p.teks, fontSize: 17),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        const Icon(Icons.star_rounded,
+                            color: AppColors.gold, size: 15),
+                        const SizedBox(width: 3),
+                        Text(
+                          rating <= 0 ? 'Mitra baru' : rating.toStringAsFixed(1),
+                          style: Teks.ket.copyWith(
+                            color: p.teks2,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          '  -  $orderHariIni order',
+                          style: Teks.ket.copyWith(color: p.teks2, fontSize: 12.5),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              _PilStatus(online: online),
+              _IkonKotakMasuk(onTap: onKotakMasuk),
+            ],
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: online ? Colors.green : Colors.grey,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(online ? 'ONLINE' : 'OFFLINE',
-                style: const TextStyle(
-                    color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
-          ),
-          const SizedBox(width: 6),
-          Builder(
-            builder: (c) {
-              final belum = NotifikasiService.instance.belumDibaca();
-              return IconButton(
-                tooltip: 'Kotak Masuk',
-                onPressed: () => Navigator.push(c,
-                    MaterialPageRoute(builder: (_) => const KotakMasukScreen())),
-                icon: Badge(
-                  isLabelVisible: belum > 0,
-                  label: Text('$belum'),
-                  child: const Icon(Icons.inbox_rounded),
+          Divider(height: 22, color: p.garis),
+          Row(
+            children: [
+              Expanded(
+                child: _AngkaRingkas(
+                  label: 'PENDAPATAN',
+                  nilai: rp(pendapatan),
+                  warna: p.teks,
                 ),
-              );
-            },
+              ),
+              Container(width: 1, height: 30, color: p.garis),
+              Expanded(
+                child: _AngkaRingkas(
+                  label: 'ORDER',
+                  nilai: '$orderHariIni',
+                  warna: p.teks,
+                ),
+              ),
+              Container(width: 1, height: 30, color: p.garis),
+              Expanded(
+                child: _AngkaRingkas(
+                  label: 'RATING',
+                  nilai: rating <= 0 ? '-' : rating.toStringAsFixed(1),
+                  warna: p.teks,
+                ),
+              ),
+            ],
           ),
-          IconButton(onPressed: onProfil, icon: const Icon(Icons.person_outline_rounded)),
         ],
+      ),
+    );
+  }
+}
+
+class _AngkaRingkas extends StatelessWidget {
+  const _AngkaRingkas({
+    required this.label,
+    required this.nilai,
+    required this.warna,
+  });
+
+  final String label;
+  final String nilai;
+  final Color warna;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = Palet.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Teks.label.copyWith(
+            color: p.teks2,
+            fontSize: 9.5,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          nilai,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Teks.judul.copyWith(color: warna, fontSize: 15),
+        ),
+      ],
+    );
+  }
+}
+
+class _PilStatus extends StatelessWidget {
+  const _PilStatus({required this.online});
+  final bool online;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = Palet.of(context);
+    final w = online ? AppColors.primaryBright : AppColors.muted;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: p.lembut(w, 0.16),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: w, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            online ? 'ONLINE' : 'OFFLINE',
+            style: Teks.label.copyWith(
+              color: online
+                  ? (p.gelap ? AppColors.primaryOnDark : AppColors.primary)
+                  : AppColors.muted,
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IkonKotakMasuk extends StatelessWidget {
+  const _IkonKotakMasuk({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = Palet.of(context);
+    final belum = NotifikasiService.instance.belumDibaca();
+    return IconButton(
+      tooltip: 'Kotak Masuk',
+      onPressed: onTap,
+      icon: Badge(
+        isLabelVisible: belum > 0,
+        label: Text('$belum'),
+        backgroundColor: AppColors.error,
+        child: Icon(Icons.notifications_none_rounded, color: p.teks),
       ),
     );
   }
@@ -382,12 +533,18 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: 24,
-      backgroundColor: AppColors.primary,
+    return Container(
+      width: 46,
+      height: 46,
+      decoration: const BoxDecoration(
+        gradient: Gaya.hijau(false),
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
       child: Text(
         nama.isEmpty ? 'M' : nama[0].toUpperCase(),
-        style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
+        style: const TextStyle(
+            color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
       ),
     );
   }
@@ -400,10 +557,10 @@ class _TombolPeta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Kaca(
-        radius: 16,
+        radius: AppRadius.field,
         padding: const EdgeInsets.all(10),
         onTap: onTekan,
-        child: Icon(ikon, size: 24, color: AppColors.primary),
+        child: Icon(ikon, size: 24, color: Palet.of(context).brand),
       );
 }
 
@@ -413,6 +570,7 @@ class _KartuOrderAktif extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = Palet.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Kaca(
@@ -420,11 +578,17 @@ class _KartuOrderAktif extends StatelessWidget {
             MaterialPageRoute(builder: (_) => OrderDetailScreen(order: order))),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: AppColors.primarySoft,
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(13),
+              ),
               child: Icon(
-                order.type == 'jastip' ? Icons.shopping_bag_rounded : Icons.two_wheeler_rounded,
+                order.type == 'jastip'
+                    ? Icons.shopping_bag_rounded
+                    : Icons.two_wheeler_rounded,
                 color: AppColors.primary,
               ),
             ),
@@ -435,18 +599,19 @@ class _KartuOrderAktif extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text('ORDER ${order.typeLabel} BERJALAN',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                      style: Teks.label.copyWith(
+                          color: AppColors.primary, fontSize: 10.5)),
+                  const SizedBox(height: 2),
                   Text('${order.statusLabel} - ${order.dropAddress}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 15)),
+                      style: Teks.isi.copyWith(color: p.teks, fontSize: 14.5)),
                 ],
               ),
             ),
             Text(rp(order.fee),
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
-            const SizedBox(width: 6),
-            const Icon(Icons.chevron_right_rounded),
+                style: Teks.judul.copyWith(color: p.teks, fontSize: 16)),
+            Icon(Icons.chevron_right_rounded, color: p.teks2),
           ],
         ),
       ),
@@ -458,18 +623,21 @@ class _BannerOffline extends StatelessWidget {
   const _BannerOffline();
 
   @override
-  Widget build(BuildContext context) => const Padding(
-        padding: EdgeInsets.only(bottom: 10),
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
         child: Kaca(
-          radius: 14,
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          radius: AppRadius.field,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           child: Row(
             children: [
-              Icon(Icons.wifi_off_rounded, size: 18, color: Colors.orange),
-              SizedBox(width: 8),
+              const Icon(Icons.wifi_off_rounded,
+                  size: 18, color: AppColors.warning),
+              const SizedBox(width: 8),
               Expanded(
-                child: Text('Sinyal hilang - order mungkin terlambat masuk.',
-                    style: TextStyle(fontSize: 13)),
+                child: Text(
+                  'Sinyal hilang - order mungkin terlambat masuk.',
+                  style: Teks.ket.copyWith(fontSize: 12.5),
+                ),
               ),
             ],
           ),

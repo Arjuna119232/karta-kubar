@@ -50,6 +50,23 @@ class AppColors {
   /// Hijau paling gelap: ujung bawah gradasi hero di tema gelap.
   static const Color primaryDeep = Color(0xFF123815);
 
+  /// Hijau aksi terang — HANYA untuk ikon/titik, bukan latar teks putih.
+  static const Color primaryBright = Color(0xFF2E9E4F);
+
+  // --- Warna kategori (mirip pembagian warna di aplikasi ojek) ---
+
+  /// Biru informasi: pendapatan, tautan, peta.
+  static const Color info = Color(0xFF1565C0);
+
+  /// Ungu kotak masuk / pengumuman.
+  static const Color violet = Color(0xFF6A1B9A);
+
+  /// Teal profil / kendaraan.
+  static const Color teal = Color(0xFF00695C);
+
+  /// Emas bintang & lencana (beda dari [secondary] yang dipakai brand).
+  static const Color gold = Color(0xFFF59F00);
+
   static const Color bgLight = Color(0xFFF6F7F9);
   static const Color cardLight = Color(0xFFFFFFFF);
   static const Color textPrimaryLight = Color(0xFF1A1A1A);
@@ -209,4 +226,113 @@ class AppMotion {
 
   /// Standar Material untuk gerak yang harus terasa netral.
   static const Curve standar = Curves.easeInOut;
+}
+
+/// Palet SIAP PAKAI per tema.
+///
+/// Semua layar memakai ini supaya tidak ada lagi `Color(0xFF...)` yang
+/// ditulis langsung di dalam widget: warna otomatis ikut tema terang/gelap
+/// dan tetap satu bahasa dengan APK Warga.
+class Palet {
+  const Palet._(this.gelap);
+
+  factory Palet.of(BuildContext c) =>
+      Palet._(Theme.of(c).brightness == Brightness.dark);
+
+  /// Dipakai saat BuildContext belum ada (menyusun ThemeData).
+  factory Palet.dari(Brightness b) => Palet._(b == Brightness.dark);
+
+  final bool gelap;
+
+  /// Latar halaman.
+  Color get latar => gelap ? AppColors.bgDark : AppColors.bgLight;
+
+  /// Permukaan kartu / sheet.
+  Color get kartu => gelap ? AppColors.cardDark : AppColors.cardLight;
+
+  /// Permukaan kedua: kolom isian, chip pasif, baris bergaris.
+  Color get kartuAlt => gelap ? const Color(0xFF26262B) : const Color(0xFFF1F2F5);
+
+  /// Garis tipis pemisah.
+  Color get garis => gelap ? AppColors.lineDark : AppColors.lineLight;
+
+  /// Teks utama.
+  Color get teks => gelap ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+
+  /// Teks sekunder.
+  Color get teks2 => gelap ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+
+  /// Warna brand yang aman untuk teks di atas [latar].
+  Color get brand => gelap ? AppColors.primaryOnDark : AppColors.primary;
+
+  /// Latar lembut bernuansa brand (chip aktif, lencana).
+  Color get brandSoft => gelap ? AppColors.primarySoftDark : AppColors.primarySoft;
+
+  /// Bayangan kartu (kosong di tema gelap).
+  List<BoxShadow> get bayangan => gelap ? AppShadows.none : AppShadows.card;
+
+  /// Bayangan untuk elemen melayang di atas peta.
+  List<BoxShadow> get melayang => gelap ? AppShadows.none : AppShadows.raised;
+
+  /// Warna apa pun dijadikan latar lembut (10-16% alpha).
+  Color lembut(Color c, [double alpha = 0.12]) => c.withValues(alpha: alpha);
+}
+
+/// Skala tipografi. Dipakai lewat `Teks.judul` dan kawan-kawan supaya ukuran
+/// huruf tidak lagi dikarang per layar.
+class Teks {
+  Teks._();
+
+  /// 32 sp — angka besar (saldo, pendapatan hari ini).
+  static const TextStyle angka = TextStyle(
+    fontSize: 32,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.8,
+    height: 1.1,
+  );
+
+  /// 24 sp — judul halaman.
+  static const TextStyle halaman = TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.4,
+    height: 1.2,
+  );
+
+  /// 19 sp — judul bagian / header sheet.
+  static const TextStyle judul = TextStyle(
+    fontSize: 19,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.2,
+    height: 1.25,
+  );
+
+  /// 15.5 sp — isi utama.
+  static const TextStyle isi = TextStyle(
+    fontSize: 15.5,
+    fontWeight: FontWeight.w500,
+    height: 1.4,
+  );
+
+  /// 13.5 sp — keterangan.
+  static const TextStyle ket = TextStyle(
+    fontSize: 13.5,
+    fontWeight: FontWeight.w500,
+    height: 1.35,
+  );
+
+  /// 11.5 sp kapital dengan tracking — label kecil di atas angka.
+  static const TextStyle label = TextStyle(
+    fontSize: 11.5,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0.6,
+    height: 1.2,
+  );
+
+  /// 13 sp tebal — angka di dalam chip/tombol kecil.
+  static const TextStyle tebal = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w700,
+    height: 1.2,
+  );
 }
