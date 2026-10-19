@@ -132,6 +132,20 @@ class SuaraNavigasi implements AnyVoiceGuidance {
   @override
   set volume(double value) {}
 
+  @override
+  String buildInstruction(AnyRouteStep step) => _instruksiId(step);
+
+  @override
+  String buildPreAnnouncement(AnyRouteStep step, double jarakMeter) {
+    final jarak = jarakMeter >= 1000
+        ? '${(jarakMeter / 1000).toStringAsFixed(1)} kilometer'
+        : '${(jarakMeter / 10).round() * 10} meter';
+    return 'Dalam $jarak, ${_instruksiId(step).toLowerCase()}';
+  }
+
+  @override
+  String buildArrivalText() => 'Anda sudah tiba di tujuan.';
+
   Future<void> _siapkan() async {
     if (_siap) return;
     try {
@@ -237,7 +251,7 @@ class MesinNavigasi extends ChangeNotifier {
       origin: asal,
       destination: tujuan,
       mode: AnyTravelMode.driving,
-      alternatives: alternatif,
+      alternatives: alternatif > 0,
       includeSpeedLimits: true,
       includeAnnotations: true,
       language: 'id',
@@ -507,38 +521,7 @@ class MesinNavigasi extends ChangeNotifier {
     );
   }
 
-  ArahManuver _arahDari(String? manuver, String instruksi) {
-    final m = (manuver ?? '').toLowerCase();
-    final gabungan = '$m $instruksi';
 
-    if (gabungan.contains('arrive') || gabungan.contains('tiba')) {
-      return ArahManuver.tiba;
-    }
-    if (gabungan.contains('depart')) return ArahManuver.mulai;
-    if (gabungan.contains('uturn') || gabungan.contains('u-turn')) {
-      return ArahManuver.putarBalik;
-    }
-    if (gabungan.contains('roundabout') || gabungan.contains('rotary')) {
-      return ArahManuver.bundaran;
-    }
-    // "sharp/slight left" harus diperiksa SEBELUM "left" biasa.
-    if (gabungan.contains('sharp left') || gabungan.contains('tajam ke kiri')) {
-      return ArahManuver.tajamKiri;
-    }
-    if (gabungan.contains('sharp right') ||
-        gabungan.contains('tajam ke kanan')) {
-      return ArahManuver.tajamKanan;
-    }
-    if (gabungan.contains('slight left') || gabungan.contains('keep left')) {
-      return ArahManuver.agakKiri;
-    }
-    if (gabungan.contains('slight right') || gabungan.contains('keep right')) {
-      return ArahManuver.agakKanan;
-    }
-    if (gabungan.contains('left')) return ArahManuver.kiri;
-    if (gabungan.contains('right')) return ArahManuver.kanan;
-    return ArahManuver.lurus;
-  }
 
   // ---------- suara ----------
 
@@ -574,4 +557,63 @@ class MesinNavigasi extends ChangeNotifier {
     suara.dispose();
     super.dispose();
   }
+}
+
+ArahManuver _arahDari(String? manuver, String instruksi) {
+  final m = (manuver ?? '').toLowerCase();
+  final gabungan = '$m $instruksi';
+
+  if (gabungan.contains('arrive') || gabungan.contains('tiba')) {
+    return ArahManuver.tiba;
+  }
+  if (gabungan.contains('depart')) return ArahManuver.mulai;
+  if (gabungan.contains('uturn') || gabungan.contains('u-turn')) {
+    return ArahManuver.putarBalik;
+  }
+  if (gabungan.contains('roundabout') || gabungan.contains('rotary')) {
+    return ArahManuver.bundaran;
+  }
+  // "sharp/slight left" harus diperiksa SEBELUM "left" biasa.
+  if (gabungan.contains('sharp left') || gabungan.contains('tajam ke kiri')) {
+    return ArahManuver.tajamKiri;
+  }
+  if (gabungan.contains('sharp right') ||
+      gabungan.contains('tajam ke kanan')) {
+    return ArahManuver.tajamKanan;
+  }
+  if (gabungan.contains('slight left') || gabungan.contains('keep left')) {
+    return ArahManuver.agakKiri;
+  }
+  if (gabungan.contains('slight right') || gabungan.contains('keep right')) {
+    return ArahManuver.agakKanan;
+  }
+  if (gabungan.contains('left')) return ArahManuver.kiri;
+  if (gabungan.contains('right')) return ArahManuver.kanan;
+  return ArahManuver.lurus;
+}
+
+/// Instruksi singkat Bahasa Indonesia untuk satu langkah (dipakai TTS).
+String _instruksiId(AnyRouteStep step) {
+  final jalan = step.roadName?.trim();
+  final tanpaJalan = jalan == null || jalan.isEmpty;
+  return switch (_arahDari(step.maneuver, step.instruction.toLowerCase())) {
+    ArahManuver.tiba => 'Anda telah tiba di tujuan',
+    ArahManuver.mulai =>
+      tanpaJalan ? 'Mulai perjalanan' : 'Mulai perjalanan lewat $jalan',
+    ArahManuver.lurus => tanpaJalan ? 'Lurus terus' : 'Lurus terus di $jalan',
+    ArahManuver.putarBalik => 'Putar balik',
+    ArahManuver.bundaran => tanpaJalan
+        ? 'Masuk bundaran, ambil jalan keluar'
+        : 'Masuk bundaran, lalu ke $jalan',
+    ArahManuver.kiri => tanpaJalan ? 'Belok kiri' : 'Belok kiri ke $jalan',
+    ArahManuver.agakKiri =>
+      tanpaJalan ? 'Belok agak ke kiri' : 'Belok agak ke kiri ke $jalan',
+    ArahManuver.tajamKiri =>
+      tanpaJalan ? 'Belok tajam ke kiri' : 'Belok tajam ke kiri ke $jalan',
+    ArahManuver.kanan => tanpaJalan ? 'Belok kanan' : 'Belok kanan ke $jalan',
+    ArahManuver.agakKanan =>
+      tanpaJalan ? 'Belok agak ke kanan' : 'Belok agak ke kanan ke $jalan',
+    ArahManuver.tajamKanan =>
+      tanpaJalan ? 'Belok tajam ke kanan' : 'Belok tajam ke kanan ke $jalan',
+  };
 }

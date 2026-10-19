@@ -331,7 +331,7 @@ class _NavigasiScreenState extends State<NavigasiScreen> {
                   ),
                   const SizedBox(height: 10),
                   _tombolBulat(
-                    _mesin.ikutArah ? Icons.explore : Icons.north_up,
+                    _mesin.ikutArah ? Icons.explore : Icons.navigation,
                     () => setState(() {
                       _mesin.ikutArah = !_mesin.ikutArah;
                       _kameraTerakhir = DateTime.fromMillisecondsSinceEpoch(0);
@@ -381,7 +381,7 @@ class _NavigasiScreenState extends State<NavigasiScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.navigation_off, size: 64, color: Colors.white),
+              const Icon(Icons.explore_off, size: 64, color: Colors.white),
               const SizedBox(height: 16),
               Text(
                 _galat!,
@@ -432,7 +432,7 @@ class _NavigasiScreenState extends State<NavigasiScreen> {
           padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
           decoration: BoxDecoration(
             color: AppColors.primary,
-            borderRadius: AppRadius.card,
+            borderRadius: BorderRadius.circular(AppRadius.card),
             boxShadow: AppShadows.card,
           ),
           child: Row(
