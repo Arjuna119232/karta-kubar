@@ -536,7 +536,7 @@ class _Avatar extends StatelessWidget {
     return Container(
       width: 46,
       height: 46,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: Gaya.hijau(false),
         shape: BoxShape.circle,
       ),
