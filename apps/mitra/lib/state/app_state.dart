@@ -350,7 +350,14 @@ class AppState extends ChangeNotifier {
 
   // ---------- init & auth ----------
   Future<void> init() async {
-    _p = await SharedPreferences.getInstance();
+    // Galat di sini dulu menghentikan main() sebelum runApp -> layar hitam.
+    // Sekarang pesannya jelas dan ditampilkan oleh gerbang boot di main.dart.
+    try {
+      _p = await SharedPreferences.getInstance();
+    } catch (e) {
+      throw StateError('Penyimpanan aplikasi tidak bisa dibuka ($e)');
+    }
+    if (_p == null) throw StateError('Penyimpanan aplikasi tidak tersedia');
     final t = _p!.getString('theme') ?? 'system';
     themeMode = ThemeMode.values.firstWhere((e) => e.name == t, orElse: () => ThemeMode.system);
     radiusKm = _p!.getDouble('radius') ?? 5;

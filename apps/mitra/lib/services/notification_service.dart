@@ -32,22 +32,28 @@ class NotificationService {
   bool _ready = false;
   bool fcmReady = false;
 
+  /// TIDAK PERNAH melempar: notifikasi bukan fitur yang boleh menggagalkan
+  /// pembukaan aplikasi (dulu exception di sini = app berhenti sebelum runApp).
   Future<void> init() async {
     if (_ready) return;
-    await Notifikasi.instance.init();
-    await _plugin.initialize(const InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-    ));
-    final android = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
-    await android?.createNotificationChannel(const AndroidNotificationChannel(
-      'online_status',
-      'Status ONLINE',
-      description: 'Tanda mitra sedang ONLINE menerima order',
-      importance: Importance.low,
-    ));
-    await android?.requestNotificationsPermission();
-    _ready = true;
+    try {
+      await Notifikasi.instance.init();
+      await _plugin.initialize(const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      ));
+      final android = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      await android?.createNotificationChannel(const AndroidNotificationChannel(
+        'online_status',
+        'Status ONLINE',
+        description: 'Tanda mitra sedang ONLINE menerima order',
+        importance: Importance.low,
+      ));
+      await android?.requestNotificationsPermission();
+      _ready = true;
+    } catch (_) {
+      _ready = false;
+    }
   }
 
   /// Dipanggil sekali dari main(). Aman dipanggil walau FCM belum dikonfigurasi.
