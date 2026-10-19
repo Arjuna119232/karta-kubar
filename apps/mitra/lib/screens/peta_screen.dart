@@ -12,7 +12,8 @@ import '../services/rute.dart';
 import '../state/app_state.dart';
 import 'widgets.dart';
 
-/// Peta gratis: MapLibre + OpenFreeMap (tanpa API key Google), rute via OSRM.
+/// Peta KUNBAR-Mitra — fokus Kecamatan Mampang Prapatan, Jakarta Selatan.
+/// MapLibre + OpenFreeMap (tanpa API key Google), rute via OSRM.
 class PetaScreen extends StatefulWidget {
   const PetaScreen({super.key, required this.order});
   final Order order;
@@ -22,6 +23,13 @@ class PetaScreen extends StatefulWidget {
 }
 
 class _PetaScreenState extends State<PetaScreen> {
+  // ===== Fokus wilayah Kecamatan Mampang Prapatan =====
+  // Pusat: -6.2437, 106.8267 (Kelurahan Kuningan Barat)
+  // Batas referensi (untuk batasan kamera di versi lanjut):
+  //   selatan -6.2600, barat 106.8100, utara -6.2250, timur 106.8430
+  static const _pusatMampang = AnyLatLng(-6.2437, 106.8267);
+
+  // Style peta: OpenFreeMap liberty (gratis, tanpa API key)
   static const _gaya = 'https://tiles.openfreemap.org/styles/liberty';
   static const _kuningan = Color(0xFF1B5E20);
 
@@ -56,7 +64,7 @@ class _PetaScreenState extends State<PetaScreen> {
     if (o.pickupLat != null && o.pickupLng != null) {
       return AnyLatLng(o.pickupLat!, o.pickupLng!);
     }
-    return const AnyLatLng(-6.2385, 106.8280); // Kuningan Barat
+    return _pusatMampang; // default: pusat Mampang Prapatan
   }
 
   Future<void> _muat() async {
@@ -82,11 +90,9 @@ class _PetaScreenState extends State<PetaScreen> {
           : 'Rute ${r.kilometer.toStringAsFixed(1)} km - sekitar ${r.etaMenit} menit';
     });
     if (r != null) {
-      _ctrl?.fitBounds(AnyLatLngBounds.fromPoints([
-        asal,
-        tujuan,
-        ...r.koordinat.take(40).map((c) => AnyLatLng(c[1], c[0])),
-      ]));
+      _ctrl?.moveCamera(AnyCameraPosition(target: asal, zoom: 15));
+    } else {
+      _ctrl?.moveCamera(AnyCameraPosition(target: asal, zoom: 15));
     }
   }
 
@@ -100,6 +106,23 @@ class _PetaScreenState extends State<PetaScreen> {
     } catch (_) {
       // Izin lokasi ditolak atau GPS mati: peta tetap jalan, hanya tanpa titik biru.
     }
+  }
+
+  /// Kembalikan kamera ke posisi driver (recenter).
+  Future<void> _recenter() async {
+    if (_saya != null) {
+      await _ctrl?.moveCamera(AnyCameraPosition(target: _saya!, zoom: 16));
+    } else {
+      await _posisiSaya();
+      if (_saya != null && mounted) {
+        await _ctrl?.moveCamera(AnyCameraPosition(target: _saya!, zoom: 16));
+      }
+    }
+  }
+
+  /// Kembalikan kamera ke pusat Mampang Prapatan.
+  Future<void> _kePusatMampang() async {
+    await _ctrl?.moveCamera(AnyCameraPosition(target: _pusatMampang, zoom: 14));
   }
 
   List<AnyMarker> _marker() {
@@ -162,10 +185,27 @@ class _PetaScreenState extends State<PetaScreen> {
     return [];
   }
 
+  Widget _tombolMampang(IconData ikon, String tooltip, VoidCallback onTekan) =>
+      Container(
+        margin: const EdgeInsets.only(bottom: 12, right: 12),
+        child: FloatingActionButton.small(
+          backgroundColor: Colors.white,
+          foregroundColor: _kuningan,
+          onPressed: onTekan,
+          tooltip: tooltip,
+          child: Icon(ikon, size: 24),
+          shape: const CircleBorder(),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Peta ${order.typeLabel}')),
+      appBar: AppBar(
+        title: const Text('Peta Mampang Prapatan'),
+        backgroundColor: _kuningan,
+        foregroundColor: Colors.white,
+      ),
       body: Stack(
         children: [
           AnyMapWidget(
@@ -174,7 +214,11 @@ class _PetaScreenState extends State<PetaScreen> {
             markers: _marker(),
             polylines: _garis(),
             myLocationEnabled: true,
-            onMapCreated: (c) => _ctrl = c,
+            onMapCreated: (c) {
+              _ctrl = c;
+              // Awal: fokus ke pusat Mampang Prapatan (kalau order belum ada titik).
+              _ctrl?.moveCamera(AnyCameraPosition(target: _awal!, zoom: 15));
+            },
             onError: (e) {
               if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
@@ -189,11 +233,33 @@ class _PetaScreenState extends State<PetaScreen> {
               right: 0,
               child: LinearProgressIndicator(minHeight: 3),
             ),
+          // Tombol Recenter (posisi driver) — kanan bawah.
+          Positioned(
+            bottom: 80,
+            right: 12,
+            child: _tombolMampang(
+              Icons.my_location,
+              'Posisi saya',
+              _recenter,
+            ),
+          ),
+          // Tombol Kembali ke Mampang Prapatan — kanan bawah, di atas recenter.
+          Positioned(
+            bottom: 150,
+            right: 12,
+            child: _tombolMampang(
+              Icons.location_city,
+              'Pusat Mampang Prapatan',
+              _kePusatMampang,
+            ),
+          ),
+          // Info status order — kiri bawah.
           Positioned(
             left: 12,
             right: 12,
             bottom: 12,
             child: Card(
+              color: Colors.white,
               child: Padding(
                 padding: const EdgeInsets.all(14),
                 child: Row(
@@ -214,6 +280,10 @@ class _PetaScreenState extends State<PetaScreen> {
                       tooltip: 'Buka navigasi',
                       onPressed: () => _bukaNavigasi(context, order),
                       icon: const Icon(Icons.navigation),
+                      style: IconButton.styleFrom(
+                        backgroundColor: _kuningan,
+                        foregroundColor: Colors.white,
+                      ),
                     ),
                   ],
                 ),
