@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../core/format.dart';
 import '../core/theme.dart';
-import '../models/models.dart';
+import '../models/models.dart' show Order; // 'Lencana' juga ada di kit.dart
 import '../state/app_state.dart';
 import '../widgets/kit.dart';
 import 'order_detail_screen.dart';
