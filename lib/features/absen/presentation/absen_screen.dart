@@ -337,7 +337,7 @@ class _SelesaiTile extends StatelessWidget {
           if (sudah)
             Row(
               children: <Widget>[
-                AppIcon(Ik.checkCircle,
+                const AppIcon(Ik.checkCircle,
                     color: AppColors.success, size: 18),
                 const SizedBox(width: 6),
                 Text('Tercatat',
