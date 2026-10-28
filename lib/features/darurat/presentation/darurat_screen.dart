@@ -7,6 +7,7 @@ import '../../../core/data/hasil.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/status_views.dart';
@@ -60,11 +61,10 @@ class DaruratScreen extends ConsumerWidget {
 
   void _bukaForm(BuildContext context, Session session) {
     Haptics.heavy();
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (BuildContext _) => FormDarurat(pengirim: session.user?.name ?? 'Warga'),
+    AppSheet.tampilkan<void>(
+      context,
+      judul: 'Lapor Darurat',
+      isi: FormDarurat(pengirim: session.user?.name ?? 'Warga'),
     );
   }
 }

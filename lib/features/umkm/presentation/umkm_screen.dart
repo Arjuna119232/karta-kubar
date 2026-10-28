@@ -8,6 +8,7 @@ import '../../../core/data/hasil.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/fade_slide_in.dart';
 import '../../../shared/widgets/section_header.dart';
@@ -106,11 +107,10 @@ class _UmkmScreenState extends ConsumerState<UmkmScreen> {
 
   void _bukaForm(Session session) {
     Haptics.medium();
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (BuildContext _) => const FormUmkm(),
+    AppSheet.tampilkan<void>(
+      context,
+      judul: 'Ajukan UMKM',
+      isi: const FormUmkm(),
     );
   }
 }

@@ -6,6 +6,7 @@ import '../../../core/data/hasil.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/fade_slide_in.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -119,11 +120,10 @@ class _AspirasiScreenState extends ConsumerState<AspirasiScreen> {
   Future<void> _bukaForm(BuildContext context, Session session) async {
     final AuthUser? user = session.user;
     Haptics.medium();
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (BuildContext _) => FormFish(
+    await AppSheet.tampilkan<void>(
+      context,
+      judul: 'Kirim Aspirasi',
+      isi: FormFish(
         pengirim: user?.name ?? 'Warga KUNBAR',
         rt: user?.rt,
         rw: user?.rw,

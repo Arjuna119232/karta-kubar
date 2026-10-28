@@ -108,7 +108,16 @@ class GaleriScreen extends ConsumerWidget {
         asyncUnggah.valueOrNull ?? const <MediaGaleri>[];
     return SafeArea(
       bottom: false,
-      child: ListView(
+      child: RefreshIndicator(
+        color: context.colors.primary,
+        backgroundColor: context.semantic.card,
+        onRefresh: () async {
+          Haptics.medium();
+          ref.invalidate(mediaGaleriProvider);
+          await Future<void>.delayed(const Duration(milliseconds: 500));
+        },
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(
             AppSpacing.screen, 12, AppSpacing.screen, 96),
         children: <Widget>[
@@ -458,6 +467,7 @@ class _NewsCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }
