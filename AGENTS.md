@@ -32,7 +32,7 @@ ganti = user wajib uninstall dan data hilang).
 
 ## Status singkat
 
-- v0.14.4+32 · 119 file Dart · 7 fitur warga belum ada (lihat PROGRESS.md).
+- v0.14.5+33 · 120 file Dart · absensi QR pakai kamera asli (mobile_scanner 6.0.11) · 7 fitur warga belum ada (lihat PROGRESS.md).
 - Absensi QR = kamera asli (`mobile_scanner ^6.0.11`, izin CAMERA disuntik
   `tool/patch_android.sh`). Detail + jebakan ada di PROGRESS.md bagian
   "Absensi QR: kamera asli".
