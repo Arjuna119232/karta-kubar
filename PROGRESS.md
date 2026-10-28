@@ -424,3 +424,35 @@ ganda. Helper di ekor file (`jumlahKelurahan`, `mitraUsahaById`,
 `saringMitraUsaha`, `mitraTerdekat`, `produkUmum`) diambil ulang dari
 berkas yang ada sebelum ditulis, dan hasil tulis dibaca balik untuk
 diverifikasi.
+
+## Absensi QR: kamera asli (28 Okt 2026)
+
+Sebelumnya tombol "Pindai QR" hanya menampilkan lembar tiruan — tidak ada
+kamera sama sekali, jadi absensi tidak pernah bisa dari QR pengurus.
+Sekarang memakai kamera sungguhan.
+
+- Paket: **`mobile_scanner: ^6.0.11`**. Versi 7.x **tidak bisa dipakai**:
+  butuh SDK `^3.7.0` + Flutter >= 3.29, sedangkan project masih
+  `>=3.4.0 <4.0.0`. 6.0.11 = ML Kit offline, tidak butuh internet.
+- Izin `CAMERA` disuntik `tool/patch_android.sh` (bagian 2) dan ikut
+  diverifikasi di bagian 5. Tanpa ini `MobileScanner` langsung
+  `permissionDenied`.
+- Lembar pindai: `lib/features/absen/presentation/qr_absen_sheet.dart`
+  (`QrAbsenSheet.tampilkan(context) -> Future<Kegiatan?>`), berisi kamera,
+  bingkai 4 sudut, tombol lampu + ganti kamera, dan kartu konfirmasi.
+  `absen_screen.dart` hanya memanggilnya lalu `_catat`.
+- ⛔ **`stop()` harus di-`await` sebelum `start()`** saat memindai ulang.
+  Memanggil `start()` saat `stop()` masih berjalan melempar
+  `controllerAlreadyInitialized` dan kamera mati sampai lembar ditutup.
+- QR dibaca oleh `bacaAbsenKode()` di `absen_state.dart` (bentuk
+  `karta-kubar://absen/YYYYMMDD/<judul>`). **Tanggal rusak/kosong TIDAK
+  membatalkan absen** — `tanggal` jadi `null`, judul tetap dipakai.
+- ⛔ `absenPayload()` tidak boleh memakai `a.tanggal!`: baris kegiatan dari
+  server bisa tanpa tanggal dan itu crash saat pengurus membuka panel QR.
+  Tanggal kosong ditulis sebagai segmen kosong.
+- Judul QR dicocokkan ke `kegiatanProvider` (case-insensitive). Kalau tidak
+  ada (QR dari daftar versi lain), kehadiran tetap dicatat memakai data QR.
+- Ikon baru `assets/icons/bolt.svg` + `flip.svg` (duotone, gaya sama dengan
+  ikon lain), masuk enum `Ik` sebagai `bolt`/`flip`.
+- Uji: `test/absen_kode_test.dart` (round-trip payload, tolak teks bukan QR,
+  tanggal 20260231 jadi null, kegiatan tanpa tanggal tetap bisa di-QR).

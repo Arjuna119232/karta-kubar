@@ -36,11 +36,14 @@ add_permission INTERNET
 # di peta). Tanpa dua izin ini, peta hanya menampilkan tiles tanpa titik.
 add_permission ACCESS_FINE_LOCATION
 add_permission ACCESS_COARSE_LOCATION
+# Kamera: pemindai QR absensi (mobile_scanner). Tanpa izin ini kamera tidak
+# bisa dibuka dan absensi mati total di lapangan.
+add_permission CAMERA
 
 # --- 5) Verifikasi izin lokasi benar-benar ada ---
 # Kehilangan satu baris di sini tidak selalu reddenya build: geolocator
 # berhenti diam-diam (selalu "izin ditolak"), jadi manifest diperiksa ulang.
-for p in ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION INTERNET; do
+for p in ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION INTERNET CAMERA; do
   grep -q "android.permission.$p" "$MANIFEST" || {
     echo "FAIL: permission $p tidak ada di manifest"
     exit 1

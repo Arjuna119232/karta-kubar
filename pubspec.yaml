@@ -42,6 +42,10 @@ dependencies:
   path_provider: ^2.1.5
   share_plus: ^12.0.2
   cross_file: ^0.3.4+2
+  # Pemindai QR absensi (kamera). DIKUNCI di 6.x: 7.x butuh sdk ^3.7.0 /
+  # Flutter >=3.29, sedangkan project ini sdk >=3.4.0. 6.0.11 membawa
+  # ML Kit barcode-scanning (offline, tanpa Play Services wajib).
+  mobile_scanner: ^6.0.11
 
 dev_dependencies:
   flutter_test:

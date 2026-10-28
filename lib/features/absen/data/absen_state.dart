@@ -4,16 +4,60 @@ import '../domain/kehadiran.dart';
 import '../../kegiatan/domain/kegiatan.dart';
 
 /// Format payload QR absen. Dipakai untuk membuat QR dan membacanya kembali.
-String absenPayload(Kegiatan a) =>
-    'karta-kubar://absen/${a.tanggal!.year}${a.tanggal!.month.toString().padLeft(2, '0')}'
-    '${a.tanggal!.day.toString().padLeft(2, '0')}/${Uri.encodeComponent(a.judul)}';
+///
+/// Kegiatan tanpa tanggal (baris dari server yang tanggalnya kosong) memakai
+/// ruas tanggal kosong — bukan `!` — supaya pembuatan QR tidak pernah crash.
+String absenPayload(Kegiatan a) {
+  final DateTime? t = a.tanggal;
+  final String tanggal = t == null
+      ? ''
+      : '${t.year}${t.month.toString().padLeft(2, '0')}'
+          '${t.day.toString().padLeft(2, '0')}';
+  return 'karta-kubar://absen/$tanggal/${Uri.encodeComponent(a.judul)}';
+}
 
-/// Baca balik payload QR -> judul kegiatan, atau null kalau bukan QR absen.
-String? parseAbsenPayload(String payload) {
-  if (!payload.startsWith('karta-kubar://absen/')) return null;
-  final List<String> bagian = payload.substring('karta-kubar://absen/'.length).split('/');
+/// Isi QR absen yang berhasil dibaca kamera.
+///
+/// `tanggal` boleh null: QR dari penyelenggara bisa saja tidak memuat tanggal
+/// yang sah, dan menolak seluruh QR hanya karena tanggalnya rusak akan membuat
+/// absensi gagal di lapangan.
+class AbsenKode {
+  const AbsenKode({required this.judul, this.tanggal});
+
+  final String judul;
+  final DateTime? tanggal;
+
+  @override
+  String toString() => 'AbsenKode($judul, $tanggal)';
+}
+
+/// Baca payload QR absen -> judul + tanggal, atau null kalau bukan QR absen.
+AbsenKode? bacaAbsenKode(String payload) {
+  const String awalan = 'karta-kubar://absen/';
+  final String teks = payload.trim();
+  if (!teks.startsWith(awalan)) return null;
+  final List<String> bagian = teks.substring(awalan.length).split('/');
   if (bagian.length < 2) return null;
-  return Uri.decodeComponent(bagian[1]);
+  final String judul = Uri.decodeComponent(bagian[1]).trim();
+  if (judul.isEmpty) return null;
+  return AbsenKode(judul: judul, tanggal: _bacaTanggal(bagian[0]));
+}
+
+/// `YYYYMMDD` -> DateTime, atau null kalau bukan tanggal yang benar-benar ada.
+///
+/// `DateTime(2026, 2, 31)` TIDAK error — dia bergulir jadi 3 Maret. Karena itu
+/// hasilnya dibandingkan balik dengan angka aslinya.
+DateTime? _bacaTanggal(String teks) {
+  if (teks.length != 8) return null;
+  final int? tahun = int.tryParse(teks.substring(0, 4));
+  final int? bulan = int.tryParse(teks.substring(4, 6));
+  final int? hari = int.tryParse(teks.substring(6, 8));
+  if (tahun == null || bulan == null || hari == null) return null;
+  final DateTime hasil = DateTime(tahun, bulan, hari);
+  if (hasil.year != tahun || hasil.month != bulan || hasil.day != hari) {
+    return null;
+  }
+  return hasil;
 }
 
 /// Daftar kehadiran anggota. Offline: hanya hidup selama sesi aplikasi.
