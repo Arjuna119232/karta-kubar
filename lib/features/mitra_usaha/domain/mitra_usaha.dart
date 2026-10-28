@@ -4,14 +4,16 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/order.dart';
 import '../../../shared/widgets/app_icon.dart';
 
-/// Kategori mitra usaha. Satu mitra bisa punya lebih dari satu kategori,
-/// misalnya agen gas yang sekaligus menjual galon air.
+/// Kategori mitra usaha, dinamai mengikuti tag OpenStreetMap supaya data
+/// dan kode memakai istilah yang sama. Satu mitra bisa punya lebih dari
+/// satu kategori, misalnya toko roti yang sekaligus jualan apotek bukan --
+/// warung yang menjual rokok pun tetap warungKelontong.
 enum KategoriMitraUsaha {
   warungKelontong,
-  warungMadura,
+  tokoRoti,
   pasar,
-  agenGas,
-  galonAir;
+  spbu,
+  apotek;
 
   static KategoriMitraUsaha dari(String nilai) =>
       KategoriMitraUsaha.values.firstWhere(
@@ -21,39 +23,39 @@ enum KategoriMitraUsaha {
 
   String get label => switch (this) {
         KategoriMitraUsaha.warungKelontong => 'Warung Kelontong',
-        KategoriMitraUsaha.warungMadura => 'Warung Madura',
+        KategoriMitraUsaha.tokoRoti => 'Toko Roti',
         KategoriMitraUsaha.pasar => 'Pasar',
-        KategoriMitraUsaha.agenGas => 'Agen Gas',
-        KategoriMitraUsaha.galonAir => 'Galon Air',
+        KategoriMitraUsaha.spbu => 'SPBU',
+        KategoriMitraUsaha.apotek => 'Apotek',
       };
 
   /// Nama pendek untuk filter chip.
   String get labelPendek => switch (this) {
         KategoriMitraUsaha.warungKelontong => 'Warung',
-        KategoriMitraUsaha.warungMadura => 'Madura',
+        KategoriMitraUsaha.tokoRoti => 'Roti',
         KategoriMitraUsaha.pasar => 'Pasar',
-        KategoriMitraUsaha.agenGas => 'Gas',
-        KategoriMitraUsaha.galonAir => 'Air',
+        KategoriMitraUsaha.spbu => 'SPBU',
+        KategoriMitraUsaha.apotek => 'Apotek',
       };
 
   /// Ikon memakai set ikon aplikasi sendiri (`Ik`), bukan ikon Material,
   /// supaya tampilan satu bahasa dengan seluruh aplikasi.
   Ik get ikon => switch (this) {
         KategoriMitraUsaha.warungKelontong => Ik.cart,
-        KategoriMitraUsaha.warungMadura => Ik.shop,
+        KategoriMitraUsaha.tokoRoti => Ik.bread,
         KategoriMitraUsaha.pasar => Ik.basket,
-        KategoriMitraUsaha.agenGas => Ik.flame,
-        KategoriMitraUsaha.galonAir => Ik.drop,
+        KategoriMitraUsaha.spbu => Ik.pump,
+        KategoriMitraUsaha.apotek => Ik.pill,
       };
 
   /// Warna penanda peta dan lencana. Hijau brand dipakai untuk warung,
   /// warna lain hanya untuk membedakan kategori saat melihat peta.
   Color get warna => switch (this) {
         KategoriMitraUsaha.warungKelontong => AppColors.primary,
-        KategoriMitraUsaha.warungMadura => const Color(0xFF0D3D11),
+        KategoriMitraUsaha.tokoRoti => const Color(0xFFB45309),
         KategoriMitraUsaha.pasar => const Color(0xFFF57C00),
-        KategoriMitraUsaha.agenGas => const Color(0xFFEF4444),
-        KategoriMitraUsaha.galonAir => AppColors.accent,
+        KategoriMitraUsaha.spbu => const Color(0xFFEF4444),
+        KategoriMitraUsaha.apotek => const Color(0xFF00897B),
       };
 
   /// Kata kunci untuk pencarian sederhana (tanpa server).
@@ -63,11 +65,11 @@ enum KategoriMitraUsaha {
             'kelontong',
             'sembako',
           ],
-        KategoriMitraUsaha.warungMadura => const <String>[
-            'warung',
-            'madura',
-            'sembako',
-            '24 jam',
+        KategoriMitraUsaha.tokoRoti => const <String>[
+            'roti',
+            'bakery',
+            'kue',
+            'martabak',
           ],
         KategoriMitraUsaha.pasar => const <String>[
             'pasar',
@@ -75,19 +77,19 @@ enum KategoriMitraUsaha {
             'dagang',
             'kaget',
           ],
-        KategoriMitraUsaha.agenGas => const <String>[
-            'gas',
-            'elpiji',
-            'refill',
-            'blue gaz',
+        KategoriMitraUsaha.spbu => const <String>[
+            'spbu',
+            'bensin',
+            'pertamina',
+            'shell',
+            'premium',
+            'solar',
           ],
-        KategoriMitraUsaha.galonAir => const <String>[
-            'galon',
-            'air',
-            'aqua',
-            'cleo',
-            'mineral',
-            'minum',
+        KategoriMitraUsaha.apotek => const <String>[
+            'apotek',
+            'obat',
+            'farmasi',
+            'kimia farma',
           ],
       };
 }
@@ -133,7 +135,7 @@ class ProdukUsaha {
       hargaKira == null ? 'Harga menyesuaikan' : 'perkiraan ${rupiah(hargaKira!)}';
 }
 
-/// Satu mitra usaha: warung, pasar, agen gas, atau depot air minum.
+/// Satu mitra usaha: warung, toko roti, pasar, SPBU, atau apotek.
 @immutable
 class MitraUsaha {
   const MitraUsaha({

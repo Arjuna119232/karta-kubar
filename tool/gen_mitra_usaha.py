@@ -20,7 +20,7 @@ DST = ROOT / "lib" / "features" / "mitra_usaha" / "data" / "mitra_usaha_lokal.da
 
 KELURAHAN = {"Kuningan Barat", "Tegal Parang", "Pela Mampang", "Bangka",
              "Mampang Prapatan"}
-KATEGORI = {"warungKelontong", "warungMadura", "pasar", "agenGas", "galonAir"}
+KATEGORI = {"warungKelontong", "tokoRoti", "pasar", "spbu", "apotek"}
 JAM = re.compile(r"^(24 jam|Belum dikonfirmasi|\d{2}:\d{2} - \d{2}:\d{2})$")
 # Huruf yang boleh: ASCII, Latin-1/Extended (U+00C0-U+024F), dan tanda baca
 # umum. Apa pun di luar itu = bukan Latin, dan `tool/check_nonlatin.py` di CI
@@ -84,6 +84,9 @@ for i, r in enumerate(rows):
             errors.append(f"{tag}: kategori '{k}' tidak dikenal")
     if not JAM.match(r["jamBuka"]):
         errors.append(f"{tag}: jamBuka '{r['jamBuka']}' tidak sesuai pola")
+    no_hp = r.get("noHp")
+    if no_hp and not re.match(r"^0\d{9,12}$", no_hp):
+        errors.append(f"{tag}: noHp '{no_hp}' tidak sesuai 08xx (10-13 digit)")
     if not (-6.30 < r["lat"] < -6.20 and 106.78 < r["lng"] < 106.90):
         errors.append(f"{tag}: koordinat di luar Jakarta Selatan")
     for medan in ("nama", "alamat", "fitur"):
@@ -123,18 +126,18 @@ baris = [
     "///",
     "/// Dua sumber koordinat, dan aplikasi menampilkan bedanya:",
     "///",
-    "/// - `titikPerkiraan: false` = koordinat asli dari warga (per RT/RW).",
-    "/// - `titikPerkiraan: true` = titik jalan hasil geocode, atau titik lama",
-    "///   yang masih di dalam kelurahan. Alamatnya benar, titik pintunya",
-    "///   belum. Jangan dua-dua jenis ini dicampur tanpa penjelasan.",
+    "/// - `titikPerkiraan: false` = koordinat persis dari OpenStreetMap",
+    "///   (node/way amenity & shop), diambil langsung dari data OSM.",
+    "/// - `titikPerkiraan: true` = titik atau alamat masih perkiraan.",
+    "///   Alamatnya benar, titik pintunya belum. Jangan dua-duanya",
+    "///   dicampur tanpa penjelasan.",
     "///",
-    "/// Jam buka juga ikut jujur: yang belum dikonfirmasi warga ditulis",
-    "/// 'Belum dikonfirmasi', BUKAN jam karangan. Menampilkan jam buka",
-    "/// yang tidak diketahui sama dengan mengarang data.",
+    "/// Jam buka hanya dipakai kalau sumbernya menuliskannya (tag",
+    "/// `opening_hours` di OSM). Yang tidak tertulis diberi label",
+    "/// 'Belum dikonfirmasi', BUKAN jam karangan.",
     "///",
-    "/// Nomor HP sengaja kosong untuk semua mitra - belum ada satu pun nomor",
-    "/// yang pasti. Jangan mengarang nomor; tombol telepon akan muncul sendiri",
-    "/// begitu nomor asli masuk ke daftar ini.",
+    "/// No HP sama-sama hanya dari sumber (tag phone), divalidasi pola 08xx.",
+    "/// Kalau tidak ada, null dan tombol telepon disembunyikan oleh UI.",
     "///",
     "/// Daftar ini sengaja bukan `const`: `Kelurahan.dari(...)` memanggil",
     "/// `firstWhere`, dan fungsi tidak boleh dipanggil dalam ekspresi const.",
@@ -157,6 +160,8 @@ for r in rows:
     ]
     if r.get("info"):
         baris.append(f"    info: {q(r['info'])},")
+    if r.get("noHp"):
+        baris.append(f"    noHp: {q(r['noHp'])},")
     baris.append("  ),")
 baris += ["];", ""]
 
@@ -202,6 +207,6 @@ if kembali != isi_baru:
 # ---------------------------------------------------------------- laporan
 pasti = sum(1 for r in rows if not r["perkiraan"])
 print(f"OK  {DST.relative_to(ROOT)}")
-print(f"    {len(rows)} mitra  |  koordinat warga {pasti}  |  perkiraan {len(rows)-pasti}")
+print(f"    {len(rows)} mitra  |  koordinat persis {pasti}  |  perkiraan {len(rows)-pasti}")
 jam = sum(1 for r in rows if r["jamBuka"] != "Belum dikonfirmasi")
 print(f"    jam buka terkonfirmasi {jam}  |  belum dikonfirmasi {len(rows)-jam}")
