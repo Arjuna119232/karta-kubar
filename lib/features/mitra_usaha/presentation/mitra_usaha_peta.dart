@@ -16,7 +16,6 @@ import '../../../shared/services/peta_gaya.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/atribusi_peta.dart';
-import '../../order/presentation/widgets_order.dart';
 import '../data/mitra_usaha_lokal.dart';
 import '../domain/mitra_usaha.dart';
 
