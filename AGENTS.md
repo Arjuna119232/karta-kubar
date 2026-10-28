@@ -55,6 +55,23 @@ ganti = user wajib uninstall dan data hilang).
   - 5 titik hasil reverse geocode jatuh di luar Kecamatan Mampang Prapatan
     (m2 Rawa Barat, m3 Kuningan Timur, m23 Duren Tiga, m53 Petogogan,
     m58 Pancoran) — sengaja belum diubah, menunggu keputusan user.
+- **28 Okt 2026 — redata dari OSM (commit `f94b960`, 34 titik).** Sumber
+  kunci = `tool/osm_kandidat.json` (38 entri mentah dari Overpass,
+  diambil 28 Okt) → **`tool/osm_kandidat_ke_json.py`** (converter baru)
+  → `tool/data_mitra_baru.json`. Rantai wajib: converter → gen → 2 checker.
+  - Enum di-rename ikut tag OSM: `warungMadura→tokoRoti`, `agenGas→spbu`,
+    `galonAir→apotek` (+ ikon SVG bread/pill/pump baru via
+    `design/gen_assets.py`, tag bara `F`/`S`/`D`). Grep `lib/` sisa enum
+    lama = 0.
+  - Merge merek sama beda < 35 m (SPBU & minimarket ganda OSM, 4 pasangan)
+    + disambiguasi nama rantai: `Nama (Jl. Jalan)` vs `Nama ((urutan))`.
+  - Layanan SPBU hanya dari tag `fuel:*`; jam buka hanya dari
+    `opening_hours` (8/34 nyata, sisanya jujur "Belum dikonfirmasi");
+    noHp hanya normlalisasi `+62→0` yang lolos validasi.
+- ⛔ **Pelajaran 28 Okt:** `check_nonlatin.py` menangkap tag `name:ja`
+  pada `tool/osm_kandidat.json` di CI (tag multibahasa OSM mentah, tidak
+  pernah dipakai) — sudah dibuang. **Jangan hanya baca `tail -2` output
+  checker; baris "Ganti hurufnya…" itu BAGIAN dari laporan gagal.**
 - Versi rilis terakhir yang dikirim ke user: **0.14.7+35**
   (`/storage/emulated/0/Download/KUNBAR-Connect-v0.14.7.apk`, universal,
   113,4 MB, cert `f9bc2609…ba842e4` = bisa update di atas v0.14.6).
