@@ -202,6 +202,7 @@ class GaleriScreen extends ConsumerWidget {
             ),
         ],
       ),
+      ),
     );
   }
 }
@@ -467,7 +468,6 @@ class _NewsCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
       ),
     );
   }
