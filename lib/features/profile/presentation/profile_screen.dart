@@ -467,6 +467,15 @@ class _HakAksesCard extends StatelessWidget {
 class _RoleSwitcher extends ConsumerWidget {
   const _RoleSwitcher();
 
+  /// Peran yang boleh dipilih warga di APK. Tamu = tombol Keluar,
+  /// pengurus & admin kelola datanya lewat web console (nanti), bukan APK.
+  static const List<UserRole> pilihan = <UserRole>[
+    UserRole.warga,
+    UserRole.rt,
+    UserRole.rw,
+    UserRole.anggota,
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final Session session = ref.watch(sessionProvider);
@@ -478,18 +487,18 @@ class _RoleSwitcher extends ConsumerWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              AppIcon(Ik.code,
+              AppIcon(Ik.personCheck,
                   size: 20, color: context.semantic.textSecondary),
               const SizedBox(width: 8),
               Expanded(
-                child: Text('Preview level akses',
+                child: Text('Pilih peranmu',
                     style: context.text.titleSmall),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
-            'Alat bantu developer untuk melihat tampilan tiap role. Nanti diganti verifikasi dari pengurus.',
+            'Peran menentukan menu dan akses di aplikasi. Verifikasi resmi kelak lewat pengurus.',
             style: context.text.bodySmall
                 ?.copyWith(color: context.semantic.textSecondary),
           ),
@@ -498,7 +507,7 @@ class _RoleSwitcher extends ConsumerWidget {
             spacing: 8,
             runSpacing: 8,
             children: <Widget>[
-              for (final UserRole r in UserRole.values)
+              for (final UserRole r in _RoleSwitcher.pilihan)
                 _RoleChip(
                   role: r,
                   aktif: r == aktif,
@@ -507,11 +516,7 @@ class _RoleSwitcher extends ConsumerWidget {
                     final SessionNotifier ctrl =
                         ref.read(sessionProvider.notifier);
                     ref.read(navigationIndexProvider.notifier).state = 0;
-                    if (r == UserRole.guest) {
-                      ctrl.keluar();
-                    } else {
-                      ctrl.simpanRole(r);
-                    }
+                    ctrl.simpanRole(r);
                   },
                 ),
             ],

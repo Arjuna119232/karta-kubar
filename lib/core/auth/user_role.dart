@@ -2,34 +2,50 @@ import 'package:flutter/material.dart';
 import '../../shared/widgets/app_icon.dart';
 import '../theme/app_colors.dart';
 
-/// Lima level akses KUNBAR Connect. Hierarkis: angka lebih besar = lebih tinggi.
+/// Peran KUNBAR Connect. Hierarkis: level lebih besar = akses lebih luas.
 ///
 ///  guest      -> belum login, hanya bisa baca
-///  warga      -> NIK + alamat Kuningan Barat terverifikasi
-///  anggota    -> anggota Karang Taruna
-///  pengurus   -> pengurus karang taruna / RT / RW / kelurahan
-///  admin      -> admin super (kelola role, moderasi, analytics)
-enum UserRole { guest, warga, anggota, pengurus, admin }
+///  warga      -> warga terdaftar
+///  anggota    -> anggota Karang Taruna (kartu anggota digital)
+///  rt         -> Ketua/Perangkat RT (level sama dengan pengurus)
+///  rw         -> Ketua RW (level sama dengan pengurus)
+///  pengurus   -> pengurus karang taruna / kelurahan
+///  admin      -> admin super — hanya lewat web, tidak di APK
+enum UserRole { guest, warga, anggota, rt, rw, pengurus, admin }
 
 extension UserRoleX on UserRole {
-  /// 0 = guest (terendah) ... 4 = admin (tertinggi).
-  int get level => index;
+  /// 0 = tamu (terendah) ... 4 = akses penuh.
+  /// rt & rw sejajar pengurus, jadi level-nya dihitung eksplisit
+  /// (bukan `index`, yang berubah kalau urutan enum bergeser).
+  int get level => switch (this) {
+        UserRole.guest => 0,
+        UserRole.warga => 1,
+        UserRole.anggota => 2,
+        UserRole.rt => 3,
+        UserRole.rw => 3,
+        UserRole.pengurus => 3,
+        UserRole.admin => 4,
+      };
 
   String get label => switch (this) {
         UserRole.guest => 'Tamu',
         UserRole.warga => 'Warga',
-        UserRole.anggota => 'Anggota KT',
+        UserRole.anggota => 'Karang Taruna',
+        UserRole.rt => 'RT',
+        UserRole.rw => 'RW',
         UserRole.pengurus => 'Pengurus',
         UserRole.admin => 'Admin',
       };
 
   String get deskripsi => switch (this) {
         UserRole.guest => 'Baca berita, agenda, UMKM, dan profil kelurahan.',
-        UserRole.warga => 'NIK + alamat terverifikasi. Bisa kirim inspirations dan lapor.',
+        UserRole.warga => 'Bisa kirim aspirasi, lapor, order, dan forum warga.',
         UserRole.anggota =>
-          'Anggota Karang Taruna. Absensi QR, iuran wajib, voting internal.',
+          'Anggota Karang Taruna. Kartu anggota, absensi QR, iuran wajib.',
+        UserRole.rt => 'Ketua / perangkat RT. Kelola kegiatan wilayah RT.',
+        UserRole.rw => 'Ketua RW. Kelola kegiatan wilayah RW dan verifikasi warga.',
         UserRole.pengurus =>
-          'Pengurus / RT / RW / kelurahan. Kelola kegiatan dan verifikasi warga.',
+          'Pengurus karang taruna / kelurahan. Kelola kegiatan dan absensi.',
         UserRole.admin => 'Akses penuh: role, moderasi konten, analytics, laporan.',
       };
 
@@ -43,6 +59,8 @@ extension UserRoleX on UserRole {
         UserRole.guest => Ik.person,
         UserRole.warga => Ik.badge,
         UserRole.anggota => Ik.groups,
+        UserRole.rt => Ik.home,
+        UserRole.rw => Ik.handshake,
         UserRole.pengurus => Ik.personCheck,
         UserRole.admin => Ik.adminShield,
       };
@@ -51,8 +69,10 @@ extension UserRoleX on UserRole {
         UserRole.guest => AppColors.textSecondaryLight,
         UserRole.warga => AppColors.primary,
         UserRole.anggota => AppColors.accent,
-        UserRole.pengurus => AppColors.warning,
-        UserRole.admin => AppColors.social,
+        UserRole.rt => AppColors.success,
+        UserRole.rw => AppColors.warning,
+        UserRole.pengurus => AppColors.social,
+        UserRole.admin => AppColors.error,
       };
 
   /// Ringkasan hak akses — dipakai di layar profil & dokumentasi.
@@ -72,13 +92,25 @@ extension UserRoleX on UserRole {
           ],
         UserRole.anggota => <String>[
             'Semua akses warga',
+            'Kartu anggota Karang Taruna digital',
             'Absensi kegiatan via QR + GPS',
-            'Kartu anggota digital',
             'Iuran wajib + laporan kas',
             'Voting internal & poin kontribusi',
           ],
+        UserRole.rt => <String>[
+            'Semua akses Karang Taruna',
+            'Buat sesi absensi & QR',
+            'Kelola kegiatan wilayah RT',
+            'Broadcast pengumuman RT',
+          ],
+        UserRole.rw => <String>[
+            'Semua akses RT',
+            'Kelola kegiatan wilayah RW',
+            'Verifikasi warga RW',
+            'Broadcast pengumuman resmi RW',
+          ],
         UserRole.pengurus => <String>[
-            'Semua akses anggota',
+            'Semua akses Karang Taruna',
             'Buat sesi absensi & QR',
             'Kelola kegiatan & verifikasi warga',
             'Broadcast pengumuman resmi',

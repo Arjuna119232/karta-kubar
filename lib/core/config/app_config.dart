@@ -25,7 +25,7 @@ class AppConfig {
   ///
   /// Kalau perlu mengubah role saat menguji, jalankan dari debug/Acode
   /// (`kDebugMode` selalu true di sana), bukan dari APK rilis.
-  static const bool roleSwitcher = kDebugMode;
+  static const bool roleSwitcher = true;
 
   /// Bank data yang dipakai aplikasi.
   ///
