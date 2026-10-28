@@ -33,6 +33,8 @@ ganti = user wajib uninstall dan data hilang).
 ## Status singkat
 
 - v0.14.6+34 · 121 file Dart · absensi QR pakai kamera asli (mobile_scanner 6.0.11) · peta pakai tile raster OpenStreetMap (.de) + atribusi · 7 fitur warga belum ada (lihat PROGRESS.md).
+- Peta: gaya dipusatkan di `lib/shared/services/peta_gaya.dart` — `gayaPetaGratis` = tile raster `tile.openstreetmap.de` (bukan `tile.openstreetmap.org`, server itu memblokir aplikasi), `gayaPetaCadangan` = vector OpenFreeMap. Atribusi wajib lewat `lib/shared/widgets/atribusi_peta.dart` di SEMUA peta.
+- ⚠️ `flutter analyze` di CI FATAL pada warning: setelah memindahkan konstanta bersama, buang import yang jadi mati (mis. `widgets_order.dart` di `mitra_usaha_peta.dart`). `tool/check_dart.py` tidak menangkap ini.
 - Absensi QR = kamera asli (`mobile_scanner ^6.0.11`, izin CAMERA disuntik
   `tool/patch_android.sh`). Detail + jebakan ada di PROGRESS.md bagian
   "Absensi QR: kamera asli".
