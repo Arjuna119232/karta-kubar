@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/haptics.dart';
@@ -21,8 +20,9 @@ import '../domain/mitra_usaha.dart';
 
 /// Peta semua mitra usaha.
 ///
-/// Warna penanda mengikuti kategori (hijau brand untuk warung, warna lain
-/// hanya untuk membedakan). Tap penanda menampilkan kartu bawah; ketuk kartu
+/// Setiap mitra tampil sebagai satu titik (lingkaran GeoJSON) yang warnanya
+/// mengikuti kategori; titik yang masih perkiraan digambar berlubang. Ketuk
+/// peta di dekat sebuah titik untuk memunculkan kartu bawah, lalu ketuk kartu
 /// untuk masuk ke detail. Filter kategori berlaku langsung ke peta, jadi tidak
 /// ada peta yang menampilkan semua titik lalu sebagian besar tidak terlihat.
 class MitraUsahaPetaScreen extends ConsumerStatefulWidget {
@@ -54,6 +54,32 @@ class _MitraUsahaPetaScreenState extends ConsumerState<MitraUsahaPetaScreen> {
           .where((MitraUsaha m) => m.kategori.contains(_kategori))
           .toList(growable: false);
 
+  /// Satu titik mitra di peta.
+  ///
+  /// `radius` di sini dalam meter, dan adapter MapLibre membaginya dengan 10
+  /// sebelum dipakai sebagai radius layar — jadi 80 -> lingkaran 8 dp.
+  ///
+  /// Titik yang masih perkiraan digambar berlubang (isian transparan + garis
+  /// tepi penuh) supaya warga bisa membedakan titik pasti dari titik kira-kira
+  /// tanpa harus membuka kartunya.
+  ///
+  /// Id titik terpilih sengaja dibedakan: adapter hanya menyinkronkan ulang
+  /// lingkaran kalau HIMPUNAN id berubah, jadi tanpa itu sorotan tidak muncul.
+  AnyCircle _titikMitra(MitraUsaha m, {required bool terpilih}) {
+    final Color warna = m.kategoriUtama.warna;
+    final bool kira = m.titikPerkiraan;
+    return AnyCircle(
+      id: terpilih ? 'mitra-${m.id}-pilih' : 'mitra-${m.id}',
+      center: AnyLatLng(m.titik.lat, m.titik.lng),
+      radius: terpilih ? 150 : 80,
+      fillColor: kira && !terpilih ? warna.withValues(alpha: 0.35) : warna,
+      strokeColor: terpilih ? AppColors.white : warna,
+      strokeWidth: terpilih ? 3 : (kira ? 2 : 1.5),
+      opacity: 1,
+      zIndex: terpilih ? 20 : (kira ? 3 : 5),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<MitraUsaha> data = _data();
@@ -82,18 +108,14 @@ class _MitraUsahaPetaScreenState extends ConsumerState<MitraUsahaPetaScreen> {
               onMapCreated: (AnyMapController c) => _kontrol = c,
               minZoom: _zoomMin,
               maxZoom: _zoomMax,
-              markers: <AnyMarker>[
+              // Titik digambar sebagai lingkaran GeoJSON, bukan marker.
+              // Marker bawaan `any_map` memakai sprite `marker-15` yang hanya
+              // ada di gaya vektor; pada gaya raster OSM sprite itu tidak ada
+              // sehingga penanda tidak tampil sama sekali (peta terlihat
+              // kosong). Lingkaran selalu tergambar di gaya apa pun.
+              circles: <AnyCircle>[
                 for (final MitraUsaha m in data)
-                  AnyMarker(
-                    id: m.id,
-                    position: AnyLatLng(m.titik.lat, m.titik.lng),
-                    anchor: AnyMarkerAnchor.center,
-                    icon: _Pin(
-                      warna: m.kategoriUtama.warna,
-                      ikon: m.kategoriUtama.ikon,
-                      terpilih: terpilih?.id == m.id,
-                    ),
-                  ),
+                  _titikMitra(m, terpilih: terpilih?.id == m.id),
               ],
               myLocationEnabled: true,
               myLocationButtonEnabled: true,
@@ -181,9 +203,10 @@ class _MitraUsahaPetaScreenState extends ConsumerState<MitraUsahaPetaScreen> {
     );
   }
 
-  /// `any_map` 1.0.0 tidak punya callback tap-per-marker, jadi penanda
-  /// ditentukan dari titik yang ditekan: mitra terdekat dalam 60 meter yang
-  /// dipilih. Kalau tidak ada yang dekat, pilihan dilepas.
+  /// `any_map` 1.0.0 tidak punya callback tap-per-titik (dan `AnyCircle.onTap`
+  /// tidak diteruskan adapter MapLibre), jadi titik dipilih dari koordinat yang
+  /// ditekan: mitra terdekat dalam 60 meter. Kalau tidak ada yang dekat,
+  /// pilihan dilepas.
   void _petaDipilih(AnyLatLng posisi, List<MitraUsaha> data) {
     Haptics.selection();
     MitraUsaha? terdekat;
@@ -356,35 +379,6 @@ class _KartuTerpilih extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _Pin extends StatelessWidget {
-  const _Pin({
-    required this.warna,
-    required this.ikon,
-    required this.terpilih,
-  });
-
-  final Color warna;
-  final Ik ikon;
-  final bool terpilih;
-
-  @override
-  Widget build(BuildContext context) {
-    final double d = terpilih ? 40 : 30;
-    return Container(
-      width: d,
-      height: d,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: warna,
-        shape: BoxShape.circle,
-        border: Border.all(color: AppColors.white, width: terpilih ? 3 : 2),
-        boxShadow: AppShadows.medium,
-      ),
-      child: AppIcon(ikon, size: terpilih ? 22 : 16, color: AppColors.white),
     );
   }
 }
