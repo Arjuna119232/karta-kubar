@@ -8,21 +8,19 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../shared/models/order.dart';
 import '../../../shared/models/order_ringkas.dart';
+import '../../../shared/services/peta_gaya.dart';
 import '../../../shared/services/tarif_service.dart';
 import '../../../shared/services/tracking_service.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/atribusi_peta.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/section_header.dart';
 
-/// Style OpenFreeMap yang dipakai seluruh aplikasi.
-///
-/// CATATAN: `https://openfreemap.org/style.json` (yang sering muncul di
-/// tutorial) mengembalikan 404. Yang benar ada di host `tiles`:
-/// `https://tiles.openfreemap.org/styles/liberty`.
-const String gayaPetaGratis = 'https://tiles.openfreemap.org/styles/liberty';
+/// Gaya peta ada di `shared/services/peta_gaya.dart` (satu konstanta untuk
+/// seluruh aplikasi: order, pilih lokasi, dan peta mitra).
 
-/// Peta gratis KUNBAR: MapLibre + OpenFreeMap, tanpa API key.
+/// Peta gratis KUNBAR: MapLibre + ubin OpenStreetMap, tanpa API key.
 ///
 /// Satu widget untuk semua kebutuhan peta order (form jastip, form ojek,
 /// tracking) supaya tidak ada tiga versi peta yang tampil beda.
@@ -66,7 +64,10 @@ class PetaOrder extends StatelessWidget {
         width: double.infinity,
         child: sah.isEmpty
             ? PetaKosong(tinggi: tinggi)
-            : AnyMapWidget(
+            : Stack(
+                children: <Widget>[
+                  Positioned.fill(
+                    child: AnyMapWidget(
                 adapter: MapLibreAdapter(styleUrl: gayaPetaGratis),
                 initialCamera: AnyCameraPosition(
                   target: _pusat(sah),
@@ -95,6 +96,14 @@ class PetaOrder extends StatelessWidget {
                 myLocationEnabled: lokasiSaya,
                 myLocationButtonEnabled: lokasiSaya,
                 compassEnabled: true,
+                    ),
+                  ),
+                  const Positioned(
+                    right: 6,
+                    bottom: 6,
+                    child: AtribusiPeta(),
+                  ),
+                ],
               ),
       ),
     );

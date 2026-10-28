@@ -12,8 +12,10 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../shared/models/order.dart';
+import '../../../shared/services/peta_gaya.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_icon.dart';
+import '../../../shared/widgets/atribusi_peta.dart';
 import '../../order/presentation/widgets_order.dart';
 import '../data/mitra_usaha_lokal.dart';
 import '../domain/mitra_usaha.dart';
@@ -38,7 +40,7 @@ class _MitraUsahaPetaScreenState extends ConsumerState<MitraUsahaPetaScreen> {
   /// yang sama dipakai untuk widget dan untuk tombol.
   static const double _zoomMin = 11;
 
-  static const double _zoomMax = 18;
+  static const double _zoomMax = 19;
 
   KategoriMitraUsaha? _kategori;
 
@@ -123,6 +125,11 @@ class _MitraUsahaPetaScreenState extends ConsumerState<MitraUsahaPetaScreen> {
               bottom: AppSpacing.lg,
               child: _KartuTerpilih(item: terpilih),
             ),
+          const Positioned(
+            left: AppSpacing.screen,
+            top: 64,
+            child: AtribusiPeta(),
+          ),
           // Zoom in / out di tengah kanan. `any_map` tidak menyediakan
           // tombol bawaan, jadi kamera digerakkan lewat controller.
           Positioned(

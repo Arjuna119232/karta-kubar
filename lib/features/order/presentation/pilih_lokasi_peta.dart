@@ -12,9 +12,10 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../shared/models/order.dart';
 import '../../../shared/services/lokasi_service.dart';
+import '../../../shared/services/peta_gaya.dart';
 import '../../../shared/widgets/app_icon.dart';
+import '../../../shared/widgets/atribusi_peta.dart';
 import '../../../shared/widgets/primary_button.dart';
-import 'widgets_order.dart';
 
 /// Hasil pilihan peta: koordinat + alamat nama jalan.
 @immutable
@@ -140,6 +141,11 @@ class _PilihLokasiPetaScreenState extends State<PilihLokasiPetaScreen> {
               myLocationButtonEnabled: true,
               compassEnabled: true,
             ),
+          ),
+          const Positioned(
+            left: AppSpacing.screen,
+            top: AppSpacing.sm,
+            child: AtribusiPeta(),
           ),
           // Penanda tengah: tidak bisa digeser, peta digeser untuk memindahkannya.
           const Center(
