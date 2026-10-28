@@ -2,8 +2,8 @@
 
 Berkas ini supaya sesi baru bisa melanjutkan tanpa membaca ulang semua riwayat.
 
-**Terakhir diperbarui:** 16 Okt 2026
-**Versi aplikasi:** 0.13.0+25 (build 20 = 0.7.0 sudah DIRUSAK, jangan dipakai sebagai acuan)
+**Terakhir diperbarui:** 28 Okt 2026
+**Versi aplikasi:** 0.14.7+35
 
 ---
 
@@ -456,3 +456,42 @@ Sekarang memakai kamera sungguhan.
   ikon lain), masuk enum `Ik` sebagai `bolt`/`flip`.
 - Uji: `test/absen_kode_test.dart` (round-trip payload, tolak teks bukan QR,
   tanggal 20260231 jadi null, kegiatan tanpa tanggal tetap bisa di-QR).
+
+---
+
+## v0.14.7 — titik peta mitra jadi lingkaran + label kelurahan ikut koordinat
+
+**Masalah:** setelah peta pindah ke tile raster OSM (v0.14.6), penanda mitra
+**tidak muncul sama sekali**. Bukan bug kamera atau data — `any_map` menggambar
+marker lewat sprite `marker-15`, dan sprite itu hanya ada di gaya **vektor**.
+Gaya raster tidak punya sprite apa pun, jadi `addSymbol` dipanggil dengan
+gambar yang tidak ada dan tidak menggambar apa-apa (tanpa error).
+
+**Perbaikan:** titik digambar sebagai `AnyCircle` (`_titikMitra`,
+`mitra_usaha_peta.dart:68`). Lingkaran selalu tergambar di gaya apa pun.
+
+- Adapter MapLibre membagi `AnyCircle.radius` dengan **10** (meter → dp):
+  radius 80 = lingkaran 8 dp, titik terpilih 150 = 15 dp.
+- Titik `perkiraan: true` digambar **berlubang** (isian 35% + tepi penuh)
+  supaya warga bisa membedakan titik pasti dari titik kira-kira tanpa membuka
+  kartunya.
+- ⛔ Adapter hanya menyinkronkan ulang lingkaran kalau **himpunan id berubah**.
+  Karena itu id titik terpilih dibedakan (`mitra-<id>-pilih`) — tanpa itu
+  sorotan tidak pernah muncul saat mitra dipilih.
+
+**Label kelurahan diperbaiki (18 titik).** Reverse geocode titik (zoom 18,
+`addressdetails=1`, utamakan `address.village`) menunjukkan banyak label lama
+tidak cocok dengan koordinatnya. Contoh: m5/m6/m49/m51/m56/m57/m60 tertulis
+Tegal Parang padahal titiknya di Mampang Prapatan; m17/m19/m48 tertulis
+Mampang Prapatan padahal di Kuningan Barat; m9 tertulis Tegal Parang padahal
+Pela Mampang.
+
+⛔ **Aturan yang dipakai: koordinat yang dipercaya, label yang menyesuaikan.**
+Titik asli warga **tidak digeser lebih dari 250 m**; snap ke geometri jalan
+hanya untuk titik `perkiraan: true`. Kalau titik asli jauh dari jalan, yang
+salah adalah labelnya, bukan titiknya.
+
+**5 titik sengaja BELUM diubah** karena hasil reverse geocode-nya di luar
+Kecamatan Mampang Prapatan — menunggu keputusan user:
+m2 (Rawa Barat), m3 (Kuningan Timur), m23 (Duren Tiga), m53 (Petogogan),
+m58 (Pancoran).
