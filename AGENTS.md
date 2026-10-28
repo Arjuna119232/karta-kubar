@@ -55,3 +55,6 @@ ganti = user wajib uninstall dan data hilang).
   - 5 titik hasil reverse geocode jatuh di luar Kecamatan Mampang Prapatan
     (m2 Rawa Barat, m3 Kuningan Timur, m23 Duren Tiga, m53 Petogogan,
     m58 Pancoran) — sengaja belum diubah, menunggu keputusan user.
+- Versi rilis terakhir yang dikirim ke user: **0.14.7+35**
+  (`/storage/emulated/0/Download/KUNBAR-Connect-v0.14.7.apk`, universal,
+  113,4 MB, cert `f9bc2609…ba842e4` = bisa update di atas v0.14.6).
