@@ -40,3 +40,18 @@ ganti = user wajib uninstall dan data hilang).
   "Absensi QR: kamera asli".
 - Data mitra usaha: sumber kebenaran `tool/data_mitra_baru.json` →
   `tool/gen_mitra_usaha.py` → Dart. Jangan edit Dart-nya manual.
+  - **JSON ditulis satu objek per baris** (`json.dumps(separators=(',',':'))`).
+    Menulis ulang dengan `indent=` membuat diff 1000+ baris palsu.
+  - **Titik mitra di peta = `AnyCircle`, bukan `AnyMarker`.** Sprite
+    `marker-15` hanya ada di gaya vektor; di gaya raster OSM penanda tidak
+    tampil sama sekali (peta terlihat kosong). Adapter MapLibre membagi
+    `AnyCircle.radius` dengan 10 (meter → dp), dan hanya menyinkronkan ulang
+    kalau HIMPUNAN id berubah — karena itu id titik terpilih dibedakan.
+  - **Aturan koordinat vs label:** koordinat asli warga TIDAK digeser >250 m
+    (snap ke jalan hanya untuk titik `perkiraan:true`). Kalau titik asli jauh
+    dari jalan, yang diperbaiki adalah **label kelurahan/alamat** mengikuti
+    koordinat (reverse geocode zoom 18, `addressdetails=1`, utamakan
+    `address.village`), bukan sebaliknya.
+  - 5 titik hasil reverse geocode jatuh di luar Kecamatan Mampang Prapatan
+    (m2 Rawa Barat, m3 Kuningan Timur, m23 Duren Tiga, m53 Petogogan,
+    m58 Pancoran) — sengaja belum diubah, menunggu keputusan user.
