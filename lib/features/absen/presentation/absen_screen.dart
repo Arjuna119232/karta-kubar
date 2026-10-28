@@ -87,7 +87,7 @@ class _AbsenScreenState extends ConsumerState<AbsenScreen> {
                   const SizedBox(height: AppSpacing.section),
                   const SectionHeader(title: 'Pindai QR Kegiatan'),
                   _ScannerCard(
-                    onScan: () => _bukaScanner(context, ctrl),
+                    onScan: () => _bukaScanner(ctrl),
                   ),
                   const SizedBox(height: AppSpacing.section),
                   const SectionHeader(title: 'Riwayat Kehadiran'),
@@ -117,7 +117,7 @@ class _AbsenScreenState extends ConsumerState<AbsenScreen> {
                           kegiatan: a,
                           sudah: ctrl.sudahAbsen(
                               a.judul, a.tanggal ?? DateTime.now()),
-                          onIsi: () => _catat(context, ctrl, a),
+                          onIsi: () => _catat(ctrl, a),
                         ),
                       ),
                   ],
@@ -127,14 +127,15 @@ class _AbsenScreenState extends ConsumerState<AbsenScreen> {
     );
   }
 
-  Future<void> _bukaScanner(BuildContext context, AbsenNotifier ctrl) async {
+  Future<void> _bukaScanner(AbsenNotifier ctrl) async {
+    // Pakai context milik State (bukan parameter) supaya pemakaian setelah
+    // await aman: kalau layar sudah ditutup, `mounted` false dan kita berhenti.
     final Kegiatan? target = await QrAbsenSheet.tampilkan(context);
     if (target == null || !mounted) return;
-    _catat(context, ctrl, target);
+    _catat(ctrl, target);
   }
 
-  void _catat(
-      BuildContext context, AbsenNotifier ctrl, Kegiatan a) {
+  void _catat(AbsenNotifier ctrl, Kegiatan a) {
     final bool ok = ctrl.catat(a, StatusKehadiran.hadir);
     if (ok) {
       Haptics.success();
