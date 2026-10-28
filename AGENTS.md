@@ -75,3 +75,8 @@ ganti = user wajib uninstall dan data hilang).
 - Versi rilis terakhir yang dikirim ke user: **0.14.7+35**
   (`/storage/emulated/0/Download/KUNBAR-Connect-v0.14.7.apk`, universal,
   113,4 MB, cert `f9bc2609…ba842e4` = bisa update di atas v0.14.6).
+## Role system v0.14.9 (20 Okt 2026, commit dfd5e1d)
+- `UserRole` = guest, warga, **anggota, rt, rw**, pengurus, admin. `level` = map eksplisit (rt/rw = 3, sejajar pengurus), BUKAN `index` — jangan kembalikan ke index.
+- `_RoleSwitcher` = kartu "Pilih peranmu" di Profil, LIST `pilihan` = [warga, rt, rw, anggota] — tamu/pengurus/admin TIDAK di chipset (admin & admin-console = web, nanti).
+- `AppConfig.roleSwitcher = true` (produksi), demoMode tetap terpisah.
+- Kartu anggota (FlipCard) tampil untuk `bisa(anggota)` → anggota/rt/rw/pengurus/admin.
